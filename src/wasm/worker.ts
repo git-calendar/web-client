@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import './wasm_exec.js';
+import '@/wasm/wasm_exec.js';
 
 declare const self: DedicatedWorkerGlobalScope;
 
@@ -25,7 +25,13 @@ async function initWasm() {
       };
     });
 
-    const response = await fetch('./core.wasm');
+    const wasmUrl = new URL('@/assets/core.wasm', import.meta.url).href;
+    const response = await fetch(wasmUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to load WASM: ${response.status}`);
+    }
+
     const buffer = await response.arrayBuffer();
     const { instance } = await WebAssembly.instantiate(buffer, go.importObject);
 

@@ -1,5 +1,5 @@
 import type { CalendarApi } from '@/types/core';
-import { hydrateDates, dehydrateDates } from './mapper';
+import { hydrateDates, dehydrateDates } from '@/wasm/mapper';
 
 // create a worker instance
 const worker = new Worker(new URL('worker.ts', import.meta.url), { type: 'module' });

@@ -3,7 +3,7 @@
 
 node_modules/
 dist/
-src/wasm/core.wasm
+src/assets/core.wasm
 
 .DS_Store
 
