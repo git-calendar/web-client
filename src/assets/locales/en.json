@@ -28,6 +28,7 @@
   },
   "saveBtn": "Save",
   "closeBtn": "Close",
+  "deleteBtn": "Delete",
   "todayBtn": "Today",
   "calendarsTitle": "Calendars"
 }

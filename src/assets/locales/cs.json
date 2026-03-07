@@ -28,6 +28,7 @@
   },
   "saveBtn": "Uložit",
   "closeBtn": "Zavřít",
+  "deleteBtn": "Smazat",
   "todayBtn": "Dnes",
   "calendarsTitle": "Kalendáře"
 }

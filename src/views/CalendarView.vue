@@ -40,9 +40,11 @@ const views = {
 
 const showModal = ref(false);
 const editingEvent = ref<CalendarEvent | undefined>(undefined);
-function showEventModal(event?: CalendarEvent) {
+const creatingNew = ref<boolean>(false);
+function showEventModal(event?: CalendarEvent, newEvent?: boolean) {
   if (event) editingEvent.value = event;
   showModal.value = true;
+  creatingNew.value = newEvent!;
 }
 
 function closeEventModal() {
@@ -68,7 +70,13 @@ provide(showEventModalKey, showEventModal);
     <TopBar />
     <component :is="views[activeView][0]" :num-of-days="views[activeView][1]" ref="calendar-view" />
 
-    <EventModal v-show="showModal" :event="editingEvent" @close="closeEventModal" @refresh-data="updateCallDown" />
+    <EventModal
+      v-show="showModal"
+      :event="editingEvent"
+      :creating-new="creatingNew"
+      @close="closeEventModal"
+      @refresh-data="updateCallDown"
+    />
   </div>
 </template>
 

@@ -67,8 +67,13 @@ async function saveEvent() {
 
   emit('refresh-data');
   emit('close');
+}
 
-  // TODO reload view to display changes
+async function deleteEvent() {
+  const event = reconstructEvent();
+  await CalendarCore.removeEvent(event);
+  emit('refresh-data');
+  emit('close');
 }
 
 // const exampleTags = ref(['School', 'Work', 'Birthday']); // TODO
@@ -125,6 +130,9 @@ const exampleCalendars = ref(['Main', 'Shared']); // TODO
       <div class="bottom-btns">
         <button type="button" @click="saveEvent">{{ $t('saveBtn') }}</button>
         <button type="button" @click="emit('close')">{{ $t('closeBtn') }}</button>
+        <button v-if="event && event.id && event.id.length" type="button" @click="deleteEvent" class="delete-btn">
+          {{ $t('deleteBtn') }}
+        </button>
       </div>
     </form>
   </div>
@@ -170,9 +178,18 @@ const exampleCalendars = ref(['Main', 'Shared']); // TODO
 }
 
 .bottom-btns {
-  align-self: center;
+  justify-content: center;
 
   display: flex;
   gap: 1rem;
+}
+
+.delete-btn {
+  border: 1px solid var(--git-color);
+  background-color: var(--btn-red-bg-color);
+
+  &:hover {
+    background-color: var(--btn-red-bg-color-hover);
+  }
 }
 </style>

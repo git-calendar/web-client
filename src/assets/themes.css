@@ -12,6 +12,9 @@
   --btn-bg-color: #2b2b2b;
   --btn-bg-color-hover: color-mix(in srgb, var(--btn-bg-color), white 3%);
 
+  --btn-red-bg-color: color-mix(in srgb, var(--git-color), black 50%);
+  --btn-red-bg-color-hover: color-mix(in srgb, var(--git-color), black 40%);
+
   --git-color: color-mix(in srgb, var(--git-color-real), black 30%);
 
   --sidebar-color: #242424;
@@ -29,6 +32,9 @@
 
   --btn-bg-color: #fff;
   --btn-bg-color-hover: color-mix(in srgb, var(--btn-bg-color), black 3%);
+
+  --btn-red-bg-color: color-mix(in srgb, var(--git-color), white 50%);
+  --btn-red-bg-color-hover: color-mix(in srgb, var(--git-color), white 40%);
 
   --git-color: color-mix(in srgb, var(--git-color-real), white 10%);
 
