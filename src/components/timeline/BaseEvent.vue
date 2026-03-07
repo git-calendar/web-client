@@ -31,5 +31,6 @@ const props = defineProps<Props>();
   text-overflow: ellipsis;
 
   user-select: none;
+  -webkit-user-select: none; /* safari dumbass */
 }
 </style>

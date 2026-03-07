@@ -66,7 +66,6 @@ async function saveEvent() {
     const e = await CalendarCore.createEvent(event);
     console.log('created event:', e);
   }
-
   emit('refresh-data');
   emit('close');
 }
@@ -105,7 +104,6 @@ const exampleCalendars = ref(['Main', 'Shared']); // TODO
       <label>
         {{ $t('event.wholeDay') }}
         <input type="checkbox" v-model="form.wholeDay" />
-
       </label>
       -->
 
@@ -169,6 +167,11 @@ const exampleCalendars = ref(['Main', 'Shared']); // TODO
     textarea {
       resize: vertical;
       min-height: 2rem;
+    }
+
+    input,
+    select {
+      height: 2rem;
     }
   }
 }

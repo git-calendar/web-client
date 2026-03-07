@@ -46,23 +46,19 @@ const hoursOnGrid = computed(() => {
 
   const result: string[] = [];
 
-  let current = start;
-  while (true) {
+  const totalHours = end > start ? end - start : 24 - start + end;
+
+  for (let i = 0; i < totalHours; i++) {
+    const current = (start + i) % 24;
+
     // resolve formats manually ig
     if (settings.value.timeFormat === 'h12') {
-      const h = current % 12 || 12; // O -> 12
+      const h = current % 12 || 12;
       const period = current < 12 ? 'AM' : 'PM';
       result.push(`${h} ${period}`);
     } else {
       result.push(`${String(current).padStart(2, '0')}:00`);
     }
-
-    current = (current + 1) % 24;
-
-    // stop BEFORE adding the end hour
-    if (current === end) break;
-
-    if (result.length > 48) break; // prevent infinite loop
   }
 
   return result;
