@@ -15,7 +15,6 @@ const topPos = computed(() => {
   return `${timeInPercentOnTimeline(today.set({ hour: hour.value, minute: minute.value })) * 100}%`;
 });
 
-// TODO diplay on the left
 const timeFormat = computed(() => {
   const now = today.set({ hour: hour.value, minute: minute.value });
   return now.toLocaleString({ hour: '2-digit', minute: '2-digit', hourCycle: settings.value.timeFormat });
@@ -41,19 +40,34 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <span class="time" :style="{ top: `calc(${topPos} - 6px)` }">{{ timeFormat }}</span>
+  <span
+    class="time"
+    :class="[settings.timeFormat === 'h12' ? 'time-12h' : 'time-24h']"
+    :style="{ top: `calc(${topPos} - 6px)` }"
+    >{{ timeFormat }}</span
+  >
   <span class="line" :style="{ top: `calc(${topPos} + 2px)` }" />
 </template>
 
 <style scoped>
 .time {
   position: absolute;
-  left: -2.8rem;
+  text-wrap: nowrap;
+  right: 100%;
   background-color: var(--git-color);
   border-radius: 5px;
-  padding: 0 0.3rem;
-  font-size: 0.8rem;
+  padding: 0 0.2rem;
+  font-size: 0.7rem;
+
+  &.time-24h {
+    margin-right: 0.39rem;
+  }
+
+  &.time-12h {
+    margin-right: 0.2rem;
+  }
 }
+
 .line {
   user-select: none;
   pointer-events: none;

@@ -51,7 +51,7 @@ const hoursOnGrid = computed(() => {
     // resolve formats manually ig
     if (settings.value.timeFormat === 'h12') {
       const h = current % 12 || 12; // O -> 12
-      const period = current < 12 ? 'am' : 'pm';
+      const period = current < 12 ? 'AM' : 'PM';
       result.push(`${h} ${period}`);
     } else {
       result.push(`${String(current).padStart(2, '0')}:00`);
@@ -172,7 +172,7 @@ defineExpose({ updateData });
 
   span {
     border-top: 1px solid transparent;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     text-align: right;
     padding-right: 0.6rem;
 
