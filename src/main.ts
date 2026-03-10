@@ -6,8 +6,8 @@ import { CalendarCore } from '@/wasm/core-wrapper.ts';
 import '@/composables/useSettings.ts'; // init settings
 import { useTranslation } from '@/composables/useTranslation';
 
-await CalendarCore.setCorsProxy('http://localhost:8000');
-await CalendarCore.createCalendar('Main');
+await CalendarCore.setCorsProxy('http://localhost:8080');
+await CalendarCore.createCalendar('main');
 await CalendarCore.loadCalendars();
 
 const { i18n } = useTranslation();

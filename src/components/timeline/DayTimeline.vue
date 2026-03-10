@@ -147,7 +147,7 @@ function dragStop(_: MouseEvent) {
   drag.value.active = false;
 
   const [startTime, endTime] = getEventTimes();
-  const event: CalendarEvent = { title: '', from: startTime, to: endTime, calendar: 'Main', tag: '' };
+  const event: CalendarEvent = { title: '', from: startTime, to: endTime, calendar: 'main', tag: '' };
   editEventModal?.(event);
 
   window.removeEventListener('pointerup', dragStop); // cleanup

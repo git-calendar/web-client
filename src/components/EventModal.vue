@@ -79,7 +79,7 @@ async function deleteEvent() {
 
 // const exampleTags = ref(['School', 'Work', 'Birthday']); // TODO
 // const selectedTags = ref<string[]>([]);
-const exampleCalendars = ref(['Main', 'Shared']); // TODO
+const exampleCalendars = ref(['main', 'Shared']); // TODO
 </script>
 
 <template>

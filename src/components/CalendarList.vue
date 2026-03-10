@@ -4,10 +4,7 @@ import { FiPlus } from 'vue-icons-plus/fi';
 import { onMounted, ref } from 'vue';
 
 onMounted(async () => {
-  let calendarNames = await CalendarCore.listCalendars();
-  for (const name of calendarNames) {
-    calendars.value.push({ name: name, checked: true });
-  }
+  await updateData();
 });
 
 interface Calendar {
@@ -24,6 +21,16 @@ function toggle(cal: Calendar) {
 function checkboxName(calName: string): string {
   return `cal-${calName.toLowerCase()}`;
 }
+
+async function updateData() {
+  let calendarNames = await CalendarCore.listCalendars();
+
+  calendars.value = [];
+  for (const name of calendarNames) {
+    calendars.value.push({ name: name, checked: true });
+  }
+}
+defineExpose({ updateData });
 </script>
 
 <template>

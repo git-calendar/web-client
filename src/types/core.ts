@@ -16,10 +16,13 @@ export interface CalendarEvent {
 // The response types are all made async (Promise<T>) using Asyncify type.
 export interface CalendarApi {
   createCalendar(name: string): void;
-  cloneCalendar(name: string, url: string): void;
+  cloneCalendar(url: string): void;
   removeCalendar(name: string): void;
   listCalendars(): string[];
   loadCalendars(): void;
+
+  pullAll(): void;
+  pushAll(): void;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;

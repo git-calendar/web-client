@@ -3,7 +3,7 @@ import XDaysView from '@/components/timeline/XDaysView.vue';
 import SideBar from '@/components/SideBar.vue';
 import MonthSideMap from '@/components/MonthSideMap.vue';
 import TopBar from '@/components/TopBar.vue';
-import TheCalendars from '@/components/TheCalendars.vue';
+import CalendarList from '@/components/CalendarList.vue';
 import EventModal from '@/components/EventModal.vue';
 import TestWasm from '@/components/TestWasm.vue';
 
@@ -52,8 +52,10 @@ function closeEventModal() {
 }
 
 const viewComponent = useTemplateRef('calendar-view');
+const calendarsList = useTemplateRef('calendars-list');
 function updateCallDown() {
   viewComponent.value?.updateData();
+  calendarsList.value?.updateData();
 }
 
 provide(showEventModalKey, showEventModal);
@@ -63,8 +65,8 @@ provide(showEventModalKey, showEventModal);
   <div id="calendar-view">
     <SideBar>
       <MonthSideMap />
-      <TheCalendars />
-      <TestWasm />
+      <CalendarList ref="calendars-list" />
+      <TestWasm @refresh-data="updateCallDown" />
     </SideBar>
 
     <TopBar />

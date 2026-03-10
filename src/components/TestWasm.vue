@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { CalendarCore } from '@/wasm/core-wrapper';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
+
+const emit = defineEmits(['refresh-data']);
 
 onMounted(async () => {
   // const uid = uuidv4();
@@ -14,18 +16,44 @@ onMounted(async () => {
   // let e: CalendarEvent = await CalendarCore.getEvent(uid);
   // console.log(e.from.hour);
 });
+
+const cloneUrl = ref('');
+
+async function cloneAndRefresh() {
+  if (cloneUrl.value == '') {
+    alert('No repo url');
+    return;
+  }
+
+  await CalendarCore.cloneCalendar(cloneUrl.value);
+  await CalendarCore.loadCalendars();
+  emit('refresh-data');
+}
+
+async function createAndRefresh() {
+  await CalendarCore.createCalendar('main');
+  await CalendarCore.loadCalendars();
+  emit('refresh-data');
+}
+
+async function removeAndRefresh() {
+  await CalendarCore.removeCalendar('main');
+  await CalendarCore.loadCalendars();
+  emit('refresh-data');
+}
 </script>
 
 <template>
   <div class="container">
     <span>Git Testing:</span>
     <div id="git-testing-btns">
-      <button @click="CalendarCore.createCalendar('Main')">Create Main cal</button>
-      <button @click="CalendarCore.removeCalendar('Main')">Delete Main cal</button>
-      <button @click="CalendarCore.cloneCalendar('personal-web', 'https://github.com/firu11/personal-web')">
-        Clone
-      </button>
-      <br />
+      <button @click="createAndRefresh">Create main cal</button>
+      <button @click="removeAndRefresh">Delete main cal</button>
+
+      <div>
+        <input type="text" v-model="cloneUrl" placeholder="repo url" />
+        <button @click="cloneAndRefresh">Clone</button>
+      </div>
     </div>
   </div>
 </template>
@@ -54,6 +82,15 @@ onMounted(async () => {
 
   > span {
     font-weight: 500;
+  }
+
+  > div > div {
+    display: flex;
+    gap: 0.4rem;
+
+    input {
+      width: 100%;
+    }
   }
 }
 </style>
