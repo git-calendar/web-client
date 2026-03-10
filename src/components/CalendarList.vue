@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { FiPlus } from 'vue-icons-plus/fi';
-import { onMounted, ref } from 'vue';
-
-onMounted(async () => {
-  await updateData();
-});
+import { onMounted, ref, inject } from 'vue';
+import { openCalendarModalKey } from '@/types/injectionKeys';
 
 interface Calendar {
   name: string;
@@ -13,6 +10,12 @@ interface Calendar {
 }
 
 const calendars = ref<Calendar[]>([]);
+
+const openCalendarModal = inject(openCalendarModalKey);
+
+onMounted(async () => {
+  await updateData();
+});
 
 function toggle(cal: Calendar) {
   cal.checked = !cal.checked;
@@ -37,7 +40,7 @@ defineExpose({ updateData });
   <div class="calendars">
     <div class="top-bar">
       <span class="title">{{ $t('calendarsTitle') }}:</span>
-      <button class="create-new">
+      <button class="create-new" @click="openCalendarModal">
         <FiPlus />
       </button>
     </div>
@@ -48,9 +51,7 @@ defineExpose({ updateData });
         :name="checkboxName(cal.name)"
         :checked="cal.checked"
         @change="toggle(cal)"
-        hidden
       />
-      <span class="custom-checkbox" />
       <span class="cal-name">{{ cal.name }}</span>
     </label>
   </div>
@@ -112,16 +113,5 @@ defineExpose({ updateData });
 
 .cal-name {
   font-weight: 500;
-}
-
-.custom-checkbox {
-  width: 0.9rem;
-  height: 0.9rem;
-  border-radius: var(--small-border-radius);
-  border: 2px solid var(--text-color);
-}
-
-input:checked + .custom-checkbox {
-  background-color: var(--text-color);
 }
 </style>

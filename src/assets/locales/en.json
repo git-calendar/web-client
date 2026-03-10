@@ -21,14 +21,19 @@
     "to": "To",
     "wholeDay": "Whole day"
   },
+  "calendar": {
+    "name": "Name"
+  },
   "views": {
     "4days": "4 days",
     "week": "Week",
     "month": "Month"
   },
   "saveBtn": "Save",
+  "createBtn": "Create",
   "closeBtn": "Close",
   "deleteBtn": "Delete",
   "todayBtn": "Today",
-  "calendarsTitle": "Calendars"
+  "calendarsTitle": "Calendars",
+  "optionalText": "optional"
 }

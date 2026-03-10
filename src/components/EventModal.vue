@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import { type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -21,6 +21,8 @@ const form = reactive({
   calendar: '',
   wholeDay: false,
 });
+
+const calendarNames = ref([] as string[]);
 
 watch(() => props.event, updateFormFromEvent, { immediate: true });
 
@@ -77,13 +79,16 @@ async function deleteEvent() {
   emit('close');
 }
 
+onMounted(async () => {
+  calendarNames.value = await CalendarCore.listCalendars();
+});
+
 // const exampleTags = ref(['School', 'Work', 'Birthday']); // TODO
 // const selectedTags = ref<string[]>([]);
-const exampleCalendars = ref(['main', 'Shared']); // TODO
 </script>
 
 <template>
-  <div id="event-modal">
+  <div id="event-modal" class="modal">
     <form>
       <input type="text" name="title" :placeholder="$t('event.title')" autocomplete="none" v-model="form.title" />
 
@@ -107,10 +112,16 @@ const exampleCalendars = ref(['main', 'Shared']); // TODO
       </label>
       -->
 
-      <input type="text" name="location" :placeholder="$t('event.location')" v-model="form.location" />
+      <input
+        type="text"
+        name="location"
+        :placeholder="$t('event.location')"
+        autocomplete="none"
+        v-model="form.location"
+      />
 
       <select name="calendar" id="" v-model="form.calendar">
-        <option v-for="calendarName in exampleCalendars" :value="calendarName" :key="calendarName">
+        <option v-for="calendarName in calendarNames" :value="calendarName" :key="calendarName">
           {{ calendarName }}
         </option>
       </select>
@@ -139,53 +150,9 @@ const exampleCalendars = ref(['main', 'Shared']); // TODO
 </template>
 
 <style scoped>
-#event-modal {
-  position: absolute;
-  width: 100dvw;
-  height: 100dvh;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  backdrop-filter: blur(5px);
-  background-color: rgba(0, 0, 0, 0.3);
-
-  z-index: 1000;
-
-  form {
-    width: 80%;
-    max-width: 30rem;
-    border-radius: var(--small-border-radius);
-    border: 1px solid var(--btn-bg-color-hover);
-    background-color: var(--bg-color);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-
-    textarea {
-      resize: vertical;
-      min-height: 2rem;
-    }
-
-    input,
-    select {
-      height: 2rem;
-    }
-  }
-}
-
 .datetime {
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.bottom-btns {
-  justify-content: center;
-
-  display: flex;
   gap: 1rem;
 }
 

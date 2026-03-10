@@ -13,7 +13,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "format": "prettier --write --experimental-cli src/",
-    "fetch-wasm": "curl -L -o src/assets/core.wasm https://github.com/git-calendar/core/releases/download/v0.0.1/core.wasm",
+    "fetch-wasm": "curl -L -o src/assets/core.wasm https://github.com/git-calendar/core/releases/download/v0.0.2/core.wasm",
     "fetch-wasm-latest": "curl -L -o src/assets/core.wasm https://github.com/git-calendar/core/releases/latest/download/core.wasm"
   },
   "dependencies": {

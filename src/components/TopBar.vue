@@ -12,6 +12,9 @@ const today = DateTime.now();
 <template>
   <header>
     <slot />
+
+    <!-- TODO <MultiToggle v-model="idk" :options="['4days', 'Week', 'Month']" style="align-self: center" /> -->
+
     <div id="view-btns">
       <router-link :to="{ name: 'calendar', params: { year: today.year, month: today.month, day: today.day } }">
         {{ $t('todayBtn') }}

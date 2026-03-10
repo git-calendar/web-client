@@ -21,14 +21,19 @@
     "to": "Do",
     "wholeDay": "Celý den"
   },
+  "calendar": {
+    "name": "Jméno"
+  },
   "views": {
     "4days": "4 dny",
     "week": "Týden",
     "month": "Měsíc"
   },
   "saveBtn": "Uložit",
+  "createBtn": "Vytvořit",
   "closeBtn": "Zavřít",
   "deleteBtn": "Smazat",
   "todayBtn": "Dnes",
-  "calendarsTitle": "Kalendáře"
+  "calendarsTitle": "Kalendáře",
+  "optionalText": "nepovinné"
 }

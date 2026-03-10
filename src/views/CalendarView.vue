@@ -6,11 +6,12 @@ import TopBar from '@/components/TopBar.vue';
 import CalendarList from '@/components/CalendarList.vue';
 import EventModal from '@/components/EventModal.vue';
 import TestWasm from '@/components/TestWasm.vue';
+import CalendarModal from '@/components/CalendarModal.vue';
 
 import { calendarViewValues, useSettings, type CalendarView } from '@/composables/useSettings';
 import { provide, ref, computed, type ComputedRef, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
-import { showEventModalKey } from '@/types/injectionKeys';
+import { openCalendarModalKey, openEventModalKey } from '@/types/injectionKeys';
 import type { CalendarEvent } from '@/types/core';
 
 import { useKeyboard } from '@/composables/useKeyboard';
@@ -38,19 +39,6 @@ const views = {
   month: [null, null],
 };
 
-const showModal = ref(false);
-const editingEvent = ref<CalendarEvent | undefined>(undefined);
-const creatingNew = ref<boolean>(false);
-function showEventModal(event?: CalendarEvent, newEvent?: boolean) {
-  if (event) editingEvent.value = event;
-  showModal.value = true;
-  creatingNew.value = newEvent!;
-}
-
-function closeEventModal() {
-  showModal.value = false;
-}
-
 const viewComponent = useTemplateRef('calendar-view');
 const calendarsList = useTemplateRef('calendars-list');
 function updateCallDown() {
@@ -58,7 +46,23 @@ function updateCallDown() {
   calendarsList.value?.updateData();
 }
 
-provide(showEventModalKey, showEventModal);
+// --------- Modals/Popups ---------
+
+const showEventModal = ref(false);
+const editingEvent = ref<CalendarEvent | undefined>(undefined);
+const creatingNewEvent = ref<boolean>(false);
+function openEventModal(event?: CalendarEvent, newEvent?: boolean) {
+  if (event) editingEvent.value = event;
+  showEventModal.value = true;
+  creatingNewEvent.value = newEvent!;
+}
+provide(openEventModalKey, openEventModal);
+
+const showCalendarModal = ref(false);
+function openCalendarModal() {
+  showCalendarModal.value = true;
+}
+provide(openCalendarModalKey, openCalendarModal);
 </script>
 
 <template>
@@ -73,12 +77,14 @@ provide(showEventModalKey, showEventModal);
     <component :is="views[activeView][0]" :num-of-days="views[activeView][1]" ref="calendar-view" />
 
     <EventModal
-      v-show="showModal"
+      v-if="showEventModal"
       :event="editingEvent"
-      :creating-new="creatingNew"
-      @close="closeEventModal"
+      :creating-new="creatingNewEvent"
+      @close="showEventModal = false"
       @refresh-data="updateCallDown"
     />
+
+    <CalendarModal v-if="showCalendarModal" @close="showCalendarModal = false" @refresh-data="updateCallDown" />
   </div>
 </template>
 

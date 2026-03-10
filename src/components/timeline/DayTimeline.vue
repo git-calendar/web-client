@@ -7,7 +7,7 @@ import { useMouse } from '@vueuse/core';
 import BaseEvent from '@/components/timeline/BaseEvent.vue';
 import { numberOfHours, timeRangeFormat } from '@/utils';
 import { useSettings } from '@/composables/useSettings';
-import { showEventModalKey } from '@/types/injectionKeys';
+import { openEventModalKey } from '@/types/injectionKeys';
 import CursorToday from './CursorToday.vue';
 
 // TODO
@@ -23,7 +23,7 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-const editEventModal = inject(showEventModalKey);
+const editEventModal = inject(openEventModalKey);
 function onEventClick(event: CalendarEvent) {
   editEventModal?.(event);
 }
