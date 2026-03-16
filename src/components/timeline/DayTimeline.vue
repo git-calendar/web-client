@@ -188,6 +188,7 @@ function dragStop(_: MouseEvent) {
   grid-auto-flow: column;
   gap: 0.5rem;
   height: 100%;
+  padding: 0 min(10%, 1rem) 0 5px;
 }
 
 .timeline-group {
