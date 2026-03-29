@@ -21,6 +21,13 @@ export function useKeyboard() {
       router.replace({ params: { year: today.year, month: today.month, day: today.day } });
     });
 
+    // 4 -> switch to 4days view
+    onKeyStroke('4', (e) => {
+      if (inputNeededElsewhere()) return;
+      e.preventDefault();
+      router.replace({ params: { view: '4days' } });
+    });
+
     // W -> switch to week view
     onKeyStroke('w', (e) => {
       if (inputNeededElsewhere()) return;
