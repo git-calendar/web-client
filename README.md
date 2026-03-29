@@ -8,11 +8,11 @@ A web client for [git-calendar/core](https://github.com/git-calendar/core)
 Icon pack used: https://vue-icons.com/icons/fi
 
 ### TODO
-- [ ] logo (git + calendar ?)
+- [x] logo (git + calendar ?)
 - [x] drag to create event
-- [ ] multiple calendars
+- [x] multiple calendars
 - [ ] tags
-- [ ] repetition
+- [x] repetition
 - [ ] multi-day events bar
 - [ ] month view
 - [ ] mobile friendly
