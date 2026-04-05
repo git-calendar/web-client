@@ -4,6 +4,7 @@ import SettingsView from '@/views/SettingsView.vue';
 import { DateTime } from 'luxon';
 
 import { useSettings } from '@/composables/useSettings';
+import { getStartOfWeek } from '@/utils';
 
 const { settings } = useSettings();
 const isGitHubPages = import.meta.env.VITE_GITHUB_PAGES == 'true'; // needs to have VITE_ prefix
@@ -22,9 +23,24 @@ const router = createRouter({
       path: '/:pathMatch(.*)*', // anything
       redirect: () => {
         const now = DateTime.now();
+
+        if (settings.value.defaultView === 'week') {
+          // week view should be aligned
+          const startOfWeek = getStartOfWeek(now);
+          return {
+            name: 'calendar',
+            params: {
+              view: settings.value.defaultView,
+              year: startOfWeek.year,
+              month: startOfWeek.month,
+              day: startOfWeek.day,
+            },
+          };
+        }
+
         return {
           name: 'calendar',
-          params: { view: settings.value.defaultView, year: now.year, month: now.month, day: now.day }, // today
+          params: { view: settings.value.defaultView, year: now.year, month: now.month, day: now.day },
         };
       },
     },
