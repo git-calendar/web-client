@@ -2,7 +2,7 @@
 import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import router from '@/router';
-import { getCurrentViewDatetime, getViewLengthInDays } from '@/utils';
+import { getCurrentViewDatetime, getStartOfWeek, getViewLengthInDays } from '@/utils';
 import { DateTime } from 'luxon';
 import { computed, ref, watch } from 'vue';
 import { FiChevronDown, FiChevronUp } from 'vue-icons-plus/fi';
@@ -82,6 +82,35 @@ function changeMonthNum(up: boolean) {
     yearTracker.value--;
   }
 }
+
+function jumpToInterval(clickedDay: DateTime) {
+  if (route.params.view === 'week') {
+    const weekStart = getStartOfWeek(clickedDay);
+    router.replace({ params: { year: weekStart.year, month: weekStart.month, day: weekStart.day } });
+  } else {
+    router.replace({ params: { year: clickedDay.year, month: clickedDay.month, day: clickedDay.day } });
+  }
+}
+
+const hoveredDay = ref<DateTime | null>(null);
+
+const hoverInterval = computed(() => {
+  if (!hoveredDay.value) return null;
+
+  if (route.params.view === 'week') {
+    const startOfWeek = getStartOfWeek(hoveredDay.value);
+    return {
+      start: startOfWeek,
+      end: startOfWeek.plus({ days: 6 }),
+    };
+  } else {
+    const length = getViewLengthInDays(route.params);
+    return {
+      start: hoveredDay.value,
+      end: hoveredDay.value.plus({ days: length - 1 }),
+    };
+  }
+});
 </script>
 
 <template>
@@ -112,8 +141,19 @@ function changeMonthNum(up: boolean) {
           'range-start': d.hasSame(viewInterval.start, 'day'),
           'range-end': d.hasSame(viewInterval.end, 'day'),
         }"
-        @click="router.replace({ params: { year: d?.year, month: d?.month, day: d?.day } })"
+        @click="jumpToInterval(d)"
+        @mouseenter="hoveredDay = d"
+        @mouseleave="hoveredDay = null"
       >
+        <div
+          v-if="hoverInterval && d >= hoverInterval.start && d <= hoverInterval.end"
+          class="hover-layer"
+          :class="{
+            'hover-range-start': hoverInterval && d.hasSame(hoverInterval.start, 'day'),
+            'hover-range-end': hoverInterval && d.hasSame(hoverInterval.end, 'day'),
+          }"
+        />
+
         {{ d.day }}
       </div>
     </div>
@@ -170,53 +210,78 @@ function changeMonthNum(up: boolean) {
     opacity: 0.5;
     padding-bottom: 0.5rem;
   }
+}
 
-  .day {
-    aspect-ratio: 1 / 1;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    cursor: pointer;
+.day {
+  aspect-ratio: 1 / 1;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  position: relative;
 
-    &.today {
-      font-weight: 900;
-      position: relative;
+  &.today {
+    font-weight: 900;
+    position: relative;
 
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 3px;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background-color: currentColor;
-      }
+    /* the dot */
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: currentColor;
     }
+  }
 
-    &.not-this-month {
-      color: color-mix(in srgb, var(--text-color) 30%, transparent);
-
-      &.in-range {
-        color: color-mix(in srgb, var(--text-color) 50%, transparent);
-      }
-    }
+  &.not-this-month {
+    color: color-mix(in srgb, var(--text-color) 30%, transparent);
 
     &.in-range {
-      background-color: var(--git-bg-color);
-      color: var(--text-color-hard);
+      color: color-mix(in srgb, var(--text-color) 50%, transparent);
     }
+  }
 
-    &.range-start {
-      border-top-left-radius: var(--small-border-radius);
-      border-bottom-left-radius: var(--small-border-radius);
-    }
+  &.in-range {
+    background-color: var(--git-bg-color);
+    color: var(--text-color-hard);
 
-    &.range-end {
-      border-top-right-radius: var(--small-border-radius);
-      border-bottom-right-radius: var(--small-border-radius);
+    &:has(.hover-layer) {
+      filter: saturate(1.2) brightness(0.95); /* small adjustment to the git color when also hovered */
     }
+  }
+
+  &.range-start {
+    border-top-left-radius: var(--small-border-radius);
+    border-bottom-left-radius: var(--small-border-radius);
+  }
+
+  &.range-end {
+    border-top-right-radius: var(--small-border-radius);
+    border-bottom-right-radius: var(--small-border-radius);
+  }
+}
+
+.hover-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+
+  background-color: var(--sidebar-hover-color);
+
+  &.hover-range-start {
+    border-top-left-radius: var(--small-border-radius);
+    border-bottom-left-radius: var(--small-border-radius);
+  }
+
+  &.hover-range-end {
+    border-top-right-radius: var(--small-border-radius);
+    border-bottom-right-radius: var(--small-border-radius);
   }
 }
 </style>
