@@ -5,8 +5,16 @@ import '@/assets/styles.css';
 import { CalendarCore } from '@/wasm/core-wrapper.ts';
 import '@/composables/useSettings.ts'; // init settings
 import { useTranslation } from '@/composables/useTranslation';
+import { useSettings } from '@/composables/useSettings.ts';
 
-await CalendarCore.setCorsProxy('http://localhost:8080'); // TODO
+const { settings } = useSettings();
+
+try {
+  await CalendarCore.setCorsProxy(settings.value.corsProxyURL);
+} catch {
+  // TODO
+}
+
 await CalendarCore.createCalendar('main');
 await CalendarCore.loadCalendars();
 

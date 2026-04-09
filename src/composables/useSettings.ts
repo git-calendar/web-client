@@ -23,6 +23,7 @@ type UserSettings = {
   dayViewStartHour: HourNumbers;
   dayViewEndHour: HourNumbers;
   dragPrecisionMinutes: number;
+  corsProxyURL: string;
 };
 
 // default settings
@@ -37,6 +38,7 @@ const settings = useStorage<UserSettings>(
     dayViewStartHour: 6,
     dayViewEndHour: 0,
     dragPrecisionMinutes: 30,
+    corsProxyURL: '',
   },
   localStorage,
   { mergeDefaults: true },

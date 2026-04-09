@@ -3,9 +3,19 @@ import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime, type WeekdayNumbers } from 'luxon';
 import { LANGUAGES } from '@/constants.ts';
+import { CalendarCore } from '@/wasm/core-wrapper';
 
 const { settings } = useSettings();
 const { dayNameLong } = useTranslation();
+
+async function setCorsProxy() {
+  try {
+    await CalendarCore.setCorsProxy(settings.value.corsProxyURL);
+    console.log('Saved cors proxy', settings.value.corsProxyURL);
+  } catch {
+    alert('Invalid CORS Proxy URL!');
+  }
+}
 </script>
 
 <template>
@@ -55,14 +65,25 @@ const { dayNameLong } = useTranslation();
         <option value="dark">{{ $t('settings.themes.dark') }}</option>
       </select>
     </label>
+
+    <label>
+      CORS Proxy:
+      <input type="text" name="cors-proxy" @change="setCorsProxy" v-model="settings.corsProxyURL" />
+    </label>
   </form>
 </template>
 
 <style scoped>
 form {
+  justify-content: center;
+  justify-items: start;
   padding: 2rem;
   display: grid;
   gap: 1rem;
+
+  > label {
+    width: auto;
+  }
 }
 
 option {
