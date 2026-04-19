@@ -64,7 +64,8 @@ async function fetchWasm(url: string): Promise<ArrayBuffer> {
   }
 
   const contentLength = response.headers.get('Content-Length');
-  const total = contentLength ? parseInt(contentLength, 10) : 0;
+  const encoding = response.headers.get('Content-Encoding');
+  const total = contentLength ? parseInt(contentLength, 10) : 1;
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
@@ -75,13 +76,14 @@ async function fetchWasm(url: string): Promise<ArrayBuffer> {
 
     chunks.push(value);
     received += value.byteLength;
+    const encodedRecieved = received / (encoding == 'gzip' ? 4 : 1); // account for ~4x compression with Gzip
 
-    const pct = total ? 5 + Math.round((received / total) * 85) : 50;
+    const pct = total ? 5 + Math.round((encodedRecieved / total) * 85) : 50;
     const sizeMsg = total
-      ? `${(received / MB).toFixed(1)} / ${(total / MB).toFixed(1)} MB`
-      : `${(received / MB).toFixed(1)} MB`;
+      ? `${(encodedRecieved / MB).toFixed(1)} / ${(total / MB).toFixed(1)} MB`
+      : `${(encodedRecieved / MB).toFixed(1)} MB`;
 
-    progress(pct, `fetchingWasm`, sizeMsg);
+    progress(Math.min(pct, 90), `fetchingWasm`, sizeMsg);
   }
 
   // Merge chunks
