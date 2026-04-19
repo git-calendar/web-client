@@ -74,6 +74,22 @@ export function getStartOfWeek(dt: DateTime): DateTime {
 }
 
 /**
+ * Returns the router redirect object for week aligned view.
+ */
+export function getWeekAlignedRedirect(date: DateTime) {
+  const startOfWeek = getStartOfWeek(date);
+  return {
+    name: 'calendar',
+    params: {
+      view: 'week',
+      year: startOfWeek.year,
+      month: startOfWeek.month,
+      day: startOfWeek.day,
+    },
+  };
+}
+
+/**
  * Formats times based on timeFormat (17/5 pm) and puts it together like: '10:00 - 11:30'.
  */
 export function timeRangeFormat(from: DateTime, to: DateTime): string {

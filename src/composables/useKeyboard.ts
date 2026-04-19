@@ -1,7 +1,7 @@
 import { onMounted } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import router from '@/router';
-import { moveView } from '@/utils';
+import { getWeekAlignedRedirect, moveView } from '@/utils';
 import { DateTime } from 'luxon';
 
 export function useKeyboard() {
@@ -17,8 +17,8 @@ export function useKeyboard() {
     onKeyStroke('t', (e) => {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
-      const today = DateTime.now();
-      router.replace({ params: { year: today.year, month: today.month, day: today.day } });
+
+      router.replace(getWeekAlignedRedirect(DateTime.now()));
     });
 
     // 4 -> switch to 4days view

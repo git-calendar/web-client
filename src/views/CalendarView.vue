@@ -9,11 +9,12 @@ import CalendarModal from '@/components/CalendarModal.vue';
 
 import { computed, type ComputedRef, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
-import { calendarViewValues, useSettings, type CalendarView } from '@/composables/useSettings';
+import { useSettings, type CalendarView } from '@/composables/useSettings';
 import { useKeyboard } from '@/composables/useKeyboard';
 import { useCalendarModal } from '@/composables/useCalendarModal';
 import { useEventModal } from '@/composables/useEventModal';
 import { useSidebar } from '@/composables/useSidebar';
+import { CALENDAR_VIEWS } from '@/constants';
 
 useKeyboard();
 const calendarModal = useCalendarModal();
@@ -29,7 +30,7 @@ const activeView: ComputedRef<CalendarView> = computed(() => {
   }
   const viewParam = Array.isArray(param) ? param[0] : String(param); // convert to string
 
-  if (calendarViewValues.includes(viewParam as CalendarView)) {
+  if (CALENDAR_VIEWS.includes(viewParam as CalendarView)) {
     return viewParam as CalendarView;
   }
   return settings.value.defaultView;

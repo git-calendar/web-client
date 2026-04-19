@@ -2,7 +2,7 @@
 import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import router from '@/router';
-import { getCurrentViewDatetime, getStartOfWeek, getViewLengthInDays } from '@/utils';
+import { getCurrentViewDatetime, getStartOfWeek, getViewLengthInDays, getWeekAlignedRedirect } from '@/utils';
 import { DateTime } from 'luxon';
 import { computed, ref, watch } from 'vue';
 import { FiChevronDown, FiChevronUp } from 'vue-icons-plus/fi';
@@ -85,8 +85,7 @@ function changeMonthNum(up: boolean) {
 
 function jumpToInterval(clickedDay: DateTime) {
   if (route.params.view === 'week') {
-    const weekStart = getStartOfWeek(clickedDay);
-    router.replace({ params: { year: weekStart.year, month: weekStart.month, day: weekStart.day } });
+    router.replace(getWeekAlignedRedirect(clickedDay));
   } else {
     router.replace({ params: { year: clickedDay.year, month: clickedDay.month, day: clickedDay.day } });
   }

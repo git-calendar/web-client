@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { getCurrentViewDatetime, getStartOfWeek, moveView } from '@/utils';
+import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
 import { DateTime } from 'luxon';
 import { FiChevronLeft, FiChevronRight } from 'vue-icons-plus/fi';
 import { useRouter } from 'vue-router';
@@ -22,16 +22,8 @@ function changeView(viewName: string) {
   view.value = viewName;
   if (view.value === 'Week') {
     // week view should be aligned
-    const startOfWeek = getStartOfWeek(getCurrentViewDatetime(router.currentRoute.value.params));
-    router.push({
-      name: 'calendar',
-      params: {
-        view: view.value.toLowerCase(),
-        year: startOfWeek.year,
-        month: startOfWeek.month,
-        day: startOfWeek.day,
-      },
-    });
+    let current = getCurrentViewDatetime(router.currentRoute.value.params);
+    router.push(getWeekAlignedRedirect(current));
   } else {
     router.push({ name: 'calendar', params: { view: view.value.toLowerCase() } });
   }
@@ -44,8 +36,7 @@ function jumpToToday() {
 
   if (params.view === 'week') {
     // special case for week
-    const weekStart = getStartOfWeek(today);
-    router.push({ name: 'calendar', params: { year: weekStart.year, month: weekStart.month, day: weekStart.day } });
+    router.push(getWeekAlignedRedirect(today));
     return;
   }
   router.push({ name: 'calendar', params: { year: today.year, month: today.month, day: today.day } });

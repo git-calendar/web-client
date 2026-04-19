@@ -1,16 +1,15 @@
 import { useStorage } from '@vueuse/core';
 import { watch } from 'vue';
-import { LANGUAGES } from '@/constants.ts';
+import { CALENDAR_VIEWS, LANGUAGES, THEMES } from '@/constants.ts';
 import { type HourNumbers, type WeekdayNumbers, Settings as LuxonSettings } from 'luxon';
 
 export function useSettings() {
   return { settings };
 }
 
-export const calendarViewValues = ['4days', 'week', 'month'] as const;
-export type CalendarView = (typeof calendarViewValues)[number];
+export type CalendarView = (typeof CALENDAR_VIEWS)[number];
 
-type Theme = 'auto' | 'light' | 'dark';
+type Theme = (typeof THEMES)[number];
 type HourCycle = 'h12' | 'h23';
 type Lang = (typeof LANGUAGES)[number]['code'];
 

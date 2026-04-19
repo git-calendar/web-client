@@ -2,7 +2,7 @@
 import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime, type WeekdayNumbers } from 'luxon';
-import { LANGUAGES } from '@/constants.ts';
+import { DRAG_PRECISIONS, LANGUAGES, THEMES } from '@/constants.ts';
 import { CalendarCore } from '@/wasm/core-wrapper';
 
 const { settings } = useSettings();
@@ -19,7 +19,8 @@ async function setCorsProxy() {
 </script>
 
 <template>
-  <form>
+  <!-- disable enter to submit -->
+  <form onsubmit="return false;">
     <RouterLink to="/">&lt; Back to calendar</RouterLink>
 
     <label
@@ -51,18 +52,14 @@ async function setCorsProxy() {
     <label>
       {{ $t('settings.dragPrecision') }}:
       <select name="drap-precision" v-model="settings.dragPrecisionMinutes">
-        <option value="15">15min</option>
-        <option value="30">30min</option>
-        <option value="60">60min</option>
+        <option v-for="v in DRAG_PRECISIONS" :value="v">{{ v }}min</option>
       </select>
     </label>
 
     <label>
       {{ $t('settings.themes.theme') }}:
       <select name="theme" v-model="settings.theme">
-        <option value="auto">{{ $t('settings.themes.auto') }}</option>
-        <option value="light">{{ $t('settings.themes.light') }}</option>
-        <option value="dark">{{ $t('settings.themes.dark') }}</option>
+        <option v-for="t in THEMES" :value="t">{{ $t('settings.themes.' + t) }}</option>
       </select>
     </label>
 
