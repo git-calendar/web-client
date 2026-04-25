@@ -1,10 +1,10 @@
-name: Node.js CI
+name: Node.js Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -13,34 +13,37 @@ permissions:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     env:
-      GITHUB_PAGES: true      # for npm build
+      GITHUB_PAGES: true # for npm build
       VITE_GITHUB_PAGES: true # for runtime
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '25.x'
+        uses: actions/setup-node@v6
 
       - run: npm ci
       - run: npm run fetch-wasm
       - run: npm run build --if-present
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
   deploy:
+    name: Deploy to GitHub Pages
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         id: deployment
