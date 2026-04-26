@@ -39,7 +39,7 @@
     "gitCredentials": "Git credentials",
     "username": "Username",
     "password": "Password/Token",
-    "encrypted": "Encryption",
+    "encrypted": "Encrypted",
     "decryptionKey": "Encryption key/password"
   },
   "views": {

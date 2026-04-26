@@ -51,6 +51,7 @@ async function clone() {
     errors.missingURL = true;
     return;
   }
+
   await CalendarCore.cloneCalendar(urlWithAuth(form.url, form.username, form.password), form.decryptionKey);
   await CalendarCore.loadCalendars();
 
@@ -157,6 +158,7 @@ function urlWithAuth(repoUrl: string, username: string, password: string): strin
 
         > * {
           flex: 1;
+          width: 100%;
         }
       }
     }
