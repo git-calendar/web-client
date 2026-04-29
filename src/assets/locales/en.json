@@ -50,6 +50,7 @@
   "saveBtn": "Save",
   "createBtn": "Create",
   "closeBtn": "Close",
+  "cancelBtn": "Cancel",
   "deleteBtn": "Delete",
   "todayBtn": "Today",
   "calendarsTitle": "Calendars",
@@ -61,5 +62,20 @@
     "compiling": "Compiling module...",
     "starting": "Starting runtime...",
     "done": "Done!"
+  },
+  "strategy": {
+    "title": "Repeating Event",
+    "all": {
+      "title": "All",
+      "body": "Affects ALL events in the series."
+    },
+    "following": {
+      "title": "Following",
+      "body": "Only affects the following events in the series."
+    },
+    "current": {
+      "title": "Current",
+      "body": "Only affects this one event. The others in the series remain unchanged."
+    }
   }
 }

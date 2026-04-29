@@ -4,8 +4,8 @@ import SideBar from '@/components/SideBar.vue';
 import MonthSideMap from '@/components/MonthSideMap.vue';
 import TopBar from '@/components/TopBar.vue';
 import CalendarList from '@/components/CalendarList.vue';
-import EventModal from '@/components/EventModal.vue';
-import CalendarModal from '@/components/CalendarModal.vue';
+import EventModal from '@/components/modals/EventModal.vue';
+import CalendarModal from '@/components/modals/CalendarModal.vue';
 
 import { computed, type ComputedRef, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';

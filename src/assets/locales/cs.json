@@ -50,6 +50,7 @@
   "saveBtn": "Uložit",
   "createBtn": "Vytvořit",
   "closeBtn": "Zavřít",
+  "cancelBtn": "Zrušit",
   "deleteBtn": "Smazat",
   "todayBtn": "Dnes",
   "calendarsTitle": "Kalendáře",
@@ -61,5 +62,20 @@
     "compiling": "Kompilace modulu...",
     "starting": "Startování...",
     "done": "Hotovo!"
+  },
+  "strategy": {
+    "title": "Opakující se událost",
+    "all": {
+      "title": "Všechny",
+      "body": "Ovlivní VŠECHNY události v sérii."
+    },
+    "following": {
+      "title": "Následující",
+      "body": "Ovlivní pouze tuto a všechny následující události."
+    },
+    "current": {
+      "title": "Pouze tuto",
+      "body": "Ovlivní jen a pouze tuto událost. Ostatní ze série opakujících se událostí zůstanou nepozměněny."
+    }
   }
 }

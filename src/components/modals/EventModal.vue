@@ -4,6 +4,8 @@ import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/useEventModal';
+import StrategyModal from './StrategyModal.vue';
+import { useStrategyModal } from '@/composables/useStrategyModal';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -19,6 +21,7 @@ const frequencyOptions = [
 
 const emit = defineEmits(['refresh-data']);
 const thisModal = useEventModal();
+const strategyModal = useStrategyModal();
 
 const form = reactive({
   title: '',
@@ -138,9 +141,8 @@ async function saveEvent(e: Event) {
       newEvent = await CalendarCore.updateEvent(event);
       console.log('updated event:', newEvent);
     } else {
-      // TODO popup with update strategy options
-      newEvent = await CalendarCore.updateRepeatingEvent(originalEvent!, event, UpdateStrategy.All);
-      console.log('updated event with strategy:', newEvent);
+      strategyModal.open('update'); // pop-up with strategy options
+      return; // don't close this eventModal just yet
     }
   } catch (err) {
     alert(err);
@@ -159,11 +161,11 @@ async function deleteEvent() {
       console.time('Time to delete event');
       await CalendarCore.removeEvent(event);
       console.timeEnd('Time to delete event');
+
       console.log('deleted repeating event:', event);
     } else {
-      // TODO popup with update strategy options
-      await CalendarCore.removeRepeatingEvent(event, UpdateStrategy.Current);
-      console.log('deleted repeating event:', event);
+      strategyModal.open('delete'); // pop-up with strategy options
+      return; // don't close this eventModal just yet
     }
   } catch (err) {
     alert(err);
@@ -172,6 +174,32 @@ async function deleteEvent() {
 
   emit('refresh-data');
   thisModal.close();
+}
+
+async function updateWithStrategy(strategy: UpdateStrategy) {
+  switch (strategyModal.getAction()) {
+    case 'delete':
+      await saveRepeatingEvent(strategy);
+      break;
+    case 'update':
+      await deleteRepeatingEvent(strategy);
+      break;
+  }
+
+  emit('refresh-data');
+  thisModal.close();
+}
+
+async function saveRepeatingEvent(strategy: UpdateStrategy) {
+  const event = reconstructEvent();
+  const newEvent = await CalendarCore.updateRepeatingEvent(originalEvent!, event, strategy);
+  console.log('updated event with strategy:', newEvent);
+}
+
+async function deleteRepeatingEvent(strategy: UpdateStrategy) {
+  const event = reconstructEvent();
+  await CalendarCore.removeRepeatingEvent(event, strategy);
+  console.log('deleted repeating event:', event);
 }
 
 onMounted(async () => {
@@ -265,6 +293,8 @@ onMounted(async () => {
       </div>
     </form>
   </div>
+
+  <StrategyModal v-if="strategyModal.isOpen.value" @cancel-update="strategyModal.close" @update="updateWithStrategy" />
 </template>
 
 <style scoped>
