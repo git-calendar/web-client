@@ -42,6 +42,8 @@ const form = reactive({
 const errors = reactive({
   missingName: false,
   badToDate: false,
+  badFromDate: false,
+  badUntilDate: false,
 });
 
 const calendarNames = ref([] as string[]);
@@ -125,9 +127,7 @@ function reconstructEvent(): CalendarEvent {
 }
 
 function dateTimeToIsoDateAndTime(time: DateTime): [string, string] {
-  const dateStr = time.toISODate() ?? '';
-  const timeStr = time.toISOTime({ includeOffset: false, precision: 'minute' }) ?? '';
-  return [dateStr, timeStr];
+  return [time.toISODate() ?? '', time.toFormat('HH:mm')];
 }
 
 async function saveEvent(e: Event) {
@@ -220,9 +220,29 @@ function validate(event: CalendarEvent): boolean {
     return false;
   }
 
+  if (!event.from.isValid) {
+    errors.badFromDate = true;
+    return false;
+  }
+  if (!event.to.isValid) {
+    errors.badToDate = true;
+    return false;
+  }
+
   if (event.to.diff(event.from).as('milliseconds') < 0) {
     errors.badToDate = true;
     return false;
+  }
+
+  if (event.repeat && event.repeat.count == 0) {
+    if (!event.repeat.until?.isValid) {
+      errors.badUntilDate = true;
+      return false;
+    }
+    if (event.repeat.until.diff(event.from).as('milliseconds') < 0) {
+      errors.badUntilDate = true;
+      return false;
+    }
   }
 
   return true; // ok
@@ -254,9 +274,15 @@ onMounted(async () => {
 
       <div class="dates">
         <span>{{ $t('event.from') }}:</span>
-        <div class="datetime">
-          <input type="date" name="from-date" v-model="form.fromDate" />
-          <input type="time" name="from-time" v-model="form.fromTime" v-if="!form.entireDay" />
+        <div class="datetime" :class="{ red: errors.badFromDate }">
+          <input type="date" name="from-date" v-model="form.fromDate" @change="errors.badFromDate = false" />
+          <input
+            type="time"
+            name="from-time"
+            v-model="form.fromTime"
+            v-if="!form.entireDay"
+            @change="errors.badFromDate = false"
+          />
         </div>
 
         <span>{{ $t('event.to') }}:</span>
@@ -294,7 +320,14 @@ onMounted(async () => {
           </option>
         </select>
 
-        <input v-if="form.repeatEnd == 'on'" type="date" name="end-on" v-model="form.repeatEndOn" />
+        <input
+          v-if="form.repeatEnd == 'on'"
+          type="date"
+          name="end-on"
+          v-model="form.repeatEndOn"
+          :class="{ red: errors.badUntilDate }"
+          @change="errors.badUntilDate = false"
+        />
         <input v-if="form.repeatEnd == 'after'" type="number" name="end-after" v-model="form.repeatEndAfter" />
       </label>
 
