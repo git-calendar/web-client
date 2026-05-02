@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue';
 import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -209,8 +209,10 @@ async function deleteRepeatingEvent(strategy: UpdateStrategy) {
   console.log('deleted repeating event:', event);
 }
 
+const nameInputField = useTemplateRef('name-input-field');
 onMounted(async () => {
   calendarNames.value = await CalendarCore.listCalendars();
+  nameInputField.value?.focus(); // focus name field
 });
 
 // const exampleTags = ref(['School', 'Work', 'Birthday']); // TODO
@@ -220,7 +222,14 @@ onMounted(async () => {
 <template>
   <div id="event-modal" class="modal">
     <form>
-      <input type="text" name="title" :placeholder="$t('event.title')" autocomplete="none" v-model="form.title" />
+      <input
+        type="text"
+        name="title"
+        :placeholder="$t('event.title')"
+        autocomplete="none"
+        v-model="form.title"
+        ref="name-input-field"
+      />
 
       <div class="dates">
         <span>{{ $t('event.from') }}:</span>
