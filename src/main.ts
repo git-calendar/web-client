@@ -5,6 +5,12 @@ import '@/assets/styles.css';
 import '@/composables/useSettings.ts'; // init settings
 import { useTranslation } from '@/composables/useTranslation';
 
+import { registerSW } from 'virtual:pwa-register';
+
+registerSW({
+  immediate: true,
+});
+
 const { i18n } = useTranslation();
 
 const app = createApp(App);
