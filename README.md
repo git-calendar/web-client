@@ -9,9 +9,9 @@ Also using:
 
 ### Build/run locally
 ```sh
-npm install     # download dependencies
-npm fetch-wasm  # download compiled wasm core from github releases (you can compile it yourself though)
-npm run dev     # run locally
+npm install         # download dependencies
+npm run fetch-wasm  # download compiled wasm core from github releases (you can compile it yourself though)
+npm run dev         # run locally
 ```
 
 ### TODO
