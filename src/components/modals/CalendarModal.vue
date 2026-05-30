@@ -135,7 +135,7 @@ function urlWithAuth(repoUrl: string, username: string, password: string): strin
       />
 
       <div class="bottom-btns">
-        <button type="button" @click="submit">{{ $t('saveBtn') }}</button>
+        <button type="button" @click="submit">{{ $t('createBtn') }}</button>
         <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
       </div>
     </form>

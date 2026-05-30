@@ -13,7 +13,7 @@ type MessageSchema = typeof import('@/assets/locales/en.json'); // type-define '
 const localeModules = import.meta.glob('@/assets/locales/*.json', { eager: true });
 const messages = {} as Record<LocaleCode, MessageSchema>;
 for (const path in localeModules) {
-  const match = path.match(/\/([a-z]{2})\.json$/); // extract 'en', 'cs', etc.
+  const match = path.match(/\/([a-z]+)\.json$/); // extract 'en', 'cs', etc.
   if (!match) continue;
   const code = match[1] as LocaleCode;
   messages[code] = (localeModules[path] as any).default; // cast JSON to correct schema
