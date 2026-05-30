@@ -21,8 +21,24 @@ function toSnakeCase(str: string): string {
 //
 // So this hydrateDates tries to parse it beforehand.
 export function hydrateDates<T>(data: unknown): T {
-  // non-object, primitive, null
+  // primitives / null
   if (data === null || typeof data !== 'object') return data as T;
+
+  // preserve binary data
+  if (
+    data instanceof Uint8Array ||
+    data instanceof ArrayBuffer ||
+    ArrayBuffer.isView(data) ||
+    data instanceof Blob ||
+    data instanceof File
+  ) {
+    return data as T;
+  }
+
+  // preserve Luxon values if they ever come through here
+  if (DateTime.isDateTime(data)) {
+    return data as T;
+  }
 
   if (Array.isArray(data)) {
     return data.map(hydrateDates) as unknown as T; // recursively for arrays
@@ -44,10 +60,8 @@ export function hydrateDates<T>(data: unknown): T {
       } else {
         result[key] = dt;
       }
-    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = hydrateDates(value); // recursively for objects
     } else {
-      result[key] = value; // just assign
+      result[key] = hydrateDates(value); // recursively
     }
   }
 
