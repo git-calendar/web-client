@@ -138,7 +138,7 @@ async function saveEvent(e: Event) {
 
   let newEvent: CalendarEvent;
   try {
-    if (thisModal.isEventNew.value) {
+    if (thisModal.isNew.value) {
       console.time('Time to create event');
       newEvent = await CalendarCore.createEvent(event);
       console.timeEnd('Time to create event');
@@ -363,7 +363,7 @@ onMounted(async () => {
       <div class="bottom-btns">
         <button type="submit" @click="saveEvent">{{ $t('saveBtn') }}</button>
         <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
-        <button v-if="!thisModal.isEventNew.value" type="button" @click="deleteEvent" class="delete-btn">
+        <button v-if="!thisModal.isNew.value" type="button" @click="deleteEvent" class="delete-btn">
           {{ $t('deleteBtn') }}
         </button>
       </div>

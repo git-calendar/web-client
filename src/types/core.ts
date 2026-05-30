@@ -27,6 +27,7 @@ export interface CalendarApi {
   createCalendar(name: string, password: string): void;
   cloneCalendar(url: string, password: string): void;
   removeCalendar(name: string): void;
+  updateCalendar(name: string, updated: Calendar): void;
   listCalendars(): string[];
   loadCalendars(): void;
 
@@ -58,4 +59,10 @@ export enum UpdateStrategy {
   Current = 0,
   Following,
   All,
+}
+
+export interface Calendar {
+  name: string;
+  remoteUrl?: string;
+  decryptionKey?: string;
 }

@@ -9,7 +9,7 @@ export function useEventModal() {
   return {
     isOpen: readonly(isOpen),
     event: readonly(editingEvent),
-    isEventNew: computed(() => editingEvent.value!.id === undefined),
+    isNew: computed(() => editingEvent.value!.id === undefined),
 
     open(event?: CalendarEvent) {
       if (event) {

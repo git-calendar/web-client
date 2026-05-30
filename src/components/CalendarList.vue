@@ -1,22 +1,22 @@
 <script setup lang="ts">
 import { CalendarCore } from '@/wasm/core-wrapper';
-import { FiTrash, FiPlus } from 'vue-icons-plus/fi';
+import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
 import { onMounted, ref } from 'vue';
 import { useCalendarModal } from '@/composables/useCalendarModal';
 
 const calendarModal = useCalendarModal();
 const emit = defineEmits(['refresh-data']);
-interface Calendar {
+interface CalendarItem {
   name: string;
   checked: boolean;
 }
-const calendars = ref<Calendar[]>([]);
+const calendars = ref<CalendarItem[]>([]);
 
 onMounted(async () => {
   await updateData();
 });
 
-function toggle(cal: Calendar) {
+function toggle(cal: CalendarItem) {
   cal.checked = !cal.checked;
 }
 
@@ -36,12 +36,6 @@ async function updateData() {
   }
 }
 
-async function deleteCalendar(calendar: Calendar) {
-  await CalendarCore.removeCalendar(calendar.name);
-  await CalendarCore.loadCalendars();
-  emit('refresh-data');
-}
-
 defineExpose({ updateData });
 </script>
 
@@ -49,7 +43,7 @@ defineExpose({ updateData });
   <div class="calendars">
     <div class="top-bar">
       <span class="title">{{ $t('calendarsTitle') }}:</span>
-      <button class="create-new" @click="calendarModal.open">
+      <button class="create-new" @click="calendarModal.open()">
         <FiPlus />
       </button>
     </div>
@@ -64,8 +58,8 @@ defineExpose({ updateData });
         />
         <span class="cal-name">{{ cal.name }}</span>
       </label>
-      <button @click="deleteCalendar(cal)">
-        <FiTrash />
+      <button @click="calendarModal.open({ name: cal.name })">
+        <FiEdit2 />
       </button>
     </div>
   </div>

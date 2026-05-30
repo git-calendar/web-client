@@ -1,17 +1,32 @@
-import { ref, readonly } from 'vue';
+import type { Calendar } from '@/types/core';
+import { ref, shallowRef, readonly, computed } from 'vue';
 
 const isOpen = ref(false);
+const editingCalendar = shallowRef<Calendar | undefined>(undefined);
 
 export function useCalendarModal() {
   return {
     isOpen: readonly(isOpen),
+    calendar: readonly(editingCalendar),
+    isNew: computed(() => editingCalendar.value === undefined),
 
-    open() {
+    open(calendar?: Calendar) {
+      if (calendar) {
+        editingCalendar.value = calendar;
+      } else {
+        editingCalendar.value = {
+          name: '',
+          remoteUrl: '',
+          decryptionKey: undefined,
+        };
+      }
+
       isOpen.value = true;
     },
 
     close() {
       isOpen.value = false;
+      editingCalendar.value = undefined;
     },
   };
 }
