@@ -4,6 +4,8 @@ import { useSlots } from 'vue';
 import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import { useSidebar } from '@/composables/useSidebar';
 import NewEventBtn from '@/components/NewEventBtn.vue';
+import { exportZip } from '@/utils';
+import { LuFolderArchive } from 'vue-icons-plus/lu';
 
 const slots = useSlots();
 const sidebar = useSidebar();
@@ -29,6 +31,9 @@ const sidebar = useSidebar();
       <router-link to="/settings">
         <FiSettings />
       </router-link>
+      <button type="button" @click="exportZip('')">
+        <LuFolderArchive style="transform: scale(1.1)" />
+      </button>
       <a href="https://github.com/git-calendar/web-client" target="_blank">
         <FiGithub style="position: relative; left: -2%; top: 2%" />
       </a>
@@ -63,6 +68,7 @@ aside {
     padding: 0.3rem;
     width: 2.1rem;
     aspect-ratio: 1/1;
+    background-color: transparent;
 
     border-radius: var(--small-border-radius);
 

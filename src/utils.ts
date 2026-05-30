@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import { type RouteParamsGeneric, type Router } from 'vue-router';
 import { useSettings } from '@/composables/useSettings';
 import type { CalendarEvent } from './types/core';
+import { CalendarCore } from './wasm/core-wrapper';
 
 const { settings } = useSettings();
 
@@ -121,4 +122,43 @@ export function timeInPercentOnTimeline(datetime: DateTime): number {
  */
 export function isWholeDay(event: CalendarEvent): boolean {
   return event.from.toFormat('HH:mm') == '00:00' && event.to.toFormat('HH:mm') == '23:59';
+}
+
+/**
+ * Downloads a zipped calendar or all calendars if ''.
+ */
+export async function exportZip(calendar: string = '') {
+  const zipBytes = await CalendarCore.exportZip(calendar);
+  const fileName = calendar ? `${calendar}.zip` : `git-calendar-data.zip`;
+
+  if ('showSaveFilePicker' in window && typeof window.showSaveFilePicker == 'function') {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: fileName,
+      types: [
+        {
+          description: 'ZIP archive',
+          accept: { 'application/zip': ['.zip'] },
+        },
+      ],
+    });
+
+    const writable = await handle.createWritable();
+    await writable.write(zipBytes);
+    await writable.close();
+  } else {
+    // firefox doesnt have the showSaveFilePicker method
+    downloadBlob(zipBytes, fileName);
+  }
+}
+
+function downloadBlob(data: BlobPart, filename: string) {
+  const blob = new Blob([data], { type: 'application/zip' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  URL.revokeObjectURL(url);
 }
