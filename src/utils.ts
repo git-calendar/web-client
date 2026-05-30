@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import { type RouteParamsGeneric, type Router } from 'vue-router';
 import { useSettings } from '@/composables/useSettings';
 import type { CalendarEvent } from './types/core';
+import { CalendarCore } from './wasm/core-wrapper';
 
 const { settings } = useSettings();
 
@@ -121,4 +122,18 @@ export function timeInPercentOnTimeline(datetime: DateTime): number {
  */
 export function isWholeDay(event: CalendarEvent): boolean {
   return event.from.toFormat('HH:mm') == '00:00' && event.to.toFormat('HH:mm') == '23:59';
+}
+
+export async function exportZip(calendar: string) {
+  const bytes = await CalendarCore.exportZip(calendar);
+
+  const blob = new Blob([bytes], { type: 'application/zip' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'git-calendar-data.zip';
+  a.click();
+
+  URL.revokeObjectURL(url);
 }

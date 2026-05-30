@@ -32,6 +32,7 @@ export interface CalendarApi {
 
   pullAll(): void;
   pushAll(): void;
+  exportZip(calendar: string): ArrayBuffer;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;
