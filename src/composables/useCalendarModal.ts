@@ -11,16 +11,7 @@ export function useCalendarModal() {
     isNew: computed(() => editingCalendar.value === undefined),
 
     open(calendar?: Calendar) {
-      if (calendar) {
-        editingCalendar.value = calendar;
-      } else {
-        editingCalendar.value = {
-          name: '',
-          remoteUrl: '',
-          decryptionKey: undefined,
-        };
-      }
-
+      editingCalendar.value = calendar;
       isOpen.value = true;
     },
 

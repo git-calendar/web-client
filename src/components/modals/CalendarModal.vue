@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, watch, onMounted, useTemplateRef } from 'vue';
+import { reactive, watch, onMounted, useTemplateRef } from 'vue';
 import MultiToggle from '@/components/MultiToggle.vue';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useCalendarModal } from '@/composables/useCalendarModal';
@@ -23,25 +23,16 @@ const errors = reactive({
   missingURL: false,
 });
 
-const originalCalendar = ref<Calendar | undefined>(undefined);
+let originalCalendar: Calendar | undefined = undefined;
 
 watch(
   () => thisModal.calendar.value,
   (newCalendar) => {
-    if (isExistingCalendar(newCalendar)) {
-      originalCalendar.value = { ...newCalendar };
-    } else {
-      originalCalendar.value = undefined;
-    }
-
+    originalCalendar = newCalendar ? { ...newCalendar } : undefined;
     updateFormFromCalendar(newCalendar);
   },
   { immediate: true },
 );
-
-function isExistingCalendar(calendar: Calendar | undefined): calendar is Calendar {
-  return Boolean(calendar?.name?.trim());
-}
 
 function updateFormFromCalendar(calendar: Calendar | undefined) {
   resetForm();
@@ -61,14 +52,16 @@ function reconstructCalendar(): Calendar {
   const trimmedUrl = form.url.trim();
 
   return {
-    ...originalCalendar.value,
+    ...originalCalendar,
     name: form.name.trim(),
     remoteUrl: trimmedUrl ? urlWithAuth(trimmedUrl, form.username, form.password) : undefined,
-    decryptionKey: form.encrypted ? form.decryptionKey || originalCalendar.value?.decryptionKey : undefined,
+    decryptionKey: form.encrypted ? form.decryptionKey || originalCalendar?.decryptionKey : undefined,
   };
 }
 
-async function saveCalendar() {
+async function saveCalendar(e: Event) {
+  e.preventDefault();
+
   if (!validate()) return;
 
   try {
@@ -104,20 +97,20 @@ async function createCalendar() {
 }
 
 async function updateCalendar() {
-  if (!originalCalendar.value) {
-    throw new Error('Cannot update calendar: no existing calendar was loaded.');
+  if (!originalCalendar) {
+    throw new Error('Cannot update calendar: no calendar was loaded.');
   }
 
   const updatedCalendar = reconstructCalendar();
 
-  await CalendarCore.updateCalendar(originalCalendar.value.name, updatedCalendar);
+  await CalendarCore.updateCalendar(originalCalendar.name, updatedCalendar);
 }
 
 async function deleteCal() {
-  if (!originalCalendar.value) return;
+  if (!originalCalendar) return;
 
   try {
-    await CalendarCore.removeCalendar(originalCalendar.value.name);
+    await CalendarCore.removeCalendar(originalCalendar.name);
     await CalendarCore.loadCalendars();
   } catch (err) {
     alert(err);
@@ -204,9 +197,8 @@ onMounted(() => {
 
 <template>
   <div id="calendar-modal" class="modal">
-    <form @submit.prevent="saveCalendar">
-      {{ thisModal.isNew }}
-      <MultiToggle v-if="thisModal.isNew" v-model="form.how" :options="howOptions" style="align-self: center" />
+    <form>
+      <MultiToggle v-if="thisModal.isNew.value" v-model="form.how" :options="howOptions" style="align-self: center" />
 
       <input
         type="text"
@@ -223,7 +215,7 @@ onMounted(() => {
       <input
         type="url"
         name="url"
-        :placeholder="`Remote URL ${thisModal.isNew && form.how == 'Clone' ? '' : '(' + $t('optionalText') + ')'}`"
+        :placeholder="`Remote URL ${form.how == 'Init' ? '(' + $t('optionalText') + ')' : ''}`"
         autocomplete="none"
         v-model="form.url"
         :class="{ red: errors.missingURL }"
@@ -253,9 +245,9 @@ onMounted(() => {
       />
 
       <div class="bottom-btns">
-        <button type="submit">{{ $t('saveBtn') }}</button>
+        <button type="submit" @click="saveCalendar">{{ $t('saveBtn') }}</button>
         <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
-        <button v-if="!thisModal.isNew" type="button" @click="deleteCal" class="delete-btn">
+        <button v-if="!thisModal.isNew.value" type="button" @click="deleteCal" class="delete-btn">
           {{ $t('deleteBtn') }}
         </button>
       </div>
