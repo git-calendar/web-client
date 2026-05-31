@@ -58,12 +58,29 @@ const days = computed(() => {
 watch(
   () => route.params,
   () => {
-    currentDatetime.value = getCurrentViewDatetime(route.params);
+    const viewStart = getCurrentViewDatetime(route.params);
+    currentDatetime.value = viewStart;
 
-    // make sure that the highlited interval is always fully visible
-    if (viewInterval.value.end > days.value[days.value.length - 1] || viewInterval.value.start < days.value[0]) {
-      monthTracker.value = currentDatetime.value.month;
-      yearTracker.value = currentDatetime.value.year;
+    const viewEnd = viewStart.plus({
+      days: getViewLengthInDays(route.params),
+    });
+
+    const trackedMonthStart = viewStart
+      .set({
+        year: yearTracker.value,
+        month: monthTracker.value,
+        day: 1,
+      })
+      .startOf('day');
+
+    const trackedMonthEnd = trackedMonthStart.plus({ months: 1 });
+
+    const isWholeIntervalAfterCurrentMonth = viewStart >= trackedMonthEnd;
+    const isWholeIntervalBeforeCurrentMonth = viewEnd <= trackedMonthStart;
+
+    if (isWholeIntervalAfterCurrentMonth || isWholeIntervalBeforeCurrentMonth) {
+      monthTracker.value = viewStart.month;
+      yearTracker.value = viewStart.year;
     }
   },
   { immediate: true },
