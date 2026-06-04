@@ -252,8 +252,20 @@ onMounted(() => {
       <div id="git-credentials">
         {{ $t('calendar.gitCredentials') }}
         <div>
-          <input type="text" name="username" :placeholder="$t('calendar.username')" v-model="form.username" />
-          <input type="password" name="password" :placeholder="$t('calendar.password')" v-model="form.password" />
+          <input
+            type="text"
+            name="username"
+            :placeholder="$t('calendar.username')"
+            autocomplete="username"
+            v-model="form.username"
+          />
+          <input
+            type="password"
+            name="password"
+            :placeholder="$t('calendar.password')"
+            autocomplete="current-password"
+            v-model="form.password"
+          />
         </div>
       </div>
 
