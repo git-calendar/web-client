@@ -250,7 +250,7 @@ function validate(event: CalendarEvent): boolean {
 
 const nameInputField = useTemplateRef('name-input-field');
 onMounted(async () => {
-  calendarNames.value = await CalendarCore.listCalendars();
+  calendarNames.value = (await CalendarCore.listCalendars()).map((cal) => cal.name);
   nameInputField.value?.focus(); // focus name field
 });
 

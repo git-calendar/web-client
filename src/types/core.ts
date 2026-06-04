@@ -27,25 +27,23 @@ export interface CalendarApi {
   createCalendar(name: string, password: string): void;
   cloneCalendar(url: string, password: string): void;
   removeCalendar(name: string): void;
-  updateCalendar(name: string, updated: Calendar): void;
-  listCalendars(): string[];
+  renameCalendar(oldName: string, newName: string): void;
+  listCalendars(): Calendar[];
   loadCalendars(): void;
-
-  pullAll(): void;
-  pushAll(): void;
-  exportZip(calendar: string): ArrayBuffer;
+  updateRemotes(calendar: string, ...remoteUrls: string[]): void;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;
   updateRepeatingEvent(oldEvent: CalendarEvent, newEvent: CalendarEvent, strategy: UpdateStrategy): CalendarEvent;
-
   removeEvent(event: CalendarEvent): void;
   removeRepeatingEvent(event: CalendarEvent, strategy: UpdateStrategy): void;
-
   getEvent(id: string): CalendarEvent;
   getEvents(from: DateTime, to: DateTime): CalendarEvent[];
 
   setCorsProxy(url: string): void;
+  pullAll(): void;
+  pushAll(): void;
+  exportZip(calendar: string): ArrayBuffer;
 }
 
 export enum Freq {
@@ -64,6 +62,12 @@ export enum UpdateStrategy {
 
 export interface Calendar {
   name: string;
-  remoteUrl?: string;
-  decryptionKey?: string;
+  tags: Tag[];
+  encrypted: boolean;
+  remotes: string[];
+}
+
+export interface Tag {
+  name: string;
+  color: string;
 }

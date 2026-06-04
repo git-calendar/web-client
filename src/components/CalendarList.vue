@@ -3,21 +3,19 @@ import { CalendarCore } from '@/wasm/core-wrapper';
 import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
 import { onMounted, ref } from 'vue';
 import { useCalendarModal } from '@/composables/useCalendarModal';
+import type { Calendar } from '@/types/core';
 
 const calendarModal = useCalendarModal();
 const emit = defineEmits(['refresh-data']);
-interface CalendarItem {
-  name: string;
-  checked: boolean;
-}
-const calendars = ref<CalendarItem[]>([]);
+const calendars = ref<Calendar[]>([]);
+const hidden = ref(new Map<string, boolean>());
 
 onMounted(async () => {
   await updateData();
 });
 
-function toggle(cal: CalendarItem) {
-  cal.checked = !cal.checked;
+function toggle(cal: Calendar) {
+  hidden.value.set(cal.name, !(hidden.value.get(cal.name) ?? false));
 }
 
 function checkboxName(calName: string): string {
@@ -25,15 +23,7 @@ function checkboxName(calName: string): string {
 }
 
 async function updateData() {
-  const calendarNames = await CalendarCore.listCalendars();
-
-  calendars.value = [];
-
-  if (calendarNames) {
-    for (const name of calendarNames) {
-      calendars.value.push({ name: name, checked: true });
-    }
-  }
+  calendars.value = await CalendarCore.listCalendars();
 }
 
 defineExpose({ updateData });
@@ -53,12 +43,12 @@ defineExpose({ updateData });
           type="checkbox"
           :id="checkboxName(cal.name)"
           :name="checkboxName(cal.name)"
-          :checked="cal.checked"
+          :checked="!(hidden.get(cal.name) ?? false)"
           @change="toggle(cal)"
         />
         <span class="cal-name">{{ cal.name }}</span>
       </label>
-      <button @click="calendarModal.open({ name: cal.name })">
+      <button @click="calendarModal.open(cal.name)">
         <FiEdit2 />
       </button>
     </div>

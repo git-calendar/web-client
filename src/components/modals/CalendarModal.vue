@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted, useTemplateRef } from 'vue';
+import { reactive, watch, onMounted, useTemplateRef, ref } from 'vue';
 import MultiToggle from '@/components/MultiToggle.vue';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useCalendarModal } from '@/composables/useCalendarModal';
@@ -23,40 +23,41 @@ const errors = reactive({
   missingURL: false,
 });
 
-let originalCalendar: Calendar | undefined = undefined;
+const originalCalendar = ref<Calendar | undefined>();
 
 watch(
-  () => thisModal.calendar.value,
-  (newCalendar) => {
-    originalCalendar = newCalendar ? { ...newCalendar } : undefined;
-    updateFormFromCalendar(newCalendar);
+  () => thisModal.openedCalendarName,
+  async (newName) => {
+    const calendars = await CalendarCore.listCalendars();
+    for (const cal of calendars) {
+      if (cal.name === newName.value) {
+        originalCalendar.value = cal;
+        break;
+      }
+    }
+    if (originalCalendar.value) {
+      updateFormFromCalendar(originalCalendar.value);
+    }
   },
   { immediate: true },
 );
 
-function updateFormFromCalendar(calendar: Calendar | undefined) {
+function updateFormFromCalendar(calendar: Calendar) {
   resetForm();
 
   if (!calendar) return;
 
-  form.how = calendar.remoteUrl ? 'Clone' : 'Init';
+  form.how = '';
   form.name = calendar.name ?? '';
-  form.url = calendar.remoteUrl ?? '';
-  form.username = '';
-  form.password = '';
-  form.encrypted = calendar.decryptionKey !== undefined;
+  form.encrypted = calendar.encrypted;
   form.decryptionKey = ''; // secret
-}
 
-function reconstructCalendar(): Calendar {
-  const trimmedUrl = form.url.trim();
-
-  return {
-    ...originalCalendar,
-    name: form.name.trim(),
-    remoteUrl: trimmedUrl ? urlWithAuth(trimmedUrl, form.username, form.password) : undefined,
-    decryptionKey: form.encrypted ? form.decryptionKey || originalCalendar?.decryptionKey : undefined,
-  };
+  if (calendar.remotes && calendar.remotes.length !== 0) {
+    const remoteUrl = authFromUrl(calendar.remotes[0]);
+    form.url = remoteUrl.url;
+    form.username = remoteUrl.username;
+    form.password = remoteUrl.password;
+  }
 }
 
 async function saveCalendar(e: Event) {
@@ -97,20 +98,32 @@ async function createCalendar() {
 }
 
 async function updateCalendar() {
-  if (!originalCalendar) {
-    throw new Error('Cannot update calendar: no calendar was loaded.');
+  const origName = originalCalendar.value?.name;
+  if (!origName) throw new Error('Cannot update calendar: calendar name is undefined.');
+
+  if (origName !== form.name) {
+    try {
+      await CalendarCore.renameCalendar(origName, form.name);
+    } catch (e) {
+      alert(e);
+    }
   }
 
-  const updatedCalendar = reconstructCalendar();
-
-  await CalendarCore.updateCalendar(originalCalendar.name, updatedCalendar);
+  const newRemoteUrl = urlWithAuth(form.url, form.username, form.password);
+  if (originalCalendar.value?.remotes[0] !== newRemoteUrl) {
+    try {
+      await CalendarCore.updateRemotes(origName, newRemoteUrl);
+    } catch (e) {
+      alert(e);
+    }
+  }
 }
 
 async function deleteCal() {
-  if (!originalCalendar) return;
+  if (!originalCalendar.value) return;
 
   try {
-    await CalendarCore.removeCalendar(originalCalendar.name);
+    await CalendarCore.removeCalendar(originalCalendar.value.name);
     await CalendarCore.loadCalendars();
   } catch (err) {
     alert(err);
@@ -188,6 +201,28 @@ function urlWithAuth(repoUrl: string, username: string, password: string): strin
   return url.toString();
 }
 
+function authFromUrl(repoUrl: string): {
+  url: string;
+  username: string;
+  password: string;
+} {
+  const url = new URL(repoUrl);
+
+  const rawUsername = decodeURIComponent(url.username);
+  const rawPassword = decodeURIComponent(url.password);
+
+  url.username = '';
+  url.password = '';
+
+  const isTokenOnly = rawUsername && !rawPassword;
+
+  return {
+    url: url.toString(),
+    username: isTokenOnly ? '' : rawUsername,
+    password: isTokenOnly ? rawUsername : rawPassword,
+  };
+}
+
 const nameInputField = useTemplateRef('name-input-field');
 
 onMounted(() => {
@@ -205,7 +240,7 @@ onMounted(() => {
         name="name"
         :placeholder="$t('calendar.name')"
         autocomplete="none"
-        :disabled="thisModal.isNew && form.how != 'Init'"
+        :disabled="thisModal.isNew.value && form.how != 'Init'"
         v-model="form.name"
         ref="name-input-field"
         :class="{ red: errors.missingName }"
@@ -230,19 +265,22 @@ onMounted(() => {
         </div>
       </div>
 
-      <label>
-        {{ $t('calendar.encrypted') }}
-        <input type="checkbox" v-model="form.encrypted" />
-      </label>
+      <div id="encryption" v-if="thisModal.isNew.value">
+        <!-- TODO: re-encrypt option for existing calendars -->
+        <label>
+          {{ $t('calendar.encrypted') }}
+          <input type="checkbox" v-model="form.encrypted" />
+        </label>
 
-      <input
-        v-if="form.encrypted"
-        type="password"
-        name="decryption-key"
-        :placeholder="$t('calendar.decryptionKey')"
-        autocomplete="current-password"
-        v-model="form.decryptionKey"
-      />
+        <input
+          v-if="form.encrypted"
+          type="password"
+          name="decryption-key"
+          :placeholder="$t('calendar.decryptionKey')"
+          autocomplete="current-password"
+          v-model="form.decryptionKey"
+        />
+      </div>
 
       <div class="bottom-btns">
         <button type="submit" @click="saveCalendar">{{ $t('saveBtn') }}</button>
