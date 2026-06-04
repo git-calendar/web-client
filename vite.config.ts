@@ -4,8 +4,11 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const base = process.env.GITHUB_PAGES == 'true' ? '/web-client/' : '/';
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [
     vue(),
     VitePWA({
@@ -13,8 +16,9 @@ export default defineConfig({
       manifest: {
         name: 'Git Calendar Web',
         short_name: 'Git Cal',
-        id: 'Git Cal',
-        start_url: '/',
+        id: base,
+        start_url: base,
+        scope: base,
         description: 'A web client for a Git-backed calendar.',
         display: 'standalone',
         background_color: '#ffffff',
@@ -22,12 +26,12 @@ export default defineConfig({
         orientation: 'portrait-primary',
         icons: [
           {
-            src: '/icon-192.png',
+            src: `${base}icon-192.png`,
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/icon-512.png',
+            src: `${base}icon-512.png`,
             sizes: '512x512',
             type: 'image/png',
           },
@@ -40,7 +44,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,wasm}'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MiB (core.wasm is a big boy)
         cleanupOutdatedCaches: true,
-        navigateFallback: '/index.html',
+        navigateFallback: `${base}index.html`,
       },
     }),
   ],
@@ -49,5 +53,4 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  base: process.env.GITHUB_PAGES == 'true' ? '/web-client/' : '/',
 });
