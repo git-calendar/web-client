@@ -102,20 +102,12 @@ async function updateCalendar() {
   if (!origName) throw new Error('Cannot update calendar: calendar name is undefined.');
 
   if (origName !== form.name) {
-    try {
-      await CalendarCore.renameCalendar(origName, form.name);
-    } catch (e) {
-      alert(e);
-    }
+    await CalendarCore.renameCalendar(origName, form.name);
   }
 
   const newRemoteUrl = urlWithAuth(form.url, form.username, form.password);
   if (originalCalendar.value?.remotes[0] !== newRemoteUrl) {
-    try {
-      await CalendarCore.updateRemotes(origName, newRemoteUrl);
-    } catch (e) {
-      alert(e);
-    }
+    await CalendarCore.updateRemotes(origName, newRemoteUrl);
   }
 }
 
