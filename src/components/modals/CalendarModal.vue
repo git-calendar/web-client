@@ -2,7 +2,7 @@
 import { reactive, watch, onMounted, useTemplateRef, ref } from 'vue';
 import MultiToggle from '@/components/MultiToggle.vue';
 import { CalendarCore } from '@/wasm/core-wrapper';
-import { useCalendarModal } from '@/composables/useCalendarModal';
+import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import type { Calendar } from '@/types/core';
 
 const emit = defineEmits(['refresh-data']);

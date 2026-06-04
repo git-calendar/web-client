@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useEventModal } from '@/composables/useEventModal';
+import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
 import { getCurrentViewDatetime } from '@/utils';
 import { computed } from 'vue';

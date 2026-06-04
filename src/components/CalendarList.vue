@@ -2,7 +2,7 @@
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
 import { onMounted, ref } from 'vue';
-import { useCalendarModal } from '@/composables/useCalendarModal';
+import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import type { Calendar } from '@/types/core';
 
 const calendarModal = useCalendarModal();

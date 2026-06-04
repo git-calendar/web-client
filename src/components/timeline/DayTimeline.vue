@@ -4,7 +4,7 @@ import type { CalendarEvent } from '@/types/core.ts';
 import { DateTime } from 'luxon';
 import TimelineEvent from '@/components/timeline/TimelineEvent.vue';
 import BaseEvent from '@/components/timeline/BaseEvent.vue';
-import { useEventModal } from '@/composables/useEventModal';
+import { useEventModal } from '@/composables/modals/useEventModal';
 import CursorToday from '@/components/timeline/CursorToday.vue';
 import { useDraggingEvent } from '@/composables/useDraggingEvent';
 

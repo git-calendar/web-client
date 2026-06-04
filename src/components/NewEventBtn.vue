@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { FiPlusCircle } from 'vue-icons-plus/fi';
-import { useEventModal } from '@/composables/useEventModal';
+import { useEventModal } from '@/composables/modals/useEventModal';
 
 const eventModal = useEventModal();
 

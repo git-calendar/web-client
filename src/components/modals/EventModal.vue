@@ -3,9 +3,9 @@ import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue';
 import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
-import { useEventModal } from '@/composables/useEventModal';
+import { useEventModal } from '@/composables/modals/useEventModal';
 import StrategyModal from './StrategyModal.vue';
-import { useStrategyModal } from '@/composables/useStrategyModal';
+import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },

@@ -3,9 +3,9 @@ import { onKeyStroke } from '@vueuse/core';
 import router from '@/router';
 import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
 import { DateTime } from 'luxon';
-import { useEventModal } from '@/composables/useEventModal';
-import { useCalendarModal } from '@/composables/useCalendarModal';
-import { useStrategyModal } from '@/composables/useStrategyModal';
+import { useEventModal } from '@/composables/modals/useEventModal';
+import { useCalendarModal } from '@/composables/modals/useCalendarModal';
+import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 
 const eventModal = useEventModal();
 

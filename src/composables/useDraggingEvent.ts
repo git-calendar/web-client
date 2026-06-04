@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import { useMouse } from '@vueuse/core';
 import { numberOfHours, timeRangeFormat } from '@/utils';
 import { useSettings } from '@/composables/useSettings';
-import { useEventModal } from '@/composables/useEventModal';
+import { useEventModal } from '@/composables/modals/useEventModal';
 
 export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref<DateTime>) {
   const { y } = useMouse();
