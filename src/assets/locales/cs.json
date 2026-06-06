@@ -79,5 +79,9 @@
       "title": "Pouze tuto",
       "body": "Ovlivní jen a pouze tuto událost. Ostatní ze série opakujících se událostí zůstanou nepozměněny."
     }
+  },
+  "message": {
+    "confirmCalendarDelete": "Chcete opravdu smazat celý kalenář?",
+    "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\"."
   }
 }

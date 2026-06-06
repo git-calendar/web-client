@@ -79,5 +79,9 @@
       "title": "Current",
       "body": "Only affects this one event. The others in the series remain unchanged."
     }
+  },
+  "message": {
+    "confirmCalendarDelete": "Do you really want to delete the whole calendar?",
+    "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\"."
   }
 }

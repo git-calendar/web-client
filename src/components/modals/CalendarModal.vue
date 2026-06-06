@@ -5,10 +5,12 @@ import { CalendarCore } from '@/wasm/core-wrapper';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import type { Calendar } from '@/types/core';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const emit = defineEmits(['refresh-data']);
 const thisModal = useCalendarModal();
-const { alert } = useAlertModal();
+const { alert, confirm } = useAlertModal();
 
 const howOptions = ['Init', 'Clone'];
 const form = reactive({
@@ -103,7 +105,7 @@ async function updateCalendar() {
   const calendar = originalCalendar.value;
   const origName = calendar?.name;
 
-  if (!origName) throw new Error('Cannot update calendar: calendar name is undefined. This should not happen...');
+  if (!origName) throw new Error('Cannot update calendar. This should not happen...');
 
   let calendarName = origName;
   if (origName !== form.name) {
@@ -125,7 +127,10 @@ async function updateCalendar() {
 }
 
 async function deleteCal() {
-  if (!originalCalendar.value) return;
+  if (!originalCalendar.value) throw new Error('Cannot delete calendar. This should not happen...');
+
+  let ok = await confirm(t('message.confirmCalendarDelete'));
+  if (!ok) return;
 
   try {
     await CalendarCore.removeCalendar(originalCalendar.value.name);
@@ -165,7 +170,7 @@ function validate(): boolean {
 
     if (!form.url.endsWith('.git')) {
       errors.badURL = true;
-      alert('Remote URL must end with ".git".');
+      alert(t('message.errorRemoteUrlEndDotGit'));
       return false;
     }
   }
