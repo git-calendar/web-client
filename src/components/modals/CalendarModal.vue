@@ -4,9 +4,11 @@ import MultiToggle from '@/components/MultiToggle.vue';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import type { Calendar } from '@/types/core';
+import { useAlertModal } from '@/composables/modals/useAlertModal';
 
 const emit = defineEmits(['refresh-data']);
 const thisModal = useCalendarModal();
+const { alert } = useAlertModal();
 
 const howOptions = ['Init', 'Clone'];
 const form = reactive({
@@ -20,7 +22,7 @@ const form = reactive({
 });
 const errors = reactive({
   missingName: false,
-  missingURL: false,
+  badURL: false,
 });
 
 const originalCalendar = ref<Calendar | undefined>();
@@ -74,7 +76,7 @@ async function saveCalendar(e: Event) {
 
     await CalendarCore.loadCalendars();
   } catch (err) {
-    alert(err);
+    alert(String(err));
     return;
   }
 
@@ -98,16 +100,27 @@ async function createCalendar() {
 }
 
 async function updateCalendar() {
-  const origName = originalCalendar.value?.name;
-  if (!origName) throw new Error('Cannot update calendar: calendar name is undefined.');
+  const calendar = originalCalendar.value;
+  const origName = calendar?.name;
 
+  if (!origName) throw new Error('Cannot update calendar: calendar name is undefined. This should not happen...');
+
+  let calendarName = origName;
   if (origName !== form.name) {
     await CalendarCore.renameCalendar(origName, form.name);
+    calendarName = form.name;
   }
 
-  const newRemoteUrl = urlWithAuth(form.url, form.username, form.password);
-  if (originalCalendar.value?.remotes[0] !== newRemoteUrl) {
-    await CalendarCore.updateRemotes(origName, newRemoteUrl);
+  const rawUrl = form.url?.trim();
+  if (rawUrl && !rawUrl) {
+    errors.badURL = true;
+    return;
+  }
+
+  const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
+  const currentRemoteUrl = calendar.remotes?.[0] ?? '';
+  if (currentRemoteUrl !== newRemoteUrl) {
+    await CalendarCore.updateRemotes(calendarName, newRemoteUrl);
   }
 }
 
@@ -118,7 +131,7 @@ async function deleteCal() {
     await CalendarCore.removeCalendar(originalCalendar.value.name);
     await CalendarCore.loadCalendars();
   } catch (err) {
-    alert(err);
+    alert(String(err));
     return;
   }
 
@@ -132,19 +145,29 @@ function validate(): boolean {
   const needsName = !thisModal.isNew.value || form.how === 'Init';
   const needsURL = thisModal.isNew.value && form.how === 'Clone';
 
-  if (needsName && form.name.trim() === '') {
+  form.name = form.name.trim();
+  if (needsName && form.name === '') {
     errors.missingName = true;
     return false;
   }
 
-  if (needsURL && form.url.trim() === '') {
-    errors.missingURL = true;
+  form.url = form.url.trim();
+  if (needsURL && form.url === '') {
+    errors.badURL = true;
     return false;
   }
 
-  if (form.url.trim() !== '' && !isValidUrl(form.url.trim())) {
-    errors.missingURL = true;
-    return false;
+  if (form.url !== '') {
+    if (!isValidUrl(form.url)) {
+      errors.badURL = true;
+      return false;
+    }
+
+    if (!form.url.endsWith('.git')) {
+      errors.badURL = true;
+      alert('Remote URL must end with ".git".');
+      return false;
+    }
   }
 
   return true;
@@ -173,7 +196,7 @@ function resetForm() {
 
 function resetErrors() {
   errors.missingName = false;
-  errors.missingURL = false;
+  errors.badURL = false;
 }
 
 function urlWithAuth(repoUrl: string, username: string, password: string): string {
@@ -245,8 +268,8 @@ onMounted(() => {
         :placeholder="`Remote URL ${form.how == 'Init' ? '(' + $t('optionalText') + ')' : ''}`"
         autocomplete="none"
         v-model="form.url"
-        :class="{ red: errors.missingURL }"
-        @input="errors.missingURL = false"
+        :class="{ red: errors.badURL }"
+        @input="errors.badURL = false"
       />
 
       <div id="git-credentials">

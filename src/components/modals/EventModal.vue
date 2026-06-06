@@ -6,6 +6,7 @@ import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import StrategyModal from './StrategyModal.vue';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
+import { useAlertModal } from '@/composables/modals/useAlertModal';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -22,6 +23,7 @@ const frequencyOptions = [
 const emit = defineEmits(['refresh-data']);
 const thisModal = useEventModal();
 const strategyModal = useStrategyModal();
+const { alert } = useAlertModal();
 
 const form = reactive({
   title: '',
@@ -151,7 +153,7 @@ async function saveEvent(e: Event) {
       return; // don't close this eventModal just yet
     }
   } catch (err) {
-    alert(err);
+    alert(String(err));
     return;
   }
 
@@ -174,7 +176,7 @@ async function deleteEvent() {
       return; // don't close this eventModal just yet
     }
   } catch (err) {
-    alert(err);
+    alert(String(err));
     return;
   }
 
@@ -193,7 +195,7 @@ async function updateWithStrategy(strategy: UpdateStrategy) {
         break;
     }
   } catch (err) {
-    alert(err);
+    alert(String(err));
     return;
   }
 

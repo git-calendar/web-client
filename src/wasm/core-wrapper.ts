@@ -9,6 +9,13 @@ export const CoreLoadingState = reactive({
 });
 const worker = new Worker(new URL('worker.ts', import.meta.url), { type: 'module' });
 
+class CalendarCoreError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CalendarCoreError';
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Readiness Gate
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,7 +71,7 @@ worker.onmessage = ({ data }: MessageEvent) => {
   pending.delete(id);
 
   if (error) {
-    handlers.reject(new Error(`CalendarCore: ${error}`));
+    handlers.reject(new CalendarCoreError(error));
     if (error.includes('OPFS')) {
       alert('OPFS is not available. Are you on a secure connection (HTTPS)?');
     }

@@ -197,6 +197,11 @@ input.red,
   }
 }
 
+body:has(#alert-modal) .modal:not(#alert-modal) {
+  background: none;
+  backdrop-filter: none;
+}
+
 @media (max-width: 768px) {
   html {
     font-size: clamp(14px, 1vw + 8px, 16px); /* scales everything down by 13,5% (14px from 16px default) */
