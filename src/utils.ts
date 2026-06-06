@@ -162,3 +162,11 @@ function downloadBlob(data: BlobPart, filename: string) {
 
   URL.revokeObjectURL(url);
 }
+
+export async function createCalendarOnce() {
+  const key = 'create-cal-on-first-visit';
+  if (localStorage.getItem(key) === null) {
+    await CalendarCore.createCalendar('main', '');
+    localStorage.setItem(key, 'done');
+  }
+}
