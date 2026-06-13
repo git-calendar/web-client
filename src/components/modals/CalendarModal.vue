@@ -328,7 +328,8 @@ onMounted(() => {
 <style scoped>
 #calendar-modal {
   form {
-    > #git-credentials {
+    > #git-credentials,
+    #encryption {
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
