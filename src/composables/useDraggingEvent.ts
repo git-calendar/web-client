@@ -116,7 +116,7 @@ export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref
     drag.value.active = false;
 
     const [startTime, endTime] = getEventTimes();
-    const event: CalendarEvent = { title: '', from: startTime, to: endTime, calendar: 'main', tag: '' }; // main as the default
+    const event: CalendarEvent = { title: '', from: startTime, to: endTime, calendar: 'default', tag: '' };
     eventModal.open(event);
 
     window.removeEventListener('pointerup', dragStop); // cleanup

@@ -5,6 +5,7 @@ import { CalendarCore, CoreLoadingState } from '@/wasm/core-wrapper';
 import { onBeforeMount, ref } from 'vue';
 import AlertModal from '@/components/modals/AlertModal.vue';
 import { createCalendarOnce } from '@/utils';
+import { syncAllWrapper } from '@/services/gitSync';
 
 const { settings } = useSettings();
 const coreReady = ref(false); // waits for loadCalendars etc.
@@ -18,6 +19,7 @@ onBeforeMount(async () => {
 
   await createCalendarOnce();
   await CalendarCore.loadCalendars();
+  syncAllWrapper();
   coreReady.value = true;
 });
 </script>

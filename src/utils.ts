@@ -166,7 +166,7 @@ function downloadBlob(data: BlobPart, filename: string) {
 export async function createCalendarOnce() {
   const key = 'create-cal-on-first-visit';
   if (localStorage.getItem(key) === null) {
-    await CalendarCore.createCalendar('main', '');
+    await CalendarCore.createCalendar('default', '');
     localStorage.setItem(key, 'done');
   }
 }
