@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, useTemplateRef, toRaw } from 'vue';
+import { ref, reactive, watch, onMounted, useTemplateRef, toRaw, computed } from 'vue';
 import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -26,6 +26,11 @@ const emit = defineEmits(['refresh-data']);
 const thisModal = useEventModal();
 const strategyModal = useStrategyModal();
 const { alert } = useAlertModal();
+
+const isSaving = ref(false);
+const isDeleting = ref(false);
+const isUpdatingWithStrategy = ref(false);
+const isLocked = computed(() => isSaving.value || isDeleting.value || isUpdatingWithStrategy.value);
 
 const form = reactive({
   title: '',
@@ -162,38 +167,44 @@ function dateTimeToIsoDateAndTime(time: DateTime): [string, string] {
   return [time.toISODate() ?? '', time.toFormat('HH:mm')];
 }
 
-async function saveEvent(e: Event) {
-  e.preventDefault(); // don't refresh page with button type submit
+async function saveEvent() {
+  if (isLocked.value) return;
 
   const event = reconstructEvent();
   if (!validate(event)) return;
 
-  let newEvent: CalendarEvent;
+  isSaving.value = true;
+
   try {
     if (thisModal.isNew.value) {
       console.time('Time to create event');
-      newEvent = await CalendarCore.createEvent(event);
+      const newEvent = await CalendarCore.createEvent(event);
       console.timeEnd('Time to create event');
       console.log('created event:', newEvent);
     } else if (!originalEvent?.repeat) {
-      newEvent = await CalendarCore.updateEvent(event);
+      const newEvent = await CalendarCore.updateEvent(event);
       console.log('updated event:', newEvent);
     } else {
       strategyModal.open('update'); // pop-up with strategy options
       return; // don't close this eventModal just yet
     }
+
+    emit('refresh-data');
+    void syncAllWrapper();
+    thisModal.close();
   } catch (err) {
     alert(String(err));
-    return;
+  } finally {
+    isSaving.value = false;
   }
-
-  emit('refresh-data');
-  syncAllWrapper();
-  thisModal.close();
 }
 
 async function deleteEvent() {
+  if (isLocked.value) return;
+
   const event = reconstructEvent();
+
+  isDeleting.value = true;
 
   try {
     if (!event.repeat) {
@@ -206,17 +217,21 @@ async function deleteEvent() {
       strategyModal.open('delete'); // pop-up with strategy options
       return; // don't close this eventModal just yet
     }
+
+    emit('refresh-data');
+    syncAllWrapper();
+    thisModal.close();
   } catch (err) {
     alert(String(err));
-    return;
+  } finally {
+    isDeleting.value = false;
   }
-
-  emit('refresh-data');
-  syncAllWrapper();
-  thisModal.close();
 }
 
 async function updateWithStrategy(strategy: UpdateStrategy) {
+  if (isLocked.value) return;
+  isUpdatingWithStrategy.value = true;
+
   try {
     switch (strategyModal.getAction()) {
       case 'delete':
@@ -226,14 +241,15 @@ async function updateWithStrategy(strategy: UpdateStrategy) {
         await saveRepeatingEvent(strategy);
         break;
     }
+    emit('refresh-data');
+    strategyModal.close();
+    syncAllWrapper();
+    thisModal.close();
   } catch (err) {
     alert(String(err));
-    return;
+  } finally {
+    isUpdatingWithStrategy.value = false;
   }
-
-  emit('refresh-data');
-  strategyModal.close();
-  thisModal.close();
 }
 
 async function saveRepeatingEvent(strategy: UpdateStrategy) {
@@ -293,113 +309,117 @@ onMounted(async () => {
 
 <template>
   <div id="event-modal" class="modal">
-    <form>
-      <input
-        type="text"
-        name="title"
-        :placeholder="$t('event.title')"
-        autocomplete="none"
-        v-model="form.title"
-        ref="name-input-field"
-        :class="{ red: errors.missingName }"
-        @input="errors.missingName = false"
-      />
+    <form @submit.prevent="saveEvent" :aria-busy="isLocked">
+      <fieldset :disabled="isLocked">
+        <input
+          type="text"
+          name="title"
+          :placeholder="$t('event.title')"
+          autocomplete="none"
+          v-model="form.title"
+          ref="name-input-field"
+          :class="{ red: errors.missingName }"
+          @input="errors.missingName = false"
+        />
 
-      <div class="dates">
-        <span>{{ $t('event.from') }}:</span>
-        <div class="datetime" :class="{ red: errors.badFromDate }">
-          <input type="date" name="from-date" v-model="form.fromDate" @change="errors.badFromDate = false" />
-          <input
-            type="time"
-            name="from-time"
-            v-model="form.fromTime"
-            v-if="!form.entireDay"
-            @change="errors.badFromDate = false"
-          />
+        <div class="dates">
+          <span>{{ $t('event.from') }}:</span>
+          <div class="datetime" :class="{ red: errors.badFromDate }">
+            <input type="date" name="from-date" v-model="form.fromDate" @change="errors.badFromDate = false" />
+            <input
+              type="time"
+              name="from-time"
+              v-model="form.fromTime"
+              v-if="!form.entireDay"
+              @change="errors.badFromDate = false"
+            />
+          </div>
+
+          <span>{{ $t('event.to') }}:</span>
+          <div class="datetime" :class="{ red: errors.badToDate }">
+            <input type="date" name="to-date" v-model="form.toDate" @change="errors.badToDate = false" />
+            <input
+              type="time"
+              name="to-time"
+              v-model="form.toTime"
+              v-if="!form.entireDay"
+              @change="errors.badToDate = false"
+            />
+          </div>
         </div>
 
-        <span>{{ $t('event.to') }}:</span>
-        <div class="datetime" :class="{ red: errors.badToDate }">
-          <input type="date" name="to-date" v-model="form.toDate" @change="errors.badToDate = false" />
+        <label>
+          {{ $t('event.entireDay') }}
+          <input type="checkbox" v-model="form.entireDay" />
+        </label>
+
+        <label>
+          {{ $t('event.repeat.repeat') }}:
+          <select name="repeat" v-model="form.repeatFreq">
+            <option v-for="freq in frequencyOptions" :value="freq.value" :key="freq.label">
+              {{ $t(`event.repeat.${freq.label}`) }}
+            </option>
+          </select>
+        </label>
+
+        <label v-if="form.repeatFreq">
+          {{ $t('event.repeat.end') }}:
+          <select name="end" v-model="form.repeatEnd">
+            <option v-for="end in repeatEndOptions" :value="end.value" :key="end.label">
+              {{ $t(`event.repeat.end${end.label}`) }}
+            </option>
+          </select>
+
           <input
-            type="time"
-            name="to-time"
-            v-model="form.toTime"
-            v-if="!form.entireDay"
-            @change="errors.badToDate = false"
+            v-if="form.repeatEnd == 'on'"
+            type="date"
+            name="end-on"
+            v-model="form.repeatEndOn"
+            :class="{ red: errors.badUntilDate }"
+            @change="errors.badUntilDate = false"
           />
-        </div>
-      </div>
+          <input v-if="form.repeatEnd == 'after'" type="number" name="end-after" v-model="form.repeatEndAfter" />
+        </label>
 
-      <label>
-        {{ $t('event.entireDay') }}
-        <input type="checkbox" v-model="form.entireDay" />
-      </label>
-
-      <label>
-        {{ $t('event.repeat.repeat') }}:
-        <select name="repeat" v-model="form.repeatFreq">
-          <option v-for="freq in frequencyOptions" :value="freq.value" :key="freq.label">
-            {{ $t(`event.repeat.${freq.label}`) }}
-          </option>
-        </select>
-      </label>
-
-      <label v-if="form.repeatFreq">
-        {{ $t('event.repeat.end') }}:
-        <select name="end" v-model="form.repeatEnd">
-          <option v-for="end in repeatEndOptions" :value="end.value" :key="end.label">
-            {{ $t(`event.repeat.end${end.label}`) }}
-          </option>
-        </select>
+        <label>
+          {{ $t('event.calendar') }}:
+          <select name="calendar" v-model="form.calendar">
+            <option v-for="calendarName in calendarNames" :value="calendarName" :key="calendarName">
+              {{ calendarName }}
+            </option>
+          </select>
+        </label>
 
         <input
-          v-if="form.repeatEnd == 'on'"
-          type="date"
-          name="end-on"
-          v-model="form.repeatEndOn"
-          :class="{ red: errors.badUntilDate }"
-          @change="errors.badUntilDate = false"
+          type="text"
+          name="location"
+          :placeholder="$t('event.location')"
+          autocomplete="none"
+          v-model="form.location"
         />
-        <input v-if="form.repeatEnd == 'after'" type="number" name="end-after" v-model="form.repeatEndAfter" />
-      </label>
 
-      <label>
-        {{ $t('event.calendar') }}:
-        <select name="calendar" v-model="form.calendar">
-          <option v-for="calendarName in calendarNames" :value="calendarName" :key="calendarName">
-            {{ calendarName }}
-          </option>
-        </select>
-      </label>
+        <!--
+        TODO tags
+        <div>
+            <label v-for="tagName in exampleTags" :key="tagName">
+            <input type="checkbox" name="idk" :value="tagName" v-model="selectedTags" />
+            {{ tagName }}
+            </label>
+        </div>
+        -->
 
-      <input
-        type="text"
-        name="location"
-        :placeholder="$t('event.location')"
-        autocomplete="none"
-        v-model="form.location"
-      />
+        <textarea name="description" rows="3" :placeholder="$t('event.description')" v-model="form.description" />
 
-      <!--
-      TODO tags
-      <div>
-        <label v-for="tagName in exampleTags" :key="tagName">
-          <input type="checkbox" name="idk" :value="tagName" v-model="selectedTags" />
-          {{ tagName }}
-        </label>
-      </div>
-      -->
-
-      <textarea name="description" rows="3" :placeholder="$t('event.description')" v-model="form.description" />
-
-      <div class="bottom-btns">
-        <button type="submit" @click="saveEvent">{{ $t('saveBtn') }}</button>
-        <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
-        <button v-if="!thisModal.isNew.value" type="button" @click="deleteEvent" class="delete-btn">
-          {{ $t('deleteBtn') }}
-        </button>
-      </div>
+        <div class="bottom-btns">
+          <button type="submit">
+            {{ isSaving ? $t('savingBtn') : $t('saveBtn') }}
+          </button>
+          <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
+          <button v-if="!thisModal.isNew.value" type="button" @click="deleteEvent" class="delete-btn">
+            {{ isDeleting ? $t('deletingBtn') : $t('deleteBtn') }}
+          </button>
+        </div>
+      </fieldset>
     </form>
   </div>
 
@@ -452,6 +472,22 @@ label:has(select) {
 
   &:hover:not(:focus):not(:disabled) {
     background-color: var(--btn-red-bg-color-hover);
+  }
+}
+
+fieldset {
+  display: contents;
+  border: 0;
+  padding: 0;
+  margin: 0;
+
+  &:disabled label,
+  &:disabled .dates > span {
+    opacity: 0.5;
+  }
+
+  &:disabled select {
+    opacity: 1; /* it was dimmed 2 times idk */
   }
 }
 
