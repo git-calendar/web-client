@@ -9,6 +9,7 @@ import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { syncAllWrapper } from '@/services/gitSync';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -22,7 +23,6 @@ const frequencyOptions = [
   { value: Freq.Year, label: 'yearly' },
 ];
 
-const emit = defineEmits(['refresh-data']);
 const thisModal = useEventModal();
 const strategyModal = useStrategyModal();
 const { alert } = useAlertModal();
@@ -189,7 +189,7 @@ async function saveEvent() {
       return; // don't close this eventModal just yet
     }
 
-    emit('refresh-data');
+    notifyEventsChanged();
     void syncAllWrapper();
     thisModal.close();
   } catch (err) {
@@ -218,8 +218,8 @@ async function deleteEvent() {
       return; // don't close this eventModal just yet
     }
 
-    emit('refresh-data');
-    syncAllWrapper();
+    notifyEventsChanged();
+    void syncAllWrapper();
     thisModal.close();
   } catch (err) {
     alert(String(err));
@@ -241,9 +241,10 @@ async function updateWithStrategy(strategy: UpdateStrategy) {
         await saveRepeatingEvent(strategy);
         break;
     }
-    emit('refresh-data');
+
+    notifyEventsChanged();
     strategyModal.close();
-    syncAllWrapper();
+    void syncAllWrapper();
     thisModal.close();
   } catch (err) {
     alert(String(err));

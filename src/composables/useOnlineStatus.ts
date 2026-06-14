@@ -1,27 +1,29 @@
-import { ref, readonly, onMounted, onUnmounted } from 'vue';
+import { ref, readonly } from 'vue';
 
 const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine);
 
-export function useOnlineStatus() {
-  function updateOnline() {
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
     isOnline.value = true;
-  }
+  });
 
-  function updateOffline() {
+  window.addEventListener('offline', () => {
     isOnline.value = false;
-  }
-
-  onMounted(() => {
-    window.addEventListener('online', updateOnline);
-    window.addEventListener('offline', updateOffline);
   });
+}
 
-  onUnmounted(() => {
-    window.removeEventListener('online', updateOnline);
-    window.removeEventListener('offline', updateOffline);
-  });
-
+export function useOnlineStatus() {
   return {
     isOnline: readonly(isOnline),
   };
+}
+
+export function waitForOnline(): Promise<void> {
+  if (typeof navigator === 'undefined' || navigator.onLine) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    window.addEventListener('online', () => resolve(), { once: true });
+  });
 }

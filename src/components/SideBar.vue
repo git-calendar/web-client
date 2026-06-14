@@ -7,15 +7,14 @@ import NewEventBtn from '@/components/NewEventBtn.vue';
 import { exportZip } from '@/utils';
 import { LuFolderArchive, LuRefreshCcw } from 'vue-icons-plus/lu';
 import { syncAllWrapper } from '@/services/gitSync';
-
-const emit = defineEmits(['refresh-data']);
+import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
 const slots = useSlots();
 const sidebar = useSidebar();
 
 async function syncAndReload() {
   await syncAllWrapper();
-  emit('refresh-data');
+  notifyEventsChanged();
 }
 </script>
 

@@ -7,7 +7,7 @@ import CalendarList from '@/components/CalendarList.vue';
 import EventModal from '@/components/modals/EventModal.vue';
 import CalendarModal from '@/components/modals/CalendarModal.vue';
 
-import { computed, type ComputedRef, useTemplateRef } from 'vue';
+import { computed, type ComputedRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { useKeyboard } from '@/composables/useKeyboard';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
@@ -40,28 +40,20 @@ const views = {
   week: [XDaysView, 7],
   month: [null, null],
 };
-
-const viewComponent = useTemplateRef('calendar-view');
-const calendarsList = useTemplateRef('calendars-list');
-function updateCallDown() {
-  console.log('updating view data');
-  viewComponent.value?.updateData();
-  calendarsList.value?.updateData();
-}
 </script>
 
 <template>
   <div id="calendar-view">
-    <SideBar :hidden="!sidebar.isOpen.value" @refresh-data="updateCallDown">
+    <SideBar :hidden="!sidebar.isOpen.value">
       <MonthSideMap />
-      <CalendarList ref="calendars-list" @refresh-data="updateCallDown" />
+      <CalendarList ref="calendars-list" />
     </SideBar>
 
     <TopBar />
     <component :is="views[activeView][0]" :num-of-days="views[activeView][1]" ref="calendar-view" />
 
-    <EventModal v-if="eventModal.isOpen.value" @refresh-data="updateCallDown" />
-    <CalendarModal v-if="calendarModal.isOpen.value" @refresh-data="updateCallDown" />
+    <EventModal v-if="eventModal.isOpen.value" />
+    <CalendarModal v-if="calendarModal.isOpen.value" />
   </div>
   <span id="alpha">Alpha version</span>
 </template>

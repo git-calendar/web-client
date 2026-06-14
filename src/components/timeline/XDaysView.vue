@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DayTimeline from '@/components/timeline/DayTimeline.vue';
 import type { CalendarEvent } from '@/types/core.ts';
 import { useTranslation } from '@/composables/useTranslation';
@@ -11,6 +11,7 @@ import CursorLine from '@/components/timeline/CursorLine.vue';
 import { useWindowSize } from '@vueuse/core';
 import AllDayBar from '@/components/AllDayBar.vue';
 import { settings } from '@/services/settings';
+import { eventsRevision } from '@/composables/useEventsRefresh';
 
 const { dayNameShort, dayNameSuperShort } = useTranslation();
 const { width } = useWindowSize(); // reactive window size
@@ -26,10 +27,11 @@ const startDate = computed(() => {
 });
 
 watch(
-  () => startDate.value,
-  async () => {
-    updateData();
+  [startDate, () => props.numOfDays, eventsRevision],
+  () => {
+    void updateData();
   },
+  { immediate: true },
 );
 
 const dates = computed(() => {
@@ -66,7 +68,7 @@ const eventsTimeline = ref<CalendarEvent[][]>(Array.from({ length: props.numOfDa
 const eventsWholeDay = ref<CalendarEvent[]>(Array.from({ length: props.numOfDays }));
 
 async function updateData() {
-  const resultTimeline: CalendarEvent[][] = Array.from({ length: 7 }, () => []);
+  const resultTimeline: CalendarEvent[][] = Array.from({ length: props.numOfDays }, () => []);
   const resultWholeDay: CalendarEvent[] = [];
   const events = await CalendarCore.getEvents(startDate.value, startDate.value.plus({ day: props.numOfDays }));
 
@@ -85,7 +87,7 @@ async function updateData() {
     const dayIndex = Math.floor(diffInDays);
 
     // add it to appropriate day
-    if (dayIndex >= 0 && dayIndex < 7) {
+    if (dayIndex >= 0 && dayIndex < props.numOfDays) {
       resultTimeline[dayIndex]?.push(event);
     }
   }
@@ -93,11 +95,6 @@ async function updateData() {
   eventsTimeline.value = resultTimeline;
   eventsWholeDay.value = resultWholeDay;
 }
-
-onMounted(async () => {
-  await updateData();
-});
-defineExpose({ updateData });
 </script>
 
 <template>
