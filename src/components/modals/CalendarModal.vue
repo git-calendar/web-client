@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted, useTemplateRef, ref } from 'vue';
+import { reactive, watch, onMounted, useTemplateRef, ref, computed } from 'vue';
 import MultiToggle from '@/components/MultiToggle.vue';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
@@ -12,6 +12,11 @@ const { t } = useI18n();
 const emit = defineEmits(['refresh-data']);
 const thisModal = useCalendarModal();
 const { alert, confirm } = useAlertModal();
+
+const originalCalendar = ref<Calendar | undefined>();
+const isSaving = ref(false);
+const isDeleting = ref(false);
+const isLocked = computed(() => isSaving.value || isDeleting.value);
 
 const howOptions = ['Init', 'Clone'];
 const form = reactive({
@@ -27,8 +32,6 @@ const errors = reactive({
   missingName: false,
   badURL: false,
 });
-
-const originalCalendar = ref<Calendar | undefined>();
 
 watch(
   () => thisModal.openedCalendarName,
@@ -66,9 +69,12 @@ function updateFormFromCalendar(calendar: Calendar) {
 }
 
 async function saveCalendar(e: Event) {
-  e.preventDefault();
-
+  if (isLocked.value) return;
   if (!validate()) return;
+
+  isSaving.value = true;
+
+  e.preventDefault();
 
   try {
     if (thisModal.isNew.value) {
@@ -76,15 +82,15 @@ async function saveCalendar(e: Event) {
     } else {
       await updateCalendar();
     }
-
     await CalendarCore.loadCalendars();
+
+    emit('refresh-data');
+    thisModal.close();
   } catch (err) {
     alert(String(err));
-    return;
+  } finally {
+    isSaving.value = false;
   }
-
-  emit('refresh-data');
-  thisModal.close();
 }
 
 async function createCalendar() {
@@ -122,34 +128,33 @@ async function updateCalendar() {
   if (rawUrl !== '') {
     const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
     if (calendar.remoteUrl !== newRemoteUrl) {
-      try {
-        await CalendarCore.updateRemote(calendarName, newRemoteUrl);
-        await syncAllWrapper(); // merge/pull or whatever
-      } catch (err) {
-        alert(String(err));
-      }
+      await CalendarCore.updateRemote(calendarName, newRemoteUrl);
+      await syncAllWrapper(); // merge/pull or whatever
     }
   }
 }
 
 async function deleteCal() {
+  if (isLocked.value) return;
   console.log('deleting calendar', originalCalendar.value);
-
   if (!originalCalendar.value) throw new Error('Cannot delete calendar. This should not happen...');
 
-  let ok = await confirm(t('message.confirmCalendarDelete'));
-  if (!ok) return;
+  isDeleting.value = true;
 
   try {
+    let ok = await confirm(t('message.confirmCalendarDelete'));
+    if (!ok) return;
+
     await CalendarCore.removeCalendar(originalCalendar.value.name);
     await CalendarCore.loadCalendars();
+
+    emit('refresh-data');
+    thisModal.close();
   } catch (err) {
     alert(String(err));
-    return;
+  } finally {
+    isDeleting.value = false;
   }
-
-  emit('refresh-data');
-  thisModal.close();
 }
 
 function validate(): boolean {
@@ -260,100 +265,111 @@ onMounted(() => {
 
 <template>
   <div id="calendar-modal" class="modal">
-    <form>
-      <MultiToggle v-if="thisModal.isNew.value" v-model="form.how" :options="howOptions" style="align-self: center" />
-
-      <input
-        type="text"
-        name="name"
-        :placeholder="$t('calendar.name')"
-        autocomplete="none"
-        :disabled="thisModal.isNew.value && form.how != 'Init'"
-        v-model="form.name"
-        ref="name-input-field"
-        :class="{ red: errors.missingName }"
-        @input="errors.missingName = false"
-      />
-
-      <input
-        type="url"
-        name="url"
-        :placeholder="`Remote URL ${form.how == 'Init' ? '(' + $t('optionalText') + ')' : ''}`"
-        autocomplete="none"
-        v-model="form.url"
-        :class="{ red: errors.badURL }"
-        @input="errors.badURL = false"
-      />
-
-      <div id="git-credentials">
-        {{ $t('calendar.gitCredentials') }}
-        <div>
-          <input
-            type="text"
-            name="username"
-            :placeholder="$t('calendar.username')"
-            autocomplete="username"
-            v-model="form.username"
-          />
-          <input
-            type="password"
-            name="password"
-            :placeholder="$t('calendar.password')"
-            autocomplete="current-password"
-            v-model="form.password"
-          />
-        </div>
-      </div>
-
-      <div id="encryption" v-if="thisModal.isNew.value">
-        <!-- TODO: re-encrypt option for existing calendars -->
-        <label>
-          {{ $t('calendar.encrypted') }}
-          <input type="checkbox" v-model="form.encrypted" />
-        </label>
+    <form @submit.prevent="saveCalendar" :aria-busy="isLocked">
+      <fieldset :disabled="isLocked">
+        <MultiToggle v-if="thisModal.isNew.value" v-model="form.how" :options="howOptions" style="align-self: center" />
 
         <input
-          v-if="form.encrypted"
-          type="password"
-          name="decryption-key"
-          :placeholder="$t('calendar.decryptionKey')"
-          autocomplete="current-password"
-          v-model="form.decryptionKey"
+          type="text"
+          name="name"
+          :placeholder="$t('calendar.name')"
+          autocomplete="none"
+          :disabled="thisModal.isNew.value && form.how != 'Init'"
+          v-model="form.name"
+          ref="name-input-field"
+          :class="{ red: errors.missingName }"
+          @input="errors.missingName = false"
         />
-      </div>
 
-      <div class="bottom-btns">
-        <button type="submit" @click="saveCalendar">{{ $t('saveBtn') }}</button>
-        <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
-        <button v-if="!thisModal.isNew.value" type="button" @click="deleteCal" class="delete-btn">
-          {{ $t('deleteBtn') }}
-        </button>
-      </div>
+        <input
+          type="url"
+          name="url"
+          :placeholder="`Remote URL ${form.how == 'Init' ? '(' + $t('optionalText') + ')' : ''}`"
+          autocomplete="none"
+          v-model="form.url"
+          :class="{ red: errors.badURL }"
+          @input="errors.badURL = false"
+        />
+
+        <div id="git-credentials">
+          {{ $t('calendar.gitCredentials') }}
+          <div>
+            <input
+              type="text"
+              name="username"
+              :placeholder="$t('calendar.username')"
+              autocomplete="username"
+              v-model="form.username"
+            />
+            <input
+              type="password"
+              name="password"
+              :placeholder="$t('calendar.password')"
+              autocomplete="current-password"
+              v-model="form.password"
+            />
+          </div>
+        </div>
+
+        <div id="encryption" v-if="thisModal.isNew.value">
+          <!-- TODO: re-encrypt option for existing calendars -->
+          <label>
+            {{ $t('calendar.encrypted') }}
+            <input type="checkbox" v-model="form.encrypted" />
+          </label>
+
+          <input
+            v-if="form.encrypted"
+            type="password"
+            name="decryption-key"
+            :placeholder="$t('calendar.decryptionKey')"
+            autocomplete="current-password"
+            v-model="form.decryptionKey"
+          />
+        </div>
+
+        <div class="bottom-btns">
+          <button type="submit">
+            {{ isSaving ? $t('savingBtn') : $t('saveBtn') }}
+          </button>
+          <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
+          <button v-if="!thisModal.isNew.value" type="button" @click="deleteCal" class="delete-btn">
+            {{ isDeleting ? $t('deletingBtn') : $t('deleteBtn') }}
+          </button>
+        </div>
+      </fieldset>
     </form>
   </div>
 </template>
 
 <style scoped>
-#calendar-modal {
-  form {
-    > #git-credentials,
-    #encryption {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
+#git-credentials,
+#encryption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 
-      > div {
-        width: 100%;
-        display: flex;
-        gap: 1rem;
-        justify-content: stretch;
+  > div {
+    width: 100%;
+    display: flex;
+    gap: 1rem;
+    justify-content: stretch;
 
-        > * {
-          flex: 1;
-          width: 100%;
-        }
-      }
+    > * {
+      flex: 1;
+      width: 100%;
     }
+  }
+}
+
+fieldset {
+  display: contents;
+  border: 0;
+  padding: 0;
+  margin: 0;
+
+  &:disabled > #git-credentials {
+    opacity: 0.5;
   }
 }
 

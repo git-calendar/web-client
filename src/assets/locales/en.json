@@ -49,10 +49,12 @@
     "month": "Month"
   },
   "saveBtn": "Save",
+  "savingBtn": "Saving...",
   "createBtn": "Create",
   "closeBtn": "Close",
   "cancelBtn": "Cancel",
   "deleteBtn": "Delete",
+  "deletingBtn": "Deleting...",
   "todayBtn": "Today",
   "newEventBtn": "New event",
   "calendarsTitle": "Calendars",

@@ -49,10 +49,12 @@
     "month": "Měsíc"
   },
   "saveBtn": "Uložit",
+  "savingBtn": "Ukládání...",
   "createBtn": "Vytvořit",
   "closeBtn": "Zavřít",
   "cancelBtn": "Zrušit",
   "deleteBtn": "Smazat",
+  "deletingBtn": "Mazání...",
   "todayBtn": "Dnes",
   "newEventBtn": "Nová událost",
   "calendarsTitle": "Kalendáře",
