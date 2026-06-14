@@ -17,6 +17,8 @@ export function useEventModal() {
       } else {
         editingEvent.value = {
           title: '',
+          description: '',
+          location: '',
           from: DateTime.now(),
           to: DateTime.now().plus({ hour: 2 }),
           calendar: 'default',

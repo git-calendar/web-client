@@ -6,6 +6,7 @@ import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import type { Calendar } from '@/types/core';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useI18n } from 'vue-i18n';
+import { syncAllWrapper } from '@/services/gitSync';
 
 const { t } = useI18n();
 const emit = defineEmits(['refresh-data']);
@@ -56,10 +57,12 @@ function updateFormFromCalendar(calendar: Calendar) {
   form.encrypted = calendar.encrypted;
   form.decryptionKey = ''; // secret
 
-  const remoteUrl = authFromUrl(calendar.remoteUrl);
-  form.url = remoteUrl.url;
-  form.username = remoteUrl.username;
-  form.password = remoteUrl.password;
+  if (calendar.remoteUrl) {
+    const remoteUrl = authFromUrl(calendar.remoteUrl);
+    form.url = remoteUrl.url;
+    form.username = remoteUrl.username;
+    form.password = remoteUrl.password;
+  }
 }
 
 async function saveCalendar(e: Event) {
@@ -111,15 +114,17 @@ async function updateCalendar() {
     calendarName = form.name;
   }
 
-  const rawUrl = form.url?.trim();
-  if (rawUrl && !rawUrl) {
-    errors.badURL = true;
-    return;
-  }
-
-  const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
-  if (calendar.remoteUrl !== newRemoteUrl) {
-    await CalendarCore.updateRemote(calendarName, newRemoteUrl);
+  const rawUrl = form.url.trim();
+  if (rawUrl !== '') {
+    const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
+    if (calendar.remoteUrl !== newRemoteUrl) {
+      try {
+        await CalendarCore.updateRemote(calendarName, newRemoteUrl);
+        await syncAllWrapper(); // merge/pull or whatever
+      } catch (err) {
+        alert(String(err));
+      }
+    }
   }
 }
 

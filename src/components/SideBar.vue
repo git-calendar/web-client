@@ -8,8 +8,15 @@ import { exportZip } from '@/utils';
 import { LuFolderArchive, LuRefreshCcw } from 'vue-icons-plus/lu';
 import { syncAllWrapper } from '@/services/gitSync';
 
+const emit = defineEmits(['refresh-data']);
+
 const slots = useSlots();
 const sidebar = useSidebar();
+
+async function syncAndReload() {
+  await syncAllWrapper();
+  emit('refresh-data');
+}
 </script>
 
 <template>
@@ -35,7 +42,7 @@ const sidebar = useSidebar();
       <button type="button" @click="exportZip('')">
         <LuFolderArchive style="transform: scale(1.1)" />
       </button>
-      <button type="button" @click="syncAllWrapper">
+      <button type="button" @click="syncAndReload">
         <LuRefreshCcw />
       </button>
       <a href="https://github.com/git-calendar/web-client" target="_blank">

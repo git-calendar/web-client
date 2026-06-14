@@ -51,7 +51,7 @@ function updateCallDown() {
 
 <template>
   <div id="calendar-view">
-    <SideBar :hidden="!sidebar.isOpen.value">
+    <SideBar :hidden="!sidebar.isOpen.value" @refresh-data="updateCallDown">
       <MonthSideMap />
       <CalendarList ref="calendars-list" @refresh-data="updateCallDown" />
     </SideBar>
