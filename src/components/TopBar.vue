@@ -9,6 +9,7 @@ import MultiToggle from '@/components/MultiToggle.vue';
 import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import NewEventBtn from '@/components/NewEventBtn.vue';
 import { useMobile } from '@/composables/useMobile';
+import SyncStatus from '@/components/SyncStatus.vue';
 
 const router = useRouter();
 const sidebar = useSidebar();
@@ -52,6 +53,7 @@ function jumpToToday() {
     <SidebarCloseBtn v-if="!sidebar.isOpen.value" />
     <NewEventBtn v-if="!sidebar.isOpen.value" :large="!isMobile" />
 
+    <SyncStatus />
     <!-- TODO: remove disabled -->
     <MultiToggle
       v-model="view"
