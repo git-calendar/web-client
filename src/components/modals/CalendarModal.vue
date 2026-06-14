@@ -94,7 +94,7 @@ async function saveCalendar(e: Event) {
 }
 
 async function createCalendar() {
-  console.log('creating calendar', form.name);
+  console.log('creating calendar', form.name, form.url);
 
   switch (form.how) {
     case 'Init':
@@ -136,7 +136,7 @@ async function updateCalendar() {
 
 async function deleteCal() {
   if (isLocked.value) return;
-  console.log('deleting calendar', originalCalendar.value);
+  console.log('deleting calendar', originalCalendar.value?.name);
   if (!originalCalendar.value) throw new Error('Cannot delete calendar. This should not happen...');
 
   isDeleting.value = true;
