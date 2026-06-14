@@ -1,7 +1,20 @@
 <script setup lang="ts">
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { watch, nextTick, ref } from 'vue';
 
 const { alertModalState, close } = useAlertModal();
+const confirmButton = ref<HTMLButtonElement | null>(null);
+
+// focus btn so that you can skip by pressing enter (type=submit stuff)
+watch(
+  () => alertModalState.isOpen,
+  async (isOpen) => {
+    if (!isOpen) return;
+
+    await nextTick();
+    confirmButton.value?.focus();
+  },
+);
 </script>
 
 <template>
@@ -11,11 +24,11 @@ const { alertModalState, close } = useAlertModal();
 
       <div class="bottom-btns">
         <template v-if="alertModalState.type === 'alert'">
-          <button type="submit">{{ alertModalState.confirmText }}</button>
+          <button ref="confirmButton" type="submit">{{ alertModalState.confirmText }}</button>
         </template>
 
         <template v-if="alertModalState.type === 'confirm'">
-          <button type="submit">{{ alertModalState.confirmText }}</button>
+          <button ref="confirmButton" type="submit">{{ alertModalState.confirmText }}</button>
           <button type="button" @click="close(false)">{{ alertModalState.cancelText }}</button>
         </template>
       </div>
