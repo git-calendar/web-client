@@ -4,12 +4,11 @@ import type { CalendarEvent } from '@/types/core.ts';
 import { DateTime } from 'luxon';
 import { useMouse } from '@vueuse/core';
 import { numberOfHours, timeRangeFormat } from '@/utils';
-import { useSettings } from '@/composables/useSettings';
 import { useEventModal } from '@/composables/modals/useEventModal';
+import { settings } from '@/services/settings';
 
 export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref<DateTime>) {
   const { y } = useMouse();
-  const { settings } = useSettings();
   const eventModal = useEventModal();
 
   const drag = ref({ active: false, anchorY: 0 });

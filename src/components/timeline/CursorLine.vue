@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { useSettings } from '@/composables/useSettings';
+import { settings } from '@/services/settings';
 import { timeInPercentOnTimeline } from '@/utils';
 import { DateTime } from 'luxon';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-
-const { settings } = useSettings();
 
 const hour = ref(DateTime.now().hour);
 const minute = ref(DateTime.now().minute);

@@ -3,10 +3,6 @@ import { watch } from 'vue';
 import { CALENDAR_VIEWS, LANGUAGES, THEMES } from '@/constants.ts';
 import { type HourNumbers, type WeekdayNumbers, Settings as LuxonSettings } from 'luxon';
 
-export function useSettings() {
-  return { settings };
-}
-
 export type CalendarView = (typeof CALENDAR_VIEWS)[number];
 
 type Theme = (typeof THEMES)[number];
@@ -26,7 +22,7 @@ type UserSettings = {
 };
 
 // default settings
-const settings = useStorage<UserSettings>(
+export const settings = useStorage<UserSettings>(
   'user-settings',
   {
     theme: 'auto',

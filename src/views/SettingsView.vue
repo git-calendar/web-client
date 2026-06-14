@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime, type WeekdayNumbers } from 'luxon';
 import { DRAG_PRECISIONS, LANGUAGES, THEMES } from '@/constants.ts';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { settings } from '@/services/settings';
 
-const { settings } = useSettings();
 const { dayNameLong } = useTranslation();
 const { alert } = useAlertModal();
 

@@ -1,10 +1,8 @@
 import { DateTime } from 'luxon';
 import { type RouteParamsGeneric, type Router } from 'vue-router';
-import { useSettings } from '@/composables/useSettings';
 import type { CalendarEvent } from './types/core';
 import { CalendarCore } from './wasm/core-wrapper';
-
-const { settings } = useSettings();
+import { settings } from './services/settings';
 
 /**
  * Returns the datetime from route parameters.

@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import DayTimeline from '@/components/timeline/DayTimeline.vue';
 import type { CalendarEvent } from '@/types/core.ts';
-import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -11,8 +10,8 @@ import { useRoute } from 'vue-router';
 import CursorLine from '@/components/timeline/CursorLine.vue';
 import { useWindowSize } from '@vueuse/core';
 import AllDayBar from '@/components/AllDayBar.vue';
+import { settings } from '@/services/settings';
 
-const { settings } = useSettings();
 const { dayNameShort, dayNameSuperShort } = useTranslation();
 const { width } = useWindowSize(); // reactive window size
 const isMobile = computed(() => width.value < 500);

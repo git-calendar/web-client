@@ -9,17 +9,16 @@ import CalendarModal from '@/components/modals/CalendarModal.vue';
 
 import { computed, type ComputedRef, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
-import { useSettings, type CalendarView } from '@/composables/useSettings';
 import { useKeyboard } from '@/composables/useKeyboard';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { useSidebar } from '@/composables/useSidebar';
 import { CALENDAR_VIEWS } from '@/constants';
+import { settings, type CalendarView } from '@/services/settings';
 
 useKeyboard();
 const calendarModal = useCalendarModal();
 const eventModal = useEventModal();
-const { settings } = useSettings();
 const route = useRoute();
 const sidebar = useSidebar();
 

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import type { CalendarEvent } from '@/types/core';
-import { useSettings } from '@/composables/useSettings';
 import BaseEvent from '@/components/timeline/BaseEvent.vue';
 import { numberOfHours, timeRangeFormat } from '@/utils';
-
-const { settings } = useSettings();
+import { settings } from '@/services/settings';
 
 interface Props {
   event: CalendarEvent;

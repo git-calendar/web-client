@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useSettings } from '@/composables/useSettings';
 import { useTranslation } from '@/composables/useTranslation';
 import router from '@/router';
+import { settings } from '@/services/settings';
 import { getCurrentViewDatetime, getStartOfWeek, getViewLengthInDays, getWeekAlignedRedirect } from '@/utils';
 import { DateTime } from 'luxon';
 import { computed, ref, watch } from 'vue';
@@ -10,7 +10,6 @@ import { useRoute } from 'vue-router';
 
 const { monthNameLong } = useTranslation();
 const route = useRoute();
-const { settings } = useSettings();
 
 const currentDatetime = ref<DateTime>(DateTime.now());
 const monthTracker = ref(currentDatetime.value.month);

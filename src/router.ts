@@ -3,10 +3,9 @@ import CalendarView from '@/views/CalendarView.vue';
 import SettingsView from '@/views/SettingsView.vue';
 import { DateTime } from 'luxon';
 
-import { useSettings } from '@/composables/useSettings';
 import { getWeekAlignedRedirect } from '@/utils';
+import { settings } from './services/settings';
 
-const { settings } = useSettings();
 const isGitHubPages = import.meta.env.VITE_GITHUB_PAGES == 'true'; // needs to have VITE_ prefix
 
 const router = createRouter({

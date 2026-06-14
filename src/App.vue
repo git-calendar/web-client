@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import LoadingView from '@/views/LoadingView.vue';
-import { useSettings } from '@/composables/useSettings.ts';
 import { CalendarCore, CoreLoadingState } from '@/wasm/core-wrapper';
 import { onBeforeMount, ref } from 'vue';
 import AlertModal from '@/components/modals/AlertModal.vue';
 import { createCalendarOnce } from '@/utils';
 import { syncAllWrapper } from '@/services/gitSync';
+import { settings } from './services/settings';
 
-const { settings } = useSettings();
 const coreReady = ref(false); // waits for loadCalendars etc.
 
 onBeforeMount(async () => {

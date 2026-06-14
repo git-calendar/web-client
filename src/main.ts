@@ -2,8 +2,8 @@ import { createApp } from 'vue';
 import App from '@/App.vue';
 import router from '@/router.ts';
 import '@/assets/styles.css';
-import '@/composables/useSettings.ts'; // init settings
-import { useTranslation } from '@/composables/useTranslation';
+import '@/services/settings.ts'; // init settings
+import { useTranslation } from '@/composables/useTranslation.ts';
 
 import { registerSW } from 'virtual:pwa-register';
 
