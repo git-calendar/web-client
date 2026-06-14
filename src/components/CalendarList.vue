@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
-import { onMounted, ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import type { Calendar } from '@/types/core';
+import { eventsRevision } from '@/composables/useEventsRefresh';
 
 const calendarModal = useCalendarModal();
-const emit = defineEmits(['refresh-data']);
 const calendars = ref<Calendar[]>([]);
 const hidden = ref(new Map<string, boolean>());
-
-onMounted(async () => {
-  await updateData();
-});
 
 function toggle(cal: Calendar) {
   hidden.value.set(cal.name, !(hidden.value.get(cal.name) ?? false));
@@ -26,7 +22,13 @@ async function updateData() {
   calendars.value = await CalendarCore.listCalendars();
 }
 
-defineExpose({ updateData });
+watch(
+  eventsRevision, // TODO: separate calendar signal?
+  () => {
+    void updateData();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
