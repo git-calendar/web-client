@@ -88,6 +88,8 @@ async function saveCalendar(e: Event) {
 }
 
 async function createCalendar() {
+  console.log('creating calendar', form.name);
+
   switch (form.how) {
     case 'Init':
       await CalendarCore.createCalendar(form.name.trim(), form.encrypted ? form.decryptionKey : '');
@@ -105,6 +107,8 @@ async function createCalendar() {
 async function updateCalendar() {
   const calendar = originalCalendar.value;
   const origName = calendar?.name;
+
+  console.log('updating calendar', origName);
 
   if (!origName) throw new Error('Cannot update calendar. This should not happen...');
 
@@ -129,6 +133,8 @@ async function updateCalendar() {
 }
 
 async function deleteCal() {
+  console.log('deleting calendar', originalCalendar.value);
+
   if (!originalCalendar.value) throw new Error('Cannot delete calendar. This should not happen...');
 
   let ok = await confirm(t('message.confirmCalendarDelete'));

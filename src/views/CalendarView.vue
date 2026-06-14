@@ -44,6 +44,7 @@ const views = {
 const viewComponent = useTemplateRef('calendar-view');
 const calendarsList = useTemplateRef('calendars-list');
 function updateCallDown() {
+  console.log('updating view data');
   viewComponent.value?.updateData();
   calendarsList.value?.updateData();
 }
