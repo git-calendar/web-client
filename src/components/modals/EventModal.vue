@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue';
+import { ref, reactive, watch, onMounted, useTemplateRef, toRaw } from 'vue';
 import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -8,6 +8,7 @@ import StrategyModal from '@/components/modals/StrategyModal.vue';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { syncAllWrapper } from '@/services/gitSync';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -49,14 +50,42 @@ const errors = reactive({
   badUntilDate: false,
 });
 
-const calendarNames = ref([] as string[]);
+const calendarNames = ref<string[]>([]);
+const calendarNamesLoaded = ref(false);
+
+void loadCalendarNames();
+
+async function loadCalendarNames() {
+  try {
+    calendarNames.value = (await CalendarCore.listCalendars()).map((cal) => cal.name);
+  } catch (err) {
+    alert(String(err));
+  } finally {
+    calendarNamesLoaded.value = true;
+  }
+}
 
 let originalEvent: CalendarEvent | undefined = undefined;
 watch(
-  () => thisModal.event.value,
-  (newEvent) => {
-    originalEvent = newEvent; // copy
-    updateFormFromEvent(newEvent);
+  [() => thisModal.event.value, calendarNames],
+  ([newEvent]) => {
+    if (!newEvent) {
+      originalEvent = undefined;
+      return;
+    }
+
+    originalEvent = cloneDeep(toRaw(newEvent));
+    const eventForForm = cloneDeep(originalEvent);
+
+    if (eventForForm.calendar === '') {
+      if (!calendarNamesLoaded.value) return;
+      console.log(calendarNames.value);
+      // calendar unset -> choose one
+      originalEvent.calendar = eventForForm.calendar = calendarNames.value.includes('default')
+        ? 'default'
+        : (calendarNames.value.at(0) ?? '');
+    }
+    updateFormFromEvent(originalEvent);
   },
   { immediate: true }, // fire right onMounted, not wait till first change
 );
@@ -255,7 +284,6 @@ function validate(event: CalendarEvent): boolean {
 
 const nameInputField = useTemplateRef('name-input-field');
 onMounted(async () => {
-  calendarNames.value = (await CalendarCore.listCalendars()).map((cal) => cal.name);
   nameInputField.value?.focus(); // focus name field
 });
 

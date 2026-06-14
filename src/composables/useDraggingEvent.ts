@@ -121,7 +121,7 @@ export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref
       location: '',
       from: startTime,
       to: endTime,
-      calendar: 'default',
+      calendar: '',
       tag: '',
     };
     eventModal.open(event);

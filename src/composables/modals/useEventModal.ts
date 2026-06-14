@@ -9,7 +9,7 @@ export function useEventModal() {
   return {
     isOpen: readonly(isOpen),
     event: readonly(editingEvent),
-    isNew: computed(() => editingEvent.value!.id === undefined),
+    isNew: computed(() => editingEvent.value && editingEvent.value.id === undefined),
 
     open(event?: CalendarEvent) {
       if (event) {
@@ -21,7 +21,7 @@ export function useEventModal() {
           location: '',
           from: DateTime.now(),
           to: DateTime.now().plus({ hour: 2 }),
-          calendar: 'default',
+          calendar: '',
           tag: '',
         };
       }
