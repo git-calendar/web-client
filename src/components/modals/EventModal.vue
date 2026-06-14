@@ -4,9 +4,10 @@ import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
-import StrategyModal from './StrategyModal.vue';
+import StrategyModal from '@/components/modals/StrategyModal.vue';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { syncAllWrapper } from '@/services/gitSync';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -158,6 +159,7 @@ async function saveEvent(e: Event) {
   }
 
   emit('refresh-data');
+  syncAllWrapper();
   thisModal.close();
 }
 
@@ -181,6 +183,7 @@ async function deleteEvent() {
   }
 
   emit('refresh-data');
+  syncAllWrapper();
   thisModal.close();
 }
 

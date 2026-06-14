@@ -19,7 +19,7 @@ export function useEventModal() {
           title: '',
           from: DateTime.now(),
           to: DateTime.now().plus({ hour: 2 }),
-          calendar: 'main',
+          calendar: 'default',
           tag: '',
         };
       }

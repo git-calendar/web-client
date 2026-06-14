@@ -5,7 +5,8 @@ import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import { useSidebar } from '@/composables/useSidebar';
 import NewEventBtn from '@/components/NewEventBtn.vue';
 import { exportZip } from '@/utils';
-import { LuFolderArchive } from 'vue-icons-plus/lu';
+import { LuFolderArchive, LuRefreshCcw } from 'vue-icons-plus/lu';
+import { syncAllWrapper } from '@/services/gitSync';
 
 const slots = useSlots();
 const sidebar = useSidebar();
@@ -33,6 +34,9 @@ const sidebar = useSidebar();
       </router-link>
       <button type="button" @click="exportZip('')">
         <LuFolderArchive style="transform: scale(1.1)" />
+      </button>
+      <button type="button" @click="syncAllWrapper">
+        <LuRefreshCcw />
       </button>
       <a href="https://github.com/git-calendar/web-client" target="_blank">
         <FiGithub style="position: relative; left: -2%; top: 2%" />

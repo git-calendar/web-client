@@ -30,7 +30,7 @@ export interface CalendarApi {
   renameCalendar(oldName: string, newName: string): void;
   listCalendars(): Calendar[];
   loadCalendars(): void;
-  updateRemotes(calendar: string, ...remoteUrls: string[]): void;
+  updateRemote(calendar: string, remoteUrl: string): void;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;
@@ -41,8 +41,7 @@ export interface CalendarApi {
   getEvents(from: DateTime, to: DateTime): CalendarEvent[];
 
   setCorsProxy(url: string): void;
-  pullAll(): void;
-  pushAll(): void;
+  syncAll(): void;
   exportZip(calendar: string): ArrayBuffer;
 }
 
@@ -64,7 +63,7 @@ export interface Calendar {
   name: string;
   tags: Tag[];
   encrypted: boolean;
-  remotes: string[];
+  remoteUrl: string;
 }
 
 export interface Tag {

@@ -56,12 +56,10 @@ function updateFormFromCalendar(calendar: Calendar) {
   form.encrypted = calendar.encrypted;
   form.decryptionKey = ''; // secret
 
-  if (calendar.remotes && calendar.remotes.length !== 0) {
-    const remoteUrl = authFromUrl(calendar.remotes[0]);
-    form.url = remoteUrl.url;
-    form.username = remoteUrl.username;
-    form.password = remoteUrl.password;
-  }
+  const remoteUrl = authFromUrl(calendar.remoteUrl);
+  form.url = remoteUrl.url;
+  form.username = remoteUrl.username;
+  form.password = remoteUrl.password;
 }
 
 async function saveCalendar(e: Event) {
@@ -120,9 +118,8 @@ async function updateCalendar() {
   }
 
   const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
-  const currentRemoteUrl = calendar.remotes?.[0] ?? '';
-  if (currentRemoteUrl !== newRemoteUrl) {
-    await CalendarCore.updateRemotes(calendarName, newRemoteUrl);
+  if (calendar.remoteUrl !== newRemoteUrl) {
+    await CalendarCore.updateRemote(calendarName, newRemoteUrl);
   }
 }
 
