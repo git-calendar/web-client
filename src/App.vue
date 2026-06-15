@@ -22,7 +22,9 @@ async function sync() {
 
 onBeforeMount(async () => {
   try {
-    await CalendarCore.setCorsProxy(settings.value.corsProxyURL);
+    if (settings.value.corsProxyURL !== '') {
+      await CalendarCore.setCorsProxy(settings.value.corsProxyURL);
+    }
     await createCalendarOnce();
     await CalendarCore.loadCalendars(); // load local first, they might change after with network pull
     sync();
