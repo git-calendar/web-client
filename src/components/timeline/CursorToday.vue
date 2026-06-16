@@ -41,13 +41,16 @@ onUnmounted(() => {
   pointer-events: none;
 
   position: absolute;
-  width: 102%;
+  width: calc(100% + 2px);
   height: 5px;
 
   background-color: var(--git-color);
   border: 1px var(--bg-color) solid;
   border-radius: 3px;
   z-index: 501;
+
+  position: absolute;
+  left: -1px;
 
   &::before {
     content: '';
