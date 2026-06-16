@@ -33,7 +33,7 @@ export const settings = useStorage<UserSettings>(
     dayViewStartHour: 6,
     dayViewEndHour: 0,
     dragPrecisionMinutes: 30,
-    corsProxyURL: '',
+    corsProxyURL: 'https://cors-proxy.firu.dev',
   },
   localStorage,
   { mergeDefaults: true },

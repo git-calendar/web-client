@@ -107,6 +107,10 @@ form {
 
   > label {
     width: auto;
+
+    > input[name='cors-proxy'] {
+      width: 12rem;
+    }
   }
 }
 </style>
