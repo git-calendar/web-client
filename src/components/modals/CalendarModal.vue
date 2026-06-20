@@ -98,7 +98,10 @@ async function createCalendar() {
 
   switch (form.how) {
     case 'Init':
-      await CalendarCore.createCalendar(form.name.trim(), form.encrypted ? form.decryptionKey : '');
+      const name = form.name.trim();
+      await CalendarCore.createCalendar(name, form.encrypted ? form.decryptionKey : '');
+      if (form.url !== '')
+        await CalendarCore.updateRemote(name, urlWithAuth(form.url.trim(), form.username, form.password));
       break;
 
     case 'Clone':
