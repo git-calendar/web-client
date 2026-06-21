@@ -155,6 +155,8 @@ input.red,
   position: absolute;
   width: 100dvw;
   height: 100dvh;
+  overflow-wrap: break-word;
+  word-break: break-word;
 
   display: flex;
   justify-content: center;

@@ -446,7 +446,7 @@ label:has(select) {
   gap: 0.8rem;
 
   select {
-    width: 100%;
+    flex: 1 1 auto;
   }
 }
 
