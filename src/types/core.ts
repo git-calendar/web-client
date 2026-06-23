@@ -25,12 +25,12 @@ export interface Repetition {
 // The response types are all made async (Promise<T>) using Asyncify type.
 export interface CalendarApi {
   createCalendar(name: string, password: string): void;
-  cloneCalendar(url: string, password: string): void;
+  cloneCalendar(url: string, password: string, readonly: boolean): void;
   removeCalendar(name: string): void;
   renameCalendar(oldName: string, newName: string): void;
   listCalendars(): Calendar[];
   loadCalendars(): void;
-  updateRemote(calendar: string, remoteUrl: string): void;
+  updateRemote(calendar: string, remoteUrl: string, readonly: boolean): void;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;
@@ -62,8 +62,9 @@ export enum UpdateStrategy {
 export interface Calendar {
   name: string;
   tags: Tag[];
-  encrypted: boolean;
   remoteUrl: string;
+  encrypted: boolean;
+  readonly: boolean;
 }
 
 export interface Tag {

@@ -41,7 +41,8 @@
     "username": "Username",
     "password": "Password/Token",
     "encrypted": "Encrypted",
-    "decryptionKey": "Encryption key/password"
+    "encryptionKey": "Encryption key/password",
+    "readonly": "Read-only"
   },
   "views": {
     "4days": "4 days",

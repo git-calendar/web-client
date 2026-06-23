@@ -41,7 +41,8 @@
     "username": "Uživatelské jméno",
     "password": "Heslo/Token",
     "encrypted": "Šifrování",
-    "decryptionKey": "Šifrovací heslo"
+    "encryptionKey": "Šifrovací heslo",
+    "readonly": "Pouze čtení"
   },
   "views": {
     "4days": "4 dny",
