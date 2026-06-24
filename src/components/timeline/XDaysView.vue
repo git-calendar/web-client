@@ -235,4 +235,11 @@ async function updateData() {
   margin: 1.43rem 0 0 3rem;
   border-top: var(--grid-border);
 }
+
+@media (max-width: 768px) {
+  #view-container {
+    height: calc(100% - 0.2rem);
+    margin: 0.2rem;
+  }
+}
 </style>
