@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, useTemplateRef, toRaw, computed } from 'vue';
-import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
+import { Freq, UpdateStrategy, type Calendar, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
@@ -42,6 +42,7 @@ const form = reactive({
   toTime: '',
   calendar: '',
   entireDay: false,
+  tag: '',
 
   repeatFreq: Freq.Invalid,
   repeatEnd: 'after',
@@ -55,25 +56,29 @@ const errors = reactive({
   badUntilDate: false,
 });
 
-const calendarNames = ref<string[]>([]);
-const calendarNamesLoaded = ref(false);
+const calendars = ref<Map<string, Calendar>>(new Map());
+const calendarsLoaded = ref(false);
 
-void loadCalendarNames();
-
-async function loadCalendarNames() {
+async function loadCalendars() {
   try {
-    calendarNames.value = (await CalendarCore.listCalendars()).map((cal) => cal.name);
+    const cals = await CalendarCore.listCalendars();
+
+    for (const cal of cals) {
+      calendars.value.set(cal.name, cal);
+    }
   } catch (err) {
     alert(String(err));
   } finally {
-    calendarNamesLoaded.value = true;
+    // This acts as our reactive trigger signal
+    calendarsLoaded.value = true;
   }
 }
 
 let originalEvent: CalendarEvent | undefined = undefined;
+
 watch(
-  [() => thisModal.event.value, calendarNames],
-  ([newEvent]) => {
+  [() => thisModal.event.value, calendarsLoaded], // Watch the boolean loaded state instead
+  ([newEvent, isLoaded]) => {
     if (!newEvent) {
       originalEvent = undefined;
       return;
@@ -83,16 +88,20 @@ watch(
     const eventForForm = cloneDeep(originalEvent);
 
     if (eventForForm.calendar === '') {
-      if (!calendarNamesLoaded.value) return;
-      console.log(calendarNames.value);
-      // calendar unset -> choose one
-      originalEvent.calendar = eventForForm.calendar = calendarNames.value.includes('default')
-        ? 'default'
-        : (calendarNames.value.at(0) ?? '');
+      if (!isLoaded) return;
+
+      const firstKey = calendars.value.keys().next().value ?? '';
+      const defaultCal = calendars.value.has('default') ? 'default' : firstKey;
+
+      originalEvent.calendar = eventForForm.calendar = defaultCal;
+
+      const firstTagName = calendars.value.get(defaultCal)?.tags?.[0]?.name ?? '';
+      originalEvent.tag = eventForForm.tag = firstTagName;
     }
+
     updateFormFromEvent(originalEvent);
   },
-  { immediate: true }, // fire right onMounted, not wait till first change
+  { immediate: true },
 );
 
 function updateFormFromEvent(event: CalendarEvent | undefined) {
@@ -129,6 +138,7 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   }
 
   form.calendar = event.calendar;
+  form.tag = event.tag;
 }
 
 function reconstructEvent(): CalendarEvent {
@@ -138,7 +148,7 @@ function reconstructEvent(): CalendarEvent {
     location: form.location,
     description: form.description,
     calendar: form.calendar,
-    tag: originalEvent!.tag, // TODO
+    tag: form.tag,
     from: form.entireDay
       ? DateTime.fromISO(`${form.fromDate}T00:00`, { zone: originalEvent?.from.zone })
       : DateTime.fromISO(`${form.fromDate}T${form.fromTime}`, { zone: originalEvent?.from.zone }),
@@ -302,10 +312,8 @@ function validate(event: CalendarEvent): boolean {
 const nameInputField = useTemplateRef('name-input-field');
 onMounted(async () => {
   nameInputField.value?.focus(); // focus name field
+  void loadCalendars();
 });
-
-// const exampleTags = ref(['School', 'Work', 'Birthday']); // TODO
-// const selectedTags = ref<string[]>([]);
 </script>
 
 <template>
@@ -385,8 +393,17 @@ onMounted(async () => {
         <label>
           {{ $t('event.calendar') }}:
           <select name="calendar" v-model="form.calendar">
-            <option v-for="calendarName in calendarNames" :value="calendarName" :key="calendarName">
+            <option v-for="calendarName in calendars.keys()" :value="calendarName" :key="calendarName">
               {{ calendarName }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Tag:
+          <select name="tag" id="tag" v-model="form.tag">
+            <option v-for="tag in calendars.get(form.calendar)?.tags ?? []" :key="tag.name" :value="tag.name">
+              {{ tag.name }}
             </option>
           </select>
         </label>
@@ -398,16 +415,6 @@ onMounted(async () => {
           autocomplete="none"
           v-model="form.location"
         />
-
-        <!--
-        TODO tags
-        <div>
-            <label v-for="tagName in exampleTags" :key="tagName">
-            <input type="checkbox" name="idk" :value="tagName" v-model="selectedTags" />
-            {{ tagName }}
-            </label>
-        </div>
-        -->
 
         <textarea name="description" rows="3" :placeholder="$t('event.description')" v-model="form.description" />
 

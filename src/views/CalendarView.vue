@@ -43,7 +43,7 @@ const views = {
 </script>
 
 <template>
-  <div id="calendar-view">
+  <main id="calendar-view">
     <SideBar :hidden="!sidebar.isOpen.value">
       <MonthSideMap />
       <CalendarList ref="calendars-list" />
@@ -54,7 +54,7 @@ const views = {
 
     <EventModal v-if="eventModal.isOpen.value" />
     <CalendarModal v-if="calendarModal.isOpen.value" />
-  </div>
+  </main>
   <span id="alpha">Alpha version</span>
 </template>
 
