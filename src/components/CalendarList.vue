@@ -125,7 +125,6 @@ watch(
   display: flex;
   align-items: center;
   height: 2rem;
-  padding: 0.3rem;
   border-radius: var(--small-border-radius);
 
   &:hover {
@@ -140,9 +139,10 @@ watch(
 }
 
 .edit-btn {
-  height: 100%;
+  height: calc(100% - 2 * 0.25rem);
   aspect-ratio: 1/1;
   padding: 0.25rem;
+  margin: 0.25rem;
   background-color: transparent;
   border-radius: var(--small-border-radius);
   cursor: pointer;
@@ -163,6 +163,7 @@ watch(
   cursor: pointer;
   user-select: none;
   flex-grow: 1;
+  padding: 0.3rem;
 }
 
 .cal-name {
