@@ -10,12 +10,20 @@ const calendarModal = useCalendarModal();
 const calendars = ref<Calendar[]>([]);
 const hidden = ref(new Map<string, boolean>());
 
-function toggle(cal: Calendar) {
-  hidden.value.set(cal.name, !(hidden.value.get(cal.name) ?? false));
+function getCalId(calName: string): string {
+  return `cal_${calName}`;
 }
 
-function checkboxName(calName: string): string {
-  return `cal-${calName.toLowerCase()}`;
+function getTagId(calName: string, tagName: string): string {
+  return `tag_${calName}_${tagName}`;
+}
+
+function toggleVisibility(id: string) {
+  hidden.value.set(id, !(hidden.value.get(id) ?? false));
+}
+
+function isVisible(id: string): boolean {
+  return !(hidden.value.get(id) ?? false);
 }
 
 async function updateData() {
@@ -23,7 +31,7 @@ async function updateData() {
 }
 
 watch(
-  eventsRevision, // TODO: separate calendar signal?
+  eventsRevision,
   () => {
     void updateData();
   },
@@ -39,20 +47,38 @@ watch(
         <FiPlus />
       </button>
     </div>
-    <div v-for="cal in calendars" :key="cal.name" class="calendar">
-      <label class="cal-label">
-        <input
-          type="checkbox"
-          :id="checkboxName(cal.name)"
-          :name="checkboxName(cal.name)"
-          :checked="!(hidden.get(cal.name) ?? false)"
-          @change="toggle(cal)"
-        />
-        <span class="cal-name">{{ cal.name }}</span>
-      </label>
-      <button @click="calendarModal.open(cal.name)">
-        <FiEdit2 />
-      </button>
+
+    <div v-for="cal in calendars" :key="cal.name" class="calendar-wrapper">
+      <div class="calendar-header">
+        <label class="cal-label">
+          <input
+            type="checkbox"
+            :id="getCalId(cal.name)"
+            :name="getCalId(cal.name)"
+            :checked="isVisible(getCalId(cal.name))"
+            @change="toggleVisibility(getCalId(cal.name))"
+          />
+          <span class="cal-name">{{ cal.name }}</span>
+        </label>
+
+        <button class="edit-btn" @click="calendarModal.open(cal.name)">
+          <FiEdit2 />
+        </button>
+      </div>
+
+      <div v-if="cal.tags && cal.tags.length" class="tags-list">
+        <label v-for="tag in cal.tags" :key="tag.name" class="tag-label">
+          <input
+            type="checkbox"
+            :id="getTagId(cal.name, tag.name)"
+            :name="getTagId(cal.name, tag.name)"
+            :checked="isVisible(getTagId(cal.name, tag.name))"
+            @change="toggleVisibility(getTagId(cal.name, tag.name))"
+            :style="{ '--tag-color': tag.color }"
+          />
+          <span class="tag-name">{{ tag.name }}</span>
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -60,27 +86,22 @@ watch(
 <style scoped>
 .calendars {
   width: 100%;
-
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  position: relative;
+  padding-left: 0.4rem;
+  justify-content: space-between;
 
   .title {
-    justify-self: center;
     font-weight: bold;
   }
 
   .create-new {
-    position: absolute;
-    right: 0;
     width: 1.8rem;
     height: 1.8rem;
     display: flex;
@@ -95,27 +116,43 @@ watch(
   }
 }
 
-.calendar {
+.calendar-wrapper {
   display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
   height: 2rem;
   padding: 0.3rem;
-
   border-radius: var(--small-border-radius);
 
   &:hover {
     background-color: var(--sidebar-hover-color);
-  }
 
-  > button {
-    height: 100%;
-    aspect-ratio: 1/1;
-    padding: 0.25rem;
-    margin-left: auto;
-    background-color: var(--sidebar-bg-color);
-
-    &:hover:not(:disabled) {
-      background-color: color-mix(in srgb, var(--sidebar-color), white 20%);
+    /* reveal the edit button on row hover */
+    .edit-btn {
+      opacity: 1;
+      pointer-events: auto;
     }
+  }
+}
+
+.edit-btn {
+  height: 100%;
+  aspect-ratio: 1/1;
+  padding: 0.25rem;
+  background-color: transparent;
+  border-radius: var(--small-border-radius);
+  cursor: pointer;
+
+  /* hidden by default until hovered */
+  opacity: 0;
+  pointer-events: none;
+
+  &:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--sidebar-color), white 20%);
   }
 }
 
@@ -123,12 +160,44 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.7rem;
-
   cursor: pointer;
   user-select: none;
+  flex-grow: 1;
 }
 
 .cal-name {
   font-weight: 500;
+}
+
+/* Enhanced child indentation */
+.tags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-left: 1.8rem;
+  margin-top: 0.1rem;
+}
+
+.tag-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: var(--small-border-radius);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background-color: var(--sidebar-hover-color);
+  }
+
+  input[type='checkbox']:checked::before {
+    background-color: var(--tag-color);
+  }
+}
+
+.tag-name {
+  font-size: 0.9em;
+  opacity: 0.85;
 }
 </style>

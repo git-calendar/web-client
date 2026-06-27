@@ -19,6 +19,7 @@
   --git-bg-color: color-mix(in srgb, var(--git-color-real), black 30%);
 
   --sidebar-color: #242424;
+  --sidebar-btn-bg-color: #333;
   --sidebar-hover-color: color-mix(in srgb, transparent, white 10%);
 
   --grid-color: #262626;
@@ -39,6 +40,7 @@
   --git-bg-color: color-mix(in srgb, var(--git-color-real), white 10%);
 
   --sidebar-color: #eaeaea;
+  --sidebar-btn-bg-color: #ddd;
   --sidebar-hover-color: color-mix(in srgb, transparent, black 10%);
 
   --grid-color: #d1d1d1;
