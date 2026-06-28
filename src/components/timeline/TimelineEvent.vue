@@ -3,6 +3,7 @@ import type { CalendarEvent } from '@/types/core';
 import BaseEvent from '@/components/timeline/BaseEvent.vue';
 import { numberOfHours, timeRangeFormat } from '@/utils';
 import { settings } from '@/services/settings';
+import { getTagColorHex } from '@/services/calendarCache';
 
 interface Props {
   event: CalendarEvent;
@@ -37,6 +38,7 @@ function getEventStylePos(e: CalendarEvent) {
     :height-style="getEventStylePos(event).height"
     :title="event.title"
     :subtitle="timeRangeFormat(event.from, event.to)"
+    :color="getTagColorHex(event.calendar, event.tagId)"
   />
 </template>
 
