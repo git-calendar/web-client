@@ -42,7 +42,7 @@ const form = reactive({
   toTime: '',
   calendar: '',
   entireDay: false,
-  tag: '',
+  tagId: '',
 
   repeatFreq: Freq.Invalid,
   repeatEnd: 'after',
@@ -50,7 +50,7 @@ const form = reactive({
   repeatEndAfter: 5,
 });
 const errors = reactive({
-  missingName: false,
+  missingTitle: false,
   badToDate: false,
   badFromDate: false,
   badUntilDate: false,
@@ -138,7 +138,7 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   }
 
   form.calendar = event.calendar;
-  form.tag = event.tag;
+  form.tagId = event.tagId;
 }
 
 function reconstructEvent(): CalendarEvent {
@@ -148,7 +148,7 @@ function reconstructEvent(): CalendarEvent {
     location: form.location,
     description: form.description,
     calendar: form.calendar,
-    tag: form.tag,
+    tagId: form.tagId,
     from: form.entireDay
       ? DateTime.fromISO(`${form.fromDate}T00:00`, { zone: originalEvent?.from.zone })
       : DateTime.fromISO(`${form.fromDate}T${form.fromTime}`, { zone: originalEvent?.from.zone }),
@@ -277,7 +277,7 @@ async function deleteRepeatingEvent(strategy: UpdateStrategy) {
 
 function validate(event: CalendarEvent): boolean {
   if (event.title == '') {
-    errors.missingName = true;
+    errors.missingTitle = true;
     return false;
   }
 
@@ -309,7 +309,7 @@ function validate(event: CalendarEvent): boolean {
   return true; // ok
 }
 
-const nameInputField = useTemplateRef('name-input-field');
+const nameInputField = useTemplateRef('title-input-field');
 onMounted(async () => {
   nameInputField.value?.focus(); // focus name field
   void loadCalendars();
@@ -326,9 +326,9 @@ onMounted(async () => {
           :placeholder="$t('event.title')"
           autocomplete="none"
           v-model="form.title"
-          ref="name-input-field"
-          :class="{ red: errors.missingName }"
-          @input="errors.missingName = false"
+          ref="title-input-field"
+          :class="{ red: errors.missingTitle }"
+          @input="errors.missingTitle = false"
         />
 
         <div class="dates">
