@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, useTemplateRef, toRaw, computed } from 'vue';
-import { Freq, UpdateStrategy, type Calendar, type CalendarEvent } from '@/types/core';
+import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
@@ -10,6 +10,7 @@ import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { syncAllWrapper } from '@/services/gitSync';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
+import { cachedCalendars, getDefaultCalendar, loadCalendars } from '@/services/calendarCache';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -56,29 +57,10 @@ const errors = reactive({
   badUntilDate: false,
 });
 
-const calendars = ref<Map<string, Calendar>>(new Map());
-const calendarsLoaded = ref(false);
-
-async function loadCalendars() {
-  try {
-    const cals = await CalendarCore.listCalendars();
-
-    for (const cal of cals) {
-      calendars.value.set(cal.name, cal);
-    }
-  } catch (err) {
-    alert(String(err));
-  } finally {
-    // This acts as our reactive trigger signal
-    calendarsLoaded.value = true;
-  }
-}
-
-let originalEvent: CalendarEvent | undefined = undefined;
-
+let originalEvent: CalendarEvent | undefined;
 watch(
-  [() => thisModal.event.value, calendarsLoaded], // Watch the boolean loaded state instead
-  ([newEvent, isLoaded]) => {
+  () => thisModal.event.value,
+  (newEvent) => {
     if (!newEvent) {
       originalEvent = undefined;
       return;
@@ -88,15 +70,11 @@ watch(
     const eventForForm = cloneDeep(originalEvent);
 
     if (eventForForm.calendar === '') {
-      if (!isLoaded) return;
+      const defaultCal = getDefaultCalendar();
+      originalEvent.calendar = eventForForm.calendar = defaultCal?.name ?? '';
 
-      const firstKey = calendars.value.keys().next().value ?? '';
-      const defaultCal = calendars.value.has('default') ? 'default' : firstKey;
-
-      originalEvent.calendar = eventForForm.calendar = defaultCal;
-
-      const firstTagName = calendars.value.get(defaultCal)?.tags?.[0]?.name ?? '';
-      originalEvent.tag = eventForForm.tag = firstTagName;
+      const firstTagId = defaultCal?.tags[0].id ?? '';
+      originalEvent.tagId = eventForForm.tagId = firstTagId;
     }
 
     updateFormFromEvent(originalEvent);
@@ -312,7 +290,15 @@ function validate(event: CalendarEvent): boolean {
 const nameInputField = useTemplateRef('title-input-field');
 onMounted(async () => {
   nameInputField.value?.focus(); // focus name field
-  void loadCalendars();
+
+  await loadCalendars();
+
+  if (form.calendar === '') {
+    const calendar = getDefaultCalendar();
+
+    form.calendar = calendar?.name ?? '';
+    form.tagId = calendar?.tags[0]?.id ?? '';
+  }
 });
 </script>
 
@@ -393,16 +379,20 @@ onMounted(async () => {
         <label>
           {{ $t('event.calendar') }}:
           <select name="calendar" v-model="form.calendar">
-            <option v-for="calendarName in calendars.keys()" :value="calendarName" :key="calendarName">
-              {{ calendarName }}
+            <option v-for="calendar in cachedCalendars" :value="calendar.name" :key="calendar.name">
+              {{ calendar.name }}
             </option>
           </select>
         </label>
 
         <label>
           Tag:
-          <select name="tag" id="tag" v-model="form.tag">
-            <option v-for="tag in calendars.get(form.calendar)?.tags ?? []" :key="tag.name" :value="tag.name">
+          <select name="tag" id="tag" v-model="form.tagId">
+            <option
+              v-for="tag in cachedCalendars.find((cal) => cal.name == form.calendar)?.tags ?? []"
+              :key="tag.id"
+              :value="tag.id"
+            >
               {{ tag.name }}
             </option>
           </select>
