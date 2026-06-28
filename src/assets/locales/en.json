@@ -86,5 +86,19 @@
   "message": {
     "confirmCalendarDelete": "Do you really want to delete the whole calendar?",
     "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\"."
+  },
+  "colors": {
+    "blue": "Commit Blue",
+    "green": "Addition Green (+)",
+    "red": "Deletion Red (-)",
+    "purple": "Merged Purple",
+    "yellow": "Stash Yellow",
+    "orange": "Rebase Orange",
+    "cyan": "Tag Cyan",
+    "teal": "Resolved Teal",
+    "pink": "Fetch Pink",
+    "indigo": "Origin Indigo",
+    "berry": "Cherry-pick Berry",
+    "slate": "Docs Slate"
   }
 }

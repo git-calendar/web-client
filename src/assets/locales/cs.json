@@ -86,5 +86,19 @@
   "message": {
     "confirmCalendarDelete": "Chcete opravdu smazat celý kalenář?",
     "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\"."
+  },
+  "colors": {
+    "blue": "Commitová modrá",
+    "green": "Addition zelená (+)",
+    "red": "Deletion červená (-)",
+    "purple": "Merged fialová",
+    "yellow": "Stash žlutá",
+    "orange": "Rebase oranžová",
+    "cyan": "Tag azurová",
+    "teal": "Vyřešená tyrkysová",
+    "pink": "Fetch růžová",
+    "indigo": "Origin indigová",
+    "berry": "Cherry-pick vínová",
+    "slate": "Dokumentační břidlicová"
   }
 }

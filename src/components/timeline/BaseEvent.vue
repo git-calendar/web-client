@@ -1,19 +1,21 @@
 <script setup lang="ts">
+import { COLORS } from '@/colors';
 import { computed } from 'vue';
 
-interface Props {
-  topStyle: string;
-  heightStyle: string;
-  title: string;
-  subtitle: string;
-  color?: string;
-  temporary?: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  color: '#6495ed',
-  temporary: false,
-});
+const props = withDefaults(
+  defineProps<{
+    topStyle: string;
+    heightStyle: string;
+    title: string;
+    subtitle: string;
+    color?: string;
+    temporary?: boolean;
+  }>(),
+  {
+    color: COLORS.blue.hex,
+    temporary: false,
+  },
+);
 
 const dynamicStyles = computed(() => ({
   top: `calc(${props.topStyle} + 1.5px)`, // few pixel space between touching events
