@@ -21,6 +21,20 @@ export interface Repetition {
   exceptions: readonly string[];
 }
 
+export interface Calendar {
+  name: string;
+  tags: Tag[];
+  remoteUrl: string;
+  encrypted: boolean;
+  readonly: boolean;
+}
+
+export interface Tag {
+  id?: string;
+  name: string;
+  color: string;
+}
+
 // Interface showing all the methods of CalendarCore.
 // The response types are all made async (Promise<T>) using Asyncify type.
 export interface CalendarApi {
@@ -40,6 +54,9 @@ export interface CalendarApi {
   getEvent(id: string): CalendarEvent;
   getEvents(from: DateTime, to: DateTime): CalendarEvent[];
 
+  createTag(calendar: string, tag: Tag): Tag;
+  removeTag(calendar: string, id: string): void;
+
   setCorsProxy(url: string): void;
   syncAll(): void;
   exportZip(calendar: string): ArrayBuffer;
@@ -57,17 +74,4 @@ export enum UpdateStrategy {
   Current = 0,
   Following,
   All,
-}
-
-export interface Calendar {
-  name: string;
-  tags: Tag[];
-  remoteUrl: string;
-  encrypted: boolean;
-  readonly: boolean;
-}
-
-export interface Tag {
-  name: string;
-  color: string;
 }
