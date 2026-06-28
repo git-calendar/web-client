@@ -44,6 +44,10 @@
     "encryptionKey": "Encryption key/password",
     "readonly": "Read-only"
   },
+  "tag": {
+    "name": "Name",
+    "color": "Color"
+  },
   "views": {
     "4days": "4 days",
     "week": "Week",

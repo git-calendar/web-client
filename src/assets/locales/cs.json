@@ -44,6 +44,10 @@
     "encryptionKey": "Šifrovací heslo",
     "readonly": "Pouze čtení"
   },
+  "tag": {
+    "name": "Jméno",
+    "color": "Barva"
+  },
   "views": {
     "4days": "4 dny",
     "week": "Týden",

@@ -15,10 +15,13 @@ import { useEventModal } from '@/composables/modals/useEventModal';
 import { useSidebar } from '@/composables/useSidebar';
 import { CALENDAR_VIEWS } from '@/constants';
 import { settings, type CalendarView } from '@/services/settings';
+import TagModal from '@/components/modals/TagModal.vue';
+import { useTagModal } from '@/composables/modals/useTagModal';
 
 useKeyboard();
 const calendarModal = useCalendarModal();
 const eventModal = useEventModal();
+const tagModal = useTagModal();
 const route = useRoute();
 const sidebar = useSidebar();
 
@@ -53,6 +56,7 @@ const views = {
     <component :is="views[activeView][0]" :num-of-days="views[activeView][1]" ref="calendar-view" />
 
     <EventModal v-if="eventModal.isOpen.value" />
+    <TagModal v-if="tagModal.isOpen.value" />
     <CalendarModal v-if="calendarModal.isOpen.value" />
   </main>
   <span id="alpha">Alpha version</span>
