@@ -10,7 +10,7 @@
   --text-color-hard: #fff;
 
   --btn-bg-color: #2b2b2b;
-  --btn-bg-color-hover: color-mix(in srgb, var(--btn-bg-color), white 3%);
+  --btn-bg-color-hover: color-mix(in srgb, var(--btn-bg-color), white 5%);
   --btn-bg-color-checked: color-mix(in srgb, var(--btn-bg-color), white 10%);
   --btn-red-bg-color: color-mix(in srgb, var(--git-color), black 50%);
   --btn-red-bg-color-hover: color-mix(in srgb, var(--git-color), black 40%);
@@ -20,6 +20,7 @@
 
   --sidebar-color: #242424;
   --sidebar-btn-bg-color: #333;
+  --sidebar-btn-bg-hover-color: color-mix(in srgb, var(--sidebar-btn-bg-color), white 5%);
   --sidebar-hover-color: color-mix(in srgb, transparent, white 10%);
 
   --grid-color: #262626;
