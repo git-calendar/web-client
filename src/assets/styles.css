@@ -181,6 +181,33 @@ input.red,
       resize: vertical;
       min-height: 2rem;
     }
+
+    fieldset {
+      display: contents;
+      border: 0;
+      padding: 0;
+      margin: 0;
+
+      &:disabled label,
+      &:disabled .dates > span,
+      &:disabled > #git-credentials {
+        opacity: 0.5;
+      }
+
+      &:disabled select {
+        opacity: 1; /* it was dimmed 2 times idk */
+      }
+    }
+
+    label:has(select) {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+
+      select {
+        flex: 1 1 auto;
+      }
+    }
   }
 
   .bottom-btns {
@@ -188,6 +215,15 @@ input.red,
 
     display: flex;
     gap: 1rem;
+
+    .delete-btn {
+      border: 1px solid var(--git-color);
+      background-color: var(--btn-red-bg-color);
+
+      &:hover:not(:focus):not(:disabled) {
+        background-color: var(--btn-red-bg-color-hover);
+      }
+    }
   }
 
   @media (max-width: 768px) {

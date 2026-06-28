@@ -447,16 +447,6 @@ label:has(select[name='end']) {
   }
 }
 
-label:has(select) {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-
-  select {
-    flex: 1 1 auto;
-  }
-}
-
 .dates {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -472,31 +462,6 @@ label:has(select) {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.7rem;
-}
-
-.delete-btn {
-  border: 1px solid var(--git-color);
-  background-color: var(--btn-red-bg-color);
-
-  &:hover:not(:focus):not(:disabled) {
-    background-color: var(--btn-red-bg-color-hover);
-  }
-}
-
-fieldset {
-  display: contents;
-  border: 0;
-  padding: 0;
-  margin: 0;
-
-  &:disabled label,
-  &:disabled .dates > span {
-    opacity: 0.5;
-  }
-
-  &:disabled select {
-    opacity: 1; /* it was dimmed 2 times idk */
-  }
 }
 
 @media (max-width: 450px) {

@@ -377,24 +377,4 @@ onMounted(() => {
     }
   }
 }
-
-fieldset {
-  display: contents;
-  border: 0;
-  padding: 0;
-  margin: 0;
-
-  &:disabled > #git-credentials {
-    opacity: 0.5;
-  }
-}
-
-.delete-btn {
-  border: 1px solid var(--git-color);
-  background-color: var(--btn-red-bg-color);
-
-  &:hover:not(:focus):not(:disabled) {
-    background-color: var(--btn-red-bg-color-hover);
-  }
-}
 </style>
