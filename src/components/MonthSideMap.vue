@@ -108,23 +108,36 @@ function jumpToInterval(clickedDay: DateTime) {
 }
 
 const hoveredDay = ref<DateTime | null>(null);
+const pressedDay = ref<DateTime | null>(null);
+
+function getIntervalFromDay(day: DateTime) {
+  if (route.params.view === 'week') {
+    const start = getStartOfWeek(day);
+
+    return {
+      start,
+      end: start.plus({ days: 6 }),
+    };
+  }
+
+  const length = getViewLengthInDays(route.params);
+
+  return {
+    start: day,
+    end: day.plus({ days: length - 1 }),
+  };
+}
 
 const hoverInterval = computed(() => {
   if (!hoveredDay.value) return null;
 
-  if (route.params.view === 'week') {
-    const startOfWeek = getStartOfWeek(hoveredDay.value);
-    return {
-      start: startOfWeek,
-      end: startOfWeek.plus({ days: 6 }),
-    };
-  } else {
-    const length = getViewLengthInDays(route.params);
-    return {
-      start: hoveredDay.value,
-      end: hoveredDay.value.plus({ days: length - 1 }),
-    };
-  }
+  return getIntervalFromDay(hoveredDay.value);
+});
+
+const pressedInterval = computed(() => {
+  if (!pressedDay.value) return null;
+
+  return getIntervalFromDay(pressedDay.value);
 });
 </script>
 
@@ -155,10 +168,15 @@ const hoverInterval = computed(() => {
           'in-range': d >= viewInterval.start && d <= viewInterval.end,
           'range-start': d.hasSame(viewInterval.start, 'day'),
           'range-end': d.hasSame(viewInterval.end, 'day'),
+          'pressed-range': pressedInterval && d >= pressedInterval.start && d <= pressedInterval.end,
         }"
         @click="jumpToInterval(d)"
         @mouseenter="hoveredDay = d"
         @mouseleave="hoveredDay = null"
+        @pointerdown="pressedDay = d"
+        @pointerup="pressedDay = null"
+        @pointercancel="pressedDay = null"
+        @pointerleave="pressedDay = null"
       >
         <div
           v-if="hoverInterval && d >= hoverInterval.start && d <= hoverInterval.end"
@@ -168,7 +186,6 @@ const hoverInterval = computed(() => {
             'hover-range-end': hoverInterval && d.hasSame(hoverInterval.end, 'day'),
           }"
         />
-
         {{ d.day }}
       </div>
     </div>
@@ -279,6 +296,10 @@ const hoverInterval = computed(() => {
   &.range-end {
     border-top-right-radius: var(--small-border-radius);
     border-bottom-right-radius: var(--small-border-radius);
+  }
+
+  &.pressed-range {
+    transform: translateY(1px);
   }
 }
 
