@@ -7,6 +7,7 @@
 [data-theme='dark'] {
   --bg-color: #1a1a1a;
   --text-color: #c1c1c1;
+  --text-color-harder: #d9d9d9;
   --text-color-hard: #fff;
 
   --btn-bg-color: #2b2b2b;
@@ -24,11 +25,36 @@
   --sidebar-hover-color: color-mix(in srgb, transparent, white 10%);
 
   --grid-color: #262626;
+
+  /* old:
+  --event-color-blue: #6495ed;
+  --event-color-green: #2ea043;
+  --event-color-red: #ee3a49;
+  --event-color-purple: #8250df;
+  --event-color-yellow: #d9a520;
+  --event-color-orange: #f66a0a;
+  --event-color-pink: #e84393;
+  --event-color-teal: #009688;
+  --event-color-gray: #9d9c9d;*/
+
+  --event-color-blue: #00579f;
+  --event-color-green: #0d7b00;
+  --event-color-red: #af0800;
+  --event-color-purple: #7a218f;
+  --event-color-yellow: #fdc700;
+  --event-color-orange: #e85d04;
+  --event-color-pink: #ff5ba1;
+  --event-color-teal: #00a8ad;
+  --event-color-gray: #777777;
+  --event-color-brown: #755020;
+
+  --event-color-git: #f03c2e;
 }
 
 [data-theme='light'] {
   --bg-color: #f2f2f2;
-  --text-color: #101010;
+  --text-color: #1a1a1a;
+  --text-color-harder: #101010;
   --text-color-hard: #000;
 
   --btn-bg-color: #d5d5d5;

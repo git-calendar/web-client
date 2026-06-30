@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { CalendarCore } from '@/wasm/core-wrapper';
 import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
-import type { Calendar } from '@/types/core';
-import { eventsRevision } from '@/composables/useEventsRefresh';
 import { useTagModal } from '@/composables/modals/useTagModal';
-import { getTagColorHex } from '@/services/calendarCache';
+import { cachedCalendars, getTag } from '@/services/calendarCache';
+import { getEventColorCSSVariable, toColorId } from '@/colors';
 
 const calendarModal = useCalendarModal();
 const tagModal = useTagModal();
-const calendars = ref<Calendar[]>([]);
 const hidden = ref(new Map<string, boolean>());
 
 function getCalId(calName: string): string {
@@ -29,17 +26,10 @@ function isVisible(id: string): boolean {
   return !(hidden.value.get(id) ?? false);
 }
 
-async function updateData() {
-  calendars.value = await CalendarCore.listCalendars();
+function getTagColor(calName: string, tagId?: string) {
+  const tag = getTag(calName, tagId ?? '');
+  return getEventColorCSSVariable(toColorId(tag?.color));
 }
-
-watch(
-  eventsRevision,
-  () => {
-    void updateData();
-  },
-  { immediate: true },
-);
 </script>
 
 <template>
@@ -51,44 +41,46 @@ watch(
       </button>
     </div>
 
-    <div v-for="cal in calendars" :key="cal.name" class="calendar-wrapper">
-      <div class="calendar">
-        <label>
-          <input
-            type="checkbox"
-            :id="getCalId(cal.name)"
-            :name="getCalId(cal.name)"
-            :checked="isVisible(getCalId(cal.name))"
-            @change="toggleVisibility(getCalId(cal.name))"
-          />
-          <span class="name">{{ cal.name }}</span>
-        </label>
-
-        <button class="edit-btn" @click="calendarModal.open(cal.name)">
-          <FiEdit2 />
-        </button>
-      </div>
-
-      <div v-if="cal.tags && cal.tags.length" class="tags-list">
-        <div class="tag" v-for="tag in cal.tags" :key="tag.name">
+    <div class="calendar-list">
+      <div v-for="cal in cachedCalendars" :key="cal.name" class="calendar-wrap">
+        <div class="calendar">
           <label>
             <input
               type="checkbox"
-              :id="getTagId(cal.name, tag.name)"
-              :name="getTagId(cal.name, tag.name)"
-              :checked="isVisible(getTagId(cal.name, tag.name))"
-              @change="toggleVisibility(getTagId(cal.name, tag.name))"
-              :style="{ '--tag-color': getTagColorHex(cal.name, tag.id!) }"
+              :id="getCalId(cal.name)"
+              :name="getCalId(cal.name)"
+              :checked="isVisible(cal.name)"
+              @change="toggleVisibility(cal.name)"
             />
-            <span class="tag-name">{{ tag.name }}</span>
+            <span class="name">{{ cal.name }}</span>
           </label>
 
-          <button class="edit-btn" @click="tagModal.open(cal.name, tag)">
+          <button class="edit-btn" @click="calendarModal.open(cal.name)">
             <FiEdit2 />
           </button>
         </div>
-        <div class="tag new" @click="tagModal.open(cal.name)">
-          <FiPlus />
+
+        <div v-if="isVisible(cal.name)" class="tags-list">
+          <div class="tag" v-for="tag in cal.tags" :key="tag.name">
+            <label>
+              <input
+                type="checkbox"
+                :id="getTagId(cal.name, tag.name)"
+                :name="getTagId(cal.name, tag.name)"
+                :checked="isVisible(getTagId(cal.name, tag.name))"
+                @change="toggleVisibility(getTagId(cal.name, tag.name))"
+                :style="{ '--tag-color': getTagColor(cal.name, tag.id) }"
+              />
+              <span class="tag-name">{{ tag.name }}</span>
+            </label>
+
+            <button class="edit-btn" @click="tagModal.open(cal.name, tag)">
+              <FiEdit2 />
+            </button>
+          </div>
+          <div class="tag new" @click="tagModal.open(cal.name)">
+            <FiPlus />
+          </div>
         </div>
       </div>
     </div>
@@ -101,6 +93,30 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  min-height: 0;
+}
+.calendar-list {
+  --fade-size: 2rem;
+
+  height: 100%;
+  min-height: 0;
+  padding-bottom: var(--fade-size); /* leaves space at the bottom so that the shadow isnt always visible */
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* hide scrollbar: firefox */
+  scrollbar-width: none;
+  /* hide scrollbar: old edge/IE */
+  -ms-overflow-style: none;
+  /* hide scrollbar: chrome, safari, edge */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* fade out bottom content */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--fade-size)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--fade-size)), transparent 100%);
 }
 
 .top-bar {
@@ -128,7 +144,7 @@ watch(
   }
 }
 
-.calendar-wrapper {
+.calendar-wrap {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
