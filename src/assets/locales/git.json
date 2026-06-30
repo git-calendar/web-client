@@ -19,5 +19,15 @@
     "compiling": "Building...",
     "starting": "Running...",
     "done": "Ready!"
+  },
+  "colors": {
+    "blue": "Commit Blue",
+    "green": "Addition Green (+)",
+    "red": "Deletion Red (-)",
+    "purple": "Merged Purple",
+    "yellow": "Stash Yellow",
+    "orange": "Rebase Orange",
+    "pink": "Fetch Pink",
+    "gray": "Docs Gray"
   }
 }

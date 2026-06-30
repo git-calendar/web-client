@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { COLORS } from '@/colors';
+import { getEventColorCSSVariable, toColorId } from '@/colors';
+import { settings } from '@/services/settings';
 import { computed } from 'vue';
 
 const props = withDefaults(
@@ -12,16 +13,21 @@ const props = withDefaults(
     temporary?: boolean;
   }>(),
   {
-    color: COLORS.blue.hex,
+    color: settings.value.defaultEventColor,
     temporary: false,
   },
 );
 
-const dynamicStyles = computed(() => ({
-  top: `calc(${props.topStyle} + 1.5px)`, // few pixel space between touching events
-  height: `calc(${props.heightStyle} - 2px)`,
-  '--event-color': props.color,
-}));
+const dynamicStyles = computed(() => {
+  let color = getEventColorCSSVariable(toColorId(props.color));
+  if (props.temporary) color = 'var(--event-color-git)';
+
+  return {
+    top: `calc(${props.topStyle} + 1.5px)`,
+    height: `calc(${props.heightStyle} - 2px)`,
+    '--event-color': color,
+  };
+});
 </script>
 
 <template>
@@ -69,7 +75,7 @@ const dynamicStyles = computed(() => ({
   background-size: 3px 100%;
   background-repeat: repeat-y;
 
-  background-color: color-mix(in srgb, var(--event-color), transparent 85%); /* light */
+  background-color: color-mix(in srgb, var(--event-color), transparent 80%); /* light */
 }
 
 /* hover only for non-temporary events */

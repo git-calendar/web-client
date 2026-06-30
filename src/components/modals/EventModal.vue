@@ -385,6 +385,7 @@ onMounted(async () => {
         <label>
           {{ $t('event.tag') }}:
           <select name="tag" id="tag" v-model="form.tagId">
+            <option value="">{{ $t('tag.notag') }}</option>
             <option
               v-for="tag in cachedCalendars.find((cal) => cal.name == form.calendar)?.tags ?? []"
               :key="tag.id"

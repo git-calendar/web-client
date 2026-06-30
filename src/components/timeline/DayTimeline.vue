@@ -308,6 +308,7 @@ const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart 
         :title="$t('event.new')"
         :subtitle="placeholderSubtitle"
         :temporary="true"
+        :color="'git-real'"
       />
 
       <TimelineEvent
