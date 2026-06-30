@@ -1,6 +1,5 @@
 import { computed, readonly, shallowRef } from 'vue';
 
-import { COLORS } from '@/colors';
 import type { Calendar, Tag } from '@/types/core';
 import { CalendarCore } from '@/wasm/core-wrapper';
 
@@ -60,15 +59,5 @@ export function getDefaultCalendar(): Calendar | undefined {
 }
 
 export function getTag(calendarName: string, tagId: string): Tag | undefined {
-  return getCalendar(calendarName)?.tags.find((tag) => tag.id === tagId);
-}
-
-export function getTagColorHex(calendarName: string, tagId: string): string | undefined {
-  const color = getTag(calendarName, tagId)?.color;
-
-  if (!color) {
-    return undefined;
-  }
-
-  return COLORS[color as keyof typeof COLORS]?.hex;
+  return getCalendar(calendarName)?.tags?.find((tag) => tag.id === tagId);
 }

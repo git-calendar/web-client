@@ -55,6 +55,7 @@ export interface CalendarApi {
   getEvents(from: DateTime, to: DateTime): CalendarEvent[];
 
   createTag(calendar: string, tag: Tag): Tag;
+  updateTag(calendar: string, tag: Tag): Tag;
   removeTag(calendar: string, id: string): void;
 
   setCorsProxy(url: string): void;

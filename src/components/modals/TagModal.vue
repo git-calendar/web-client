@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { COLORS } from '@/colors';
+import { colorsList, getColorI18nKey } from '@/colors';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
-import { notifyEventsChanged } from '@/composables/useEventsRefresh';
+import { refreshCalendars } from '@/services/calendarCache';
 import { syncAllWrapper } from '@/services/gitSync';
 import type { Tag } from '@/types/core';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { cloneDeep } from 'lodash-es';
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, onMounted, useTemplateRef } from 'vue';
 
 const thisModal = useTagModal();
 const { alert } = useAlertModal();
@@ -37,6 +37,10 @@ watch(
   { immediate: true },
 );
 
+const isNew = computed(() => {
+  return thisModal.tag.value?.id === undefined;
+});
+
 function updateFormFromTag(tag: Tag | undefined) {
   if (!tag) return;
 
@@ -64,9 +68,13 @@ async function saveTag() {
 
   isSaving.value = true;
   try {
-    await CalendarCore.createTag(thisModal.calendarName.value, tag);
+    if (isNew.value) {
+      await CalendarCore.createTag(thisModal.calendarName.value, tag);
+    } else {
+      await CalendarCore.updateTag(thisModal.calendarName.value, tag);
+    }
     void syncAllWrapper();
-    notifyEventsChanged();
+    refreshCalendars();
     thisModal.close();
   } catch (err) {
     alert(String(err));
@@ -92,7 +100,7 @@ async function deleteTag() {
   try {
     await CalendarCore.removeTag(thisModal.calendarName.value, tag.id);
     void syncAllWrapper();
-    notifyEventsChanged();
+    refreshCalendars();
     thisModal.close();
   } catch (err) {
     alert(String(err));
@@ -114,6 +122,11 @@ function validate(tag: Tag): boolean {
 
   return true; // ok
 }
+
+const nameInputField = useTemplateRef('name-input-field');
+onMounted(async () => {
+  nameInputField.value?.focus(); // focus name field
+});
 </script>
 
 <template>
@@ -135,8 +148,8 @@ function validate(tag: Tag): boolean {
         <label>
           {{ $t('tag.color') }}:
           <select name="color" id="color" v-model="form.color">
-            <option v-for="color in COLORS" :key="color.id" :value="color.id" :style="{ '--color-hex': color.hex }">
-              {{ $t(color.i18nKey) }}
+            <option v-for="color in colorsList" :key="color" :value="color">
+              {{ $t(getColorI18nKey(color)) }}
             </option>
           </select>
         </label>
@@ -157,8 +170,6 @@ function validate(tag: Tag): boolean {
 
 <style scoped>
 #tag-modal {
-  z-index: 1001;
-
   > form {
     min-width: 20rem;
     width: auto;

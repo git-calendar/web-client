@@ -6,8 +6,12 @@ import { DateTime } from 'luxon';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
+import { useTagModal } from './modals/useTagModal';
 
+const calendarModal = useCalendarModal();
+const tagModal = useTagModal();
 const eventModal = useEventModal();
+const strategyModal = useStrategyModal();
 
 export function useKeyboard() {
   function inputNeededElsewhere(): boolean {
@@ -22,7 +26,7 @@ export function useKeyboard() {
     onKeyStroke('n', (e) => {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
-      eventModal.open();
+      if (!tagModal.isOpen.value && !calendarModal.isOpen.value) eventModal.open();
     });
 
     // T -> go to today
@@ -75,12 +79,10 @@ export function useKeyboard() {
     onKeyStroke('Escape', (e) => {
       e.preventDefault();
 
-      const calendarModal = useCalendarModal();
-      const eventModal = useEventModal();
-      const strategyModal = useStrategyModal();
-
       if (calendarModal.isOpen.value) {
         calendarModal.close();
+      } else if (tagModal.isOpen.value) {
+        tagModal.close();
       } else if (eventModal.isOpen.value && !strategyModal.isOpen.value) {
         eventModal.close();
       } else if (eventModal.isOpen.value && strategyModal.isOpen.value) {
