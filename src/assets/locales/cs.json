@@ -46,7 +46,8 @@
   },
   "tag": {
     "name": "Jméno",
-    "color": "Barva"
+    "color": "Barva",
+    "notag": "Bez štítku"
   },
   "views": {
     "4days": "4 dny",

@@ -8,7 +8,7 @@ export interface CalendarEvent {
   from: DateTime;
   to: DateTime;
   calendar: string;
-  tagId: string;
+  tagId?: string;
   parentId?: string;
   repeat?: Repetition;
 }

@@ -72,9 +72,6 @@ watch(
     if (eventForForm.calendar === '') {
       const defaultCal = getDefaultCalendar();
       originalEvent.calendar = eventForForm.calendar = defaultCal?.name ?? '';
-
-      const firstTagId = defaultCal?.tags[0].id ?? '';
-      originalEvent.tagId = eventForForm.tagId = firstTagId;
     }
 
     updateFormFromEvent(originalEvent);
@@ -116,7 +113,7 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   }
 
   form.calendar = event.calendar;
-  form.tagId = event.tagId;
+  form.tagId = event.tagId ?? '';
 }
 
 function reconstructEvent(): CalendarEvent {
@@ -126,7 +123,7 @@ function reconstructEvent(): CalendarEvent {
     location: form.location,
     description: form.description,
     calendar: form.calendar,
-    tagId: form.tagId,
+    tagId: form.tagId === '' ? undefined : form.tagId,
     from: form.entireDay
       ? DateTime.fromISO(`${form.fromDate}T00:00`, { zone: originalEvent?.from.zone })
       : DateTime.fromISO(`${form.fromDate}T${form.fromTime}`, { zone: originalEvent?.from.zone }),
@@ -287,9 +284,9 @@ function validate(event: CalendarEvent): boolean {
   return true; // ok
 }
 
-const nameInputField = useTemplateRef('title-input-field');
+const titleInputField = useTemplateRef('title-input-field');
 onMounted(async () => {
-  nameInputField.value?.focus(); // focus name field
+  titleInputField.value?.focus(); // focus title field
 
   await loadCalendars();
 

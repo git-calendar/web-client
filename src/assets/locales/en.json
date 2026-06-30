@@ -46,7 +46,8 @@
   },
   "tag": {
     "name": "Name",
-    "color": "Color"
+    "color": "Color",
+    "notag": "Untagged"
   },
   "views": {
     "4days": "4 days",
