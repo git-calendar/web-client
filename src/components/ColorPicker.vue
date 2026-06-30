@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import { colorsList } from '@/colors';
+import { colorsList, getColorI18nKey, getEventColorCSSVariable } from '@/colors';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+// helper to get the real hex from CSS variable
+const getColorHex = (colorId: string) => {
+  return getComputedStyle(document.documentElement).getPropertyValue(`--event-color-${colorId}`).trim() || ''; // fallback
+};
 </script>
 
 <template>
   <div class="color-picker-grid">
     <button
-      v-for="color in colorsList"
-      :key="color.id"
+      v-for="colorId in colorsList"
+      :key="colorId"
       class="color-item"
       :style="{
-        backgroundColor: color.hex + '26' /* 15% opacity for bg */,
-        borderLeft: `4px solid ${color.hex}`,
-        color: color.hex,
+        backgroundColor: `${getEventColorCSSVariable(colorId)}26` /* 15% opacity for bg */,
+        borderLeft: `4px solid ${getEventColorCSSVariable(colorId)}`,
+        color: getEventColorCSSVariable(colorId),
       }"
     >
-      <span class="color-name">{{ t(color.i18nKey) }}</span>
-      <span class="color-hex">{{ color.hex }}</span>
+      <span class="color-name">{{ t(getColorI18nKey(colorId)) }}</span>
+      <span class="color-hex">{{ getColorHex(colorId) }}</span>
     </button>
   </div>
 </template>
