@@ -5,6 +5,7 @@ import { DRAG_PRECISIONS, LANGUAGES, THEMES } from '@/constants.ts';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { settings } from '@/services/settings';
+import { colorsList, getColorI18nKey } from '@/colors';
 
 const { dayNameLong } = useTranslation();
 const { alert } = useAlertModal();
@@ -81,6 +82,16 @@ function formatHour(hour: number): string {
       {{ $t('settings.themes.theme') }}:
       <select name="theme" v-model="settings.theme">
         <option v-for="t in THEMES" :value="t">{{ $t('settings.themes.' + t) }}</option>
+      </select>
+    </label>
+
+    <!-- TODO: prettier color picker -->
+    <label>
+      {{ $t('tag.color') }}:
+      <select name="color" id="color" v-model="settings.defaultEventColor">
+        <option v-for="color in colorsList" :key="color" :value="color">
+          {{ $t(getColorI18nKey(color)) }}
+        </option>
       </select>
     </label>
 

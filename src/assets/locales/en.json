@@ -23,6 +23,7 @@
     "to": "Till",
     "entireDay": "Entire day",
     "calendar": "Calendar",
+    "tag": "Tag",
     "repeat": {
       "repeat": "Repeat",
       "end": "End",
@@ -41,7 +42,13 @@
     "username": "Username",
     "password": "Password/Token",
     "encrypted": "Encrypted",
-    "decryptionKey": "Encryption key/password"
+    "encryptionKey": "Encryption key/password",
+    "readonly": "Read-only"
+  },
+  "tag": {
+    "name": "Name",
+    "color": "Color",
+    "notag": "Untagged"
   },
   "views": {
     "4days": "4 days",
@@ -85,5 +92,15 @@
   "message": {
     "confirmCalendarDelete": "Do you really want to delete the whole calendar?",
     "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\"."
+  },
+  "colors": {
+    "blue": "Blue",
+    "green": "Green",
+    "red": "Red",
+    "purple": "Purple",
+    "yellow": "Yellow",
+    "orange": "Orange",
+    "pink": "Pink",
+    "gray": "Gray"
   }
 }

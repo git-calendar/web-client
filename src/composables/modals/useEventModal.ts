@@ -22,7 +22,7 @@ export function useEventModal() {
           from: DateTime.now(),
           to: DateTime.now().plus({ hour: 2 }),
           calendar: '',
-          tag: '',
+          tagId: '',
         };
       }
 

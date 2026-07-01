@@ -34,6 +34,7 @@ async function syncAndReload() {
       </template>
     </template>
 
+    <hr style="margin-top: auto" />
     <div id="links">
       <router-link to="/settings">
         <FiSettings />
@@ -57,19 +58,30 @@ aside {
   display: flex;
   flex-direction: column;
   align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
 
   padding: 0.5rem;
 
   background-color: var(--sidebar-color);
+
+  button {
+    background-color: var(--sidebar-btn-bg-color);
+
+    &:hover:not(:focus):not(:disabled) {
+      background-color: var(--sidebar-btn-bg-hover-color);
+    }
+  }
 }
 
 #links {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-
-  position: absolute;
-  bottom: 0.8rem;
+  padding: 0.3rem;
 
   > * {
     display: flex;
@@ -92,7 +104,7 @@ hr {
   width: 98%;
   border: 0.5px solid white;
   opacity: 0.2;
-  margin: 0.5rem 0 0.8rem 0;
+  margin: 0.5rem 0;
 }
 
 #top-btns {

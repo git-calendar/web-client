@@ -258,6 +258,10 @@ const pressedInterval = computed(() => {
     font-weight: 900;
     position: relative;
 
+    &:not(.in-range) {
+      color: var(--git-color);
+    }
+
     /* the dot */
     &::after {
       content: '';

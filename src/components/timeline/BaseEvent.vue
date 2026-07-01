@@ -1,25 +1,33 @@
 <script setup lang="ts">
+import { getEventColorCSSVariable, toColorId } from '@/colors';
+import { settings } from '@/services/settings';
 import { computed } from 'vue';
 
-interface Props {
-  topStyle: string;
-  heightStyle: string;
-  title: string;
-  subtitle: string;
-  color?: string;
-  temporary?: boolean;
-}
+const props = withDefaults(
+  defineProps<{
+    topStyle: string;
+    heightStyle: string;
+    title: string;
+    subtitle: string;
+    color?: string;
+    temporary?: boolean;
+  }>(),
+  {
+    color: settings.value.defaultEventColor,
+    temporary: false,
+  },
+);
 
-const props = withDefaults(defineProps<Props>(), {
-  color: '#6495ed',
-  temporary: false,
+const dynamicStyles = computed(() => {
+  let color = getEventColorCSSVariable(toColorId(props.color));
+  if (props.temporary) color = 'var(--event-color-git)';
+
+  return {
+    top: `calc(${props.topStyle} + 1.5px)`,
+    height: `calc(${props.heightStyle} - 2px)`,
+    '--event-color': color,
+  };
 });
-
-const dynamicStyles = computed(() => ({
-  top: `calc(${props.topStyle} + 1.5px)`, // few pixel space between touching events
-  height: `calc(${props.heightStyle} - 2px)`,
-  '--event-color': props.color,
-}));
 </script>
 
 <template>
@@ -67,7 +75,7 @@ const dynamicStyles = computed(() => ({
   background-size: 3px 100%;
   background-repeat: repeat-y;
 
-  background-color: color-mix(in srgb, var(--event-color), transparent 85%); /* light */
+  background-color: color-mix(in srgb, var(--event-color), transparent 80%); /* light */
 }
 
 /* hover only for non-temporary events */

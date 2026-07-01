@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router';
 import CalendarView from '@/views/CalendarView.vue';
 import SettingsView from '@/views/SettingsView.vue';
+import FileExplorer from '@/views/FileExplorer.vue';
 import { DateTime } from 'luxon';
 
 import { getWeekAlignedRedirect } from '@/utils';
-import { settings } from './services/settings';
+import { settings } from '@/services/settings';
 
 const isGitHubPages = import.meta.env.VITE_GITHUB_PAGES == 'true'; // needs to have VITE_ prefix
 
@@ -14,10 +15,11 @@ const router = createRouter({
   routes: [
     {
       name: 'calendar',
-      path: '/:view(month|week|4days)/:year(\\d+)/:month(\\d+)/:day(\\d*)', // for example: /m/2026/3 -> shows March 2026
+      path: '/:view(month|week|4days)/:year(\\d+)/:month(\\d+)/:day(\\d*)', // for example: /month/2026/3 -> shows March 2026
       component: CalendarView,
     },
     { path: '/settings', component: SettingsView },
+    { path: '/files', component: FileExplorer },
     {
       path: '/:pathMatch(.*)*', // anything
       redirect: () => {

@@ -1,34 +1,35 @@
 <script setup lang="ts">
-import { CalendarCore } from '@/wasm/core-wrapper';
 import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
-import type { Calendar } from '@/types/core';
-import { eventsRevision } from '@/composables/useEventsRefresh';
+import { useTagModal } from '@/composables/modals/useTagModal';
+import { cachedCalendars, getTag } from '@/services/calendarCache';
+import { getEventColorCSSVariable, toColorId } from '@/colors';
 
 const calendarModal = useCalendarModal();
-const calendars = ref<Calendar[]>([]);
+const tagModal = useTagModal();
 const hidden = ref(new Map<string, boolean>());
 
-function toggle(cal: Calendar) {
-  hidden.value.set(cal.name, !(hidden.value.get(cal.name) ?? false));
+function getCalId(calName: string): string {
+  return `cal_${calName}`;
 }
 
-function checkboxName(calName: string): string {
-  return `cal-${calName.toLowerCase()}`;
+function getTagId(calName: string, tagName: string): string {
+  return `tag_${calName}_${tagName}`;
 }
 
-async function updateData() {
-  calendars.value = await CalendarCore.listCalendars();
+function toggleVisibility(id: string) {
+  hidden.value.set(id, !(hidden.value.get(id) ?? false));
 }
 
-watch(
-  eventsRevision, // TODO: separate calendar signal?
-  () => {
-    void updateData();
-  },
-  { immediate: true },
-);
+function isVisible(id: string): boolean {
+  return !(hidden.value.get(id) ?? false);
+}
+
+function getTagColor(calName: string, tagId?: string) {
+  const tag = getTag(calName, tagId ?? '');
+  return getEventColorCSSVariable(toColorId(tag?.color));
+}
 </script>
 
 <template>
@@ -39,20 +40,49 @@ watch(
         <FiPlus />
       </button>
     </div>
-    <div v-for="cal in calendars" :key="cal.name" class="calendar">
-      <label class="cal-label">
-        <input
-          type="checkbox"
-          :id="checkboxName(cal.name)"
-          :name="checkboxName(cal.name)"
-          :checked="!(hidden.get(cal.name) ?? false)"
-          @change="toggle(cal)"
-        />
-        <span class="cal-name">{{ cal.name }}</span>
-      </label>
-      <button @click="calendarModal.open(cal.name)">
-        <FiEdit2 />
-      </button>
+
+    <div class="calendar-list">
+      <div v-for="cal in cachedCalendars" :key="cal.name" class="calendar-wrap">
+        <div class="calendar">
+          <label>
+            <input
+              type="checkbox"
+              :id="getCalId(cal.name)"
+              :name="getCalId(cal.name)"
+              :checked="isVisible(cal.name)"
+              @change="toggleVisibility(cal.name)"
+            />
+            <span class="name">{{ cal.name }}</span>
+          </label>
+
+          <button class="edit-btn" @click="calendarModal.open(cal.name)">
+            <FiEdit2 />
+          </button>
+        </div>
+
+        <div v-if="isVisible(cal.name)" class="tags-list">
+          <div class="tag" v-for="tag in cal.tags" :key="tag.name">
+            <label>
+              <input
+                type="checkbox"
+                :id="getTagId(cal.name, tag.name)"
+                :name="getTagId(cal.name, tag.name)"
+                :checked="isVisible(getTagId(cal.name, tag.name))"
+                @change="toggleVisibility(getTagId(cal.name, tag.name))"
+                :style="{ '--tag-color': getTagColor(cal.name, tag.id) }"
+              />
+              <span class="tag-name">{{ tag.name }}</span>
+            </label>
+
+            <button class="edit-btn" @click="tagModal.open(cal.name, tag)">
+              <FiEdit2 />
+            </button>
+          </div>
+          <div class="tag new" @click="tagModal.open(cal.name)">
+            <FiPlus />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -60,27 +90,46 @@ watch(
 <style scoped>
 .calendars {
   width: 100%;
-
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
+  min-height: 0;
+}
+.calendar-list {
+  --fade-size: 2rem;
+
+  height: 100%;
+  min-height: 0;
+  padding-bottom: var(--fade-size); /* leaves space at the bottom so that the shadow isnt always visible */
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* hide scrollbar: firefox */
+  scrollbar-width: none;
+  /* hide scrollbar: old edge/IE */
+  -ms-overflow-style: none;
+  /* hide scrollbar: chrome, safari, edge */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* fade out bottom content */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--fade-size)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--fade-size)), transparent 100%);
 }
 
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  position: relative;
+  padding-left: 0.4rem;
+  justify-content: space-between;
 
   .title {
-    justify-self: center;
     font-weight: bold;
   }
 
   .create-new {
-    position: absolute;
-    right: 0;
     width: 1.8rem;
     height: 1.8rem;
     display: flex;
@@ -95,40 +144,109 @@ watch(
   }
 }
 
-.calendar {
+.calendar-wrap {
   display: flex;
-  height: 2rem;
-  padding: 0.3rem;
+  flex-direction: column;
+  gap: 0.1rem;
 
-  border-radius: var(--small-border-radius);
+  .calendar {
+    height: 2rem;
+    padding-right: 0.25rem;
 
-  &:hover {
-    background-color: var(--sidebar-hover-color);
-  }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      cursor: pointer;
+      user-select: none;
+      flex-grow: 1;
+      padding: 0.3rem;
+    }
 
-  > button {
-    height: 100%;
-    aspect-ratio: 1/1;
-    padding: 0.25rem;
-    margin-left: auto;
-    background-color: var(--sidebar-bg-color);
-
-    &:hover:not(:disabled) {
-      background-color: color-mix(in srgb, var(--sidebar-color), white 20%);
+    .name {
+      font-weight: 500;
     }
   }
 }
 
-.cal-label {
+.calendar,
+.tag {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  border-radius: var(--small-border-radius);
 
-  cursor: pointer;
-  user-select: none;
+  &:hover {
+    background-color: var(--sidebar-hover-color);
+
+    /* reveal the edit button on row hover */
+    .edit-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
 }
 
-.cal-name {
-  font-weight: 500;
+.edit-btn {
+  height: 76%;
+  aspect-ratio: 1/1;
+  padding: 0.25rem;
+  background-color: transparent;
+  border-radius: var(--small-border-radius);
+  cursor: pointer;
+
+  /* hidden by default until hovered */
+  opacity: 0;
+  pointer-events: none;
+
+  &:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--sidebar-color), white 20%);
+  }
+}
+
+.tags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-left: 1.8rem;
+
+  .tag {
+    padding-right: 0.25rem;
+    height: 1.7rem;
+
+    label,
+    &.new {
+      display: flex;
+      padding: 0.25rem 0.4rem;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: var(--small-border-radius);
+      cursor: pointer;
+      user-select: none;
+      flex-grow: 1;
+
+      input[type='checkbox']:checked::before {
+        background-color: var(--tag-color);
+      }
+    }
+
+    .name {
+      font-size: 0.9em;
+      opacity: 0.85;
+    }
+
+    .edit-btn {
+      padding: 0.15rem;
+    }
+  }
+}
+
+.tag.new {
+  width: max-content;
+
+  svg {
+    transform: scale(1.3);
+    width: 1rem;
+    height: 1rem;
+  }
 }
 </style>

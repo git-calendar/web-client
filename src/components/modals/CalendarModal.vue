@@ -7,7 +7,7 @@ import type { Calendar } from '@/types/core';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useI18n } from 'vue-i18n';
 import { syncAllWrapper } from '@/services/gitSync';
-import { notifyEventsChanged } from '@/composables/useEventsRefresh';
+import { refreshCalendars } from '@/services/calendarCache';
 
 const { t } = useI18n();
 const thisModal = useCalendarModal();
@@ -22,11 +22,12 @@ const howOptions = ['Init', 'Clone'];
 const form = reactive({
   how: 'Init',
   name: '',
-  url: '',
+  remoteURL: '',
   username: '',
   password: '',
   encrypted: false,
-  decryptionKey: '',
+  encryptionKey: '',
+  readonly: false,
 });
 const errors = reactive({
   missingName: false,
@@ -58,11 +59,12 @@ function updateFormFromCalendar(calendar: Calendar) {
   form.how = '';
   form.name = calendar.name ?? '';
   form.encrypted = calendar.encrypted;
-  form.decryptionKey = ''; // secret
+  form.encryptionKey = ''; // secret
+  form.readonly = calendar.readonly;
 
   if (calendar.remoteUrl) {
     const remoteUrl = authFromUrl(calendar.remoteUrl);
-    form.url = remoteUrl.url;
+    form.remoteURL = remoteUrl.url;
     form.username = remoteUrl.username;
     form.password = remoteUrl.password;
   }
@@ -84,7 +86,7 @@ async function saveCalendar(e: Event) {
     }
     await CalendarCore.loadCalendars();
 
-    notifyEventsChanged();
+    refreshCalendars();
     thisModal.close();
   } catch (err) {
     alert(String(err));
@@ -94,20 +96,25 @@ async function saveCalendar(e: Event) {
 }
 
 async function createCalendar() {
-  console.log('creating calendar', form.name, form.url);
+  console.log('creating calendar', form.name, form.remoteURL);
 
   switch (form.how) {
     case 'Init':
-      const name = form.name.trim();
-      await CalendarCore.createCalendar(name, form.encrypted ? form.decryptionKey : '');
-      if (form.url !== '')
-        await CalendarCore.updateRemote(name, urlWithAuth(form.url.trim(), form.username, form.password));
+      await CalendarCore.createCalendar(form.name.trim(), form.encrypted ? form.encryptionKey : '');
+      if (form.remoteURL !== '') {
+        await CalendarCore.updateRemote(
+          form.name.trim(),
+          urlWithAuth(form.remoteURL.trim(), form.username, form.password),
+          form.readonly,
+        );
+      }
       break;
 
     case 'Clone':
       await CalendarCore.cloneCalendar(
-        urlWithAuth(form.url.trim(), form.username, form.password),
-        form.encrypted ? form.decryptionKey : '',
+        urlWithAuth(form.remoteURL.trim(), form.username, form.password),
+        form.encrypted ? form.encryptionKey : '',
+        form.readonly,
       );
       break;
   }
@@ -127,11 +134,11 @@ async function updateCalendar() {
     calendarName = form.name;
   }
 
-  const rawUrl = form.url.trim();
+  const rawUrl = form.remoteURL.trim();
   if (rawUrl !== '') {
     const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
-    if (calendar.remoteUrl !== newRemoteUrl) {
-      await CalendarCore.updateRemote(calendarName, newRemoteUrl);
+    if (calendar.remoteUrl !== newRemoteUrl || originalCalendar.value?.readonly !== form.readonly) {
+      await CalendarCore.updateRemote(calendarName, newRemoteUrl, form.readonly);
       await syncAllWrapper(); // merge/pull or whatever
     }
   }
@@ -151,7 +158,7 @@ async function deleteCal() {
     await CalendarCore.removeCalendar(originalCalendar.value.name);
     await CalendarCore.loadCalendars();
 
-    notifyEventsChanged();
+    refreshCalendars();
     thisModal.close();
   } catch (err) {
     alert(String(err));
@@ -172,19 +179,19 @@ function validate(): boolean {
     return false;
   }
 
-  form.url = form.url.trim();
-  if (needsURL && form.url === '') {
+  form.remoteURL = form.remoteURL.trim();
+  if (needsURL && form.remoteURL === '') {
     errors.badURL = true;
     return false;
   }
 
-  if (form.url !== '') {
-    if (!isValidUrl(form.url)) {
+  if (form.remoteURL !== '') {
+    if (!isValidUrl(form.remoteURL)) {
       errors.badURL = true;
       return false;
     }
 
-    if (!form.url.endsWith('.git')) {
+    if (!form.remoteURL.endsWith('.git')) {
       errors.badURL = true;
       alert(t('message.errorRemoteUrlEndDotGit'));
       return false;
@@ -206,11 +213,12 @@ function isValidUrl(value: string): boolean {
 function resetForm() {
   form.how = howOptions[0];
   form.name = '';
-  form.url = '';
+  form.remoteURL = '';
   form.username = '';
   form.password = '';
   form.encrypted = false;
-  form.decryptionKey = '';
+  form.encryptionKey = '';
+  form.readonly = false;
 
   resetErrors();
 }
@@ -289,7 +297,7 @@ onMounted(() => {
           name="url"
           :placeholder="`Remote URL ${form.how == 'Init' ? '(' + $t('optionalText') + ')' : ''}`"
           autocomplete="none"
-          v-model="form.url"
+          v-model="form.remoteURL"
           :class="{ red: errors.badURL }"
           @input="errors.badURL = false"
         />
@@ -314,20 +322,25 @@ onMounted(() => {
           </div>
         </div>
 
+        <label v-if="form.how === 'Clone' || (form.how === '' && form.remoteURL !== '')">
+          {{ $t('calendar.readonly') }}
+          <input type="checkbox" name="readonly" v-model="form.readonly" />
+        </label>
+
         <div id="encryption" v-if="thisModal.isNew.value">
           <!-- TODO: re-encrypt option for existing calendars -->
           <label>
             {{ $t('calendar.encrypted') }}
-            <input type="checkbox" v-model="form.encrypted" />
+            <input type="checkbox" name="encrypted" v-model="form.encrypted" />
           </label>
 
           <input
             v-if="form.encrypted"
             type="password"
-            name="decryption-key"
-            :placeholder="$t('calendar.decryptionKey')"
+            name="encryption-key"
+            :placeholder="$t('calendar.encryptionKey')"
             autocomplete="current-password"
-            v-model="form.decryptionKey"
+            v-model="form.encryptionKey"
           />
         </div>
 
@@ -362,26 +375,6 @@ onMounted(() => {
       flex: 1;
       width: 100%;
     }
-  }
-}
-
-fieldset {
-  display: contents;
-  border: 0;
-  padding: 0;
-  margin: 0;
-
-  &:disabled > #git-credentials {
-    opacity: 0.5;
-  }
-}
-
-.delete-btn {
-  border: 1px solid var(--git-color);
-  background-color: var(--btn-red-bg-color);
-
-  &:hover:not(:focus):not(:disabled) {
-    background-color: var(--btn-red-bg-color-hover);
   }
 }
 </style>

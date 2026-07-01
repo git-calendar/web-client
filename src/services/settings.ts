@@ -2,6 +2,7 @@ import { useStorage } from '@vueuse/core';
 import { watch } from 'vue';
 import { CALENDAR_VIEWS, LANGUAGES, THEMES } from '@/constants.ts';
 import { type HourNumbers, type WeekdayNumbers, Settings as LuxonSettings } from 'luxon';
+import { type ColorId } from '@/colors';
 
 export type CalendarView = (typeof CALENDAR_VIEWS)[number];
 
@@ -18,6 +19,7 @@ type UserSettings = {
   dayViewStartHour: HourNumbers;
   dayViewEndHour: HourNumbers;
   dragPrecisionMinutes: number;
+  defaultEventColor: ColorId;
   corsProxyURL: string;
 };
 
@@ -33,6 +35,7 @@ export const settings = useStorage<UserSettings>(
     dayViewStartHour: 6,
     dayViewEndHour: 0,
     dragPrecisionMinutes: 30,
+    defaultEventColor: 'gray',
     corsProxyURL: 'https://cors-proxy.firu.dev',
   },
   localStorage,

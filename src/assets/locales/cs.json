@@ -23,6 +23,7 @@
     "to": "Do",
     "entireDay": "Celý den",
     "calendar": "Kalendář",
+    "tag": "Štítek",
     "repeat": {
       "repeat": "Opakování",
       "end": "Konec",
@@ -41,7 +42,13 @@
     "username": "Uživatelské jméno",
     "password": "Heslo/Token",
     "encrypted": "Šifrování",
-    "decryptionKey": "Šifrovací heslo"
+    "encryptionKey": "Šifrovací heslo",
+    "readonly": "Pouze čtení"
+  },
+  "tag": {
+    "name": "Jméno",
+    "color": "Barva",
+    "notag": "Bez štítku"
   },
   "views": {
     "4days": "4 dny",
@@ -85,5 +92,15 @@
   "message": {
     "confirmCalendarDelete": "Chcete opravdu smazat celý kalenář?",
     "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\"."
+  },
+  "colors": {
+    "blue": "Modrá",
+    "green": "Zelená",
+    "red": "Červená",
+    "purple": "Fialová",
+    "yellow": "Žlutá",
+    "orange": "Oranžová",
+    "pink": "Růžová",
+    "gray": "Šedá"
   }
 }

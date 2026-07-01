@@ -10,6 +10,7 @@ import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { syncAllWrapper } from '@/services/gitSync';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
+import { cachedCalendars, getDefaultCalendar, loadCalendars } from '@/services/calendarCache';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -42,6 +43,7 @@ const form = reactive({
   toTime: '',
   calendar: '',
   entireDay: false,
+  tagId: '',
 
   repeatFreq: Freq.Invalid,
   repeatEnd: 'after',
@@ -49,31 +51,16 @@ const form = reactive({
   repeatEndAfter: 5,
 });
 const errors = reactive({
-  missingName: false,
+  missingTitle: false,
   badToDate: false,
   badFromDate: false,
   badUntilDate: false,
 });
 
-const calendarNames = ref<string[]>([]);
-const calendarNamesLoaded = ref(false);
-
-void loadCalendarNames();
-
-async function loadCalendarNames() {
-  try {
-    calendarNames.value = (await CalendarCore.listCalendars()).map((cal) => cal.name);
-  } catch (err) {
-    alert(String(err));
-  } finally {
-    calendarNamesLoaded.value = true;
-  }
-}
-
-let originalEvent: CalendarEvent | undefined = undefined;
+let originalEvent: CalendarEvent | undefined;
 watch(
-  [() => thisModal.event.value, calendarNames],
-  ([newEvent]) => {
+  () => thisModal.event.value,
+  (newEvent) => {
     if (!newEvent) {
       originalEvent = undefined;
       return;
@@ -83,16 +70,13 @@ watch(
     const eventForForm = cloneDeep(originalEvent);
 
     if (eventForForm.calendar === '') {
-      if (!calendarNamesLoaded.value) return;
-      console.log(calendarNames.value);
-      // calendar unset -> choose one
-      originalEvent.calendar = eventForForm.calendar = calendarNames.value.includes('default')
-        ? 'default'
-        : (calendarNames.value.at(0) ?? '');
+      const defaultCal = getDefaultCalendar();
+      originalEvent.calendar = eventForForm.calendar = defaultCal?.name ?? '';
     }
+
     updateFormFromEvent(originalEvent);
   },
-  { immediate: true }, // fire right onMounted, not wait till first change
+  { immediate: true },
 );
 
 function updateFormFromEvent(event: CalendarEvent | undefined) {
@@ -129,6 +113,7 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   }
 
   form.calendar = event.calendar;
+  form.tagId = event.tagId ?? '';
 }
 
 function reconstructEvent(): CalendarEvent {
@@ -138,7 +123,7 @@ function reconstructEvent(): CalendarEvent {
     location: form.location,
     description: form.description,
     calendar: form.calendar,
-    tag: originalEvent!.tag, // TODO
+    tagId: form.tagId === '' ? undefined : form.tagId,
     from: form.entireDay
       ? DateTime.fromISO(`${form.fromDate}T00:00`, { zone: originalEvent?.from.zone })
       : DateTime.fromISO(`${form.fromDate}T${form.fromTime}`, { zone: originalEvent?.from.zone }),
@@ -267,7 +252,7 @@ async function deleteRepeatingEvent(strategy: UpdateStrategy) {
 
 function validate(event: CalendarEvent): boolean {
   if (event.title == '') {
-    errors.missingName = true;
+    errors.missingTitle = true;
     return false;
   }
 
@@ -299,13 +284,19 @@ function validate(event: CalendarEvent): boolean {
   return true; // ok
 }
 
-const nameInputField = useTemplateRef('name-input-field');
+const titleInputField = useTemplateRef('title-input-field');
 onMounted(async () => {
-  nameInputField.value?.focus(); // focus name field
-});
+  titleInputField.value?.focus(); // focus title field
 
-// const exampleTags = ref(['School', 'Work', 'Birthday']); // TODO
-// const selectedTags = ref<string[]>([]);
+  await loadCalendars();
+
+  if (form.calendar === '') {
+    const calendar = getDefaultCalendar();
+
+    form.calendar = calendar?.name ?? '';
+    form.tagId = calendar?.tags[0]?.id ?? '';
+  }
+});
 </script>
 
 <template>
@@ -318,9 +309,9 @@ onMounted(async () => {
           :placeholder="$t('event.title')"
           autocomplete="none"
           v-model="form.title"
-          ref="name-input-field"
-          :class="{ red: errors.missingName }"
-          @input="errors.missingName = false"
+          ref="title-input-field"
+          :class="{ red: errors.missingTitle }"
+          @input="errors.missingTitle = false"
         />
 
         <div class="dates">
@@ -385,8 +376,22 @@ onMounted(async () => {
         <label>
           {{ $t('event.calendar') }}:
           <select name="calendar" v-model="form.calendar">
-            <option v-for="calendarName in calendarNames" :value="calendarName" :key="calendarName">
-              {{ calendarName }}
+            <option v-for="calendar in cachedCalendars" :value="calendar.name" :key="calendar.name">
+              {{ calendar.name }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          {{ $t('event.tag') }}:
+          <select name="tag" id="tag" v-model="form.tagId">
+            <option value="">{{ $t('tag.notag') }}</option>
+            <option
+              v-for="tag in cachedCalendars.find((cal) => cal.name == form.calendar)?.tags ?? []"
+              :key="tag.id"
+              :value="tag.id"
+            >
+              {{ tag.name }}
             </option>
           </select>
         </label>
@@ -398,16 +403,6 @@ onMounted(async () => {
           autocomplete="none"
           v-model="form.location"
         />
-
-        <!--
-        TODO tags
-        <div>
-            <label v-for="tagName in exampleTags" :key="tagName">
-            <input type="checkbox" name="idk" :value="tagName" v-model="selectedTags" />
-            {{ tagName }}
-            </label>
-        </div>
-        -->
 
         <textarea name="description" rows="3" :placeholder="$t('event.description')" v-model="form.description" />
 
@@ -440,16 +435,6 @@ label:has(select[name='end']) {
   }
 }
 
-label:has(select) {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-
-  select {
-    flex: 1 1 auto;
-  }
-}
-
 .dates {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -465,31 +450,6 @@ label:has(select) {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.7rem;
-}
-
-.delete-btn {
-  border: 1px solid var(--git-color);
-  background-color: var(--btn-red-bg-color);
-
-  &:hover:not(:focus):not(:disabled) {
-    background-color: var(--btn-red-bg-color-hover);
-  }
-}
-
-fieldset {
-  display: contents;
-  border: 0;
-  padding: 0;
-  margin: 0;
-
-  &:disabled label,
-  &:disabled .dates > span {
-    opacity: 0.5;
-  }
-
-  &:disabled select {
-    opacity: 1; /* it was dimmed 2 times idk */
-  }
 }
 
 @media (max-width: 450px) {

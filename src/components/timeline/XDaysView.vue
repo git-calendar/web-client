@@ -71,6 +71,7 @@ async function updateData() {
   const resultTimeline: CalendarEvent[][] = Array.from({ length: props.numOfDays }, () => []);
   const resultWholeDay: CalendarEvent[] = [];
   const events = await CalendarCore.getEvents(startDate.value, startDate.value.plus({ day: props.numOfDays }));
+  console.log('Client got events:', events);
 
   for (const event of events) {
     if (isWholeDay(event) || event.from.day != event.to.day) {
