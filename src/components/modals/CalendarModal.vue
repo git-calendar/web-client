@@ -8,6 +8,7 @@ import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useI18n } from 'vue-i18n';
 import { syncAllWrapper } from '@/services/gitSync';
 import { refreshCalendars } from '@/services/calendarCache';
+import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
 const { t } = useI18n();
 const thisModal = useCalendarModal();
@@ -87,6 +88,7 @@ async function saveCalendar(e: Event) {
     await CalendarCore.loadCalendars();
 
     refreshCalendars();
+    notifyEventsChanged();
     thisModal.close();
   } catch (err) {
     alert(String(err));
@@ -159,6 +161,7 @@ async function deleteCal() {
     await CalendarCore.loadCalendars();
 
     refreshCalendars();
+    notifyEventsChanged();
     thisModal.close();
   } catch (err) {
     alert(String(err));
