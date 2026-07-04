@@ -3,11 +3,25 @@ import { cachedCalendars } from '@/services/calendarCache';
 
 export type GetEventsFilter = Record<string, string[]>;
 
-const hiddenCalendars = reactive(new Set<string>());
-const hiddenTags = reactive(new Set<string>());
+const storageKey = 'calendar-filters';
+
+const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
+
+const hiddenCalendars = reactive(new Set<string>(stored['hidden-calendars'] ?? []));
+const hiddenTags = reactive(new Set<string>(stored['hidden-tags'] ?? []));
 
 function tagKey(calendar: string, tagId: string): string {
   return `${calendar}:${tagId}`;
+}
+
+function saveFilters() {
+  localStorage.setItem(
+    storageKey,
+    JSON.stringify({
+      'hidden-calendars': [...hiddenCalendars],
+      'hidden-tags': [...hiddenTags],
+    }),
+  );
 }
 
 export function useCalendarFilters() {
@@ -42,10 +56,12 @@ export function useCalendarFilters() {
   function toggleCalendar(calendar: string) {
     if (hiddenCalendars.has(calendar)) {
       hiddenCalendars.delete(calendar);
+      saveFilters();
       return;
     }
 
     hiddenCalendars.add(calendar);
+    saveFilters();
   }
 
   function toggleTag(calendar: string, tagId: string) {
@@ -53,10 +69,12 @@ export function useCalendarFilters() {
 
     if (hiddenTags.has(key)) {
       hiddenTags.delete(key);
+      saveFilters();
       return;
     }
 
     hiddenTags.add(key);
+    saveFilters();
   }
 
   function isCalendarVisible(calendar: string): boolean {
