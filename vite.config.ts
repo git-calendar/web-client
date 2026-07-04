@@ -2,6 +2,8 @@ import { fileURLToPath, URL } from 'node:url';
 
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { compression, defineAlgorithm } from 'vite-plugin-compression2';
+import { constants } from 'node:zlib';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const base = process.env.GITHUB_PAGES == 'true' ? '/web-client/' : '/';
@@ -11,6 +13,23 @@ export default defineConfig({
   base,
   plugins: [
     vue(),
+    // compress wasm files to brotli, zstd and gzip
+    compression({
+      include: /\.wasm$/,
+      algorithms: [
+        defineAlgorithm('gzip', { level: 9 }),
+        defineAlgorithm('zstandard', {
+          params: {
+            [constants.ZSTD_c_compressionLevel]: 19,
+          },
+        }),
+        defineAlgorithm('brotliCompress', {
+          params: {
+            [require('zlib').constants.BROTLI_PARAM_QUALITY]: 11,
+          },
+        }),
+      ],
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
@@ -41,7 +60,7 @@ export default defineConfig({
       },
 
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,wasm}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,wasm,zst,br,gz}'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MiB (core.wasm is a big boy)
         cleanupOutdatedCaches: true,
         navigateFallback: `${base}index.html`,

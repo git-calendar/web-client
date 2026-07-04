@@ -38,7 +38,7 @@ interface RpcRequest {
   args: unknown[];
 }
 
-const MB = 1_048_576;
+const MB = 1_000_000;
 let wasmReadyPromise: Promise<void> | null = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,42 +58,47 @@ function progress(percentage: number, text_id: string, other: string = '') {
 
 async function fetchWasm(url: string): Promise<ArrayBuffer> {
   const response = await fetch(url);
-  if (!response.ok || !response.body) {
-    throw new Error(`WASM fetch failed: HTTP ${response.status} or missing body`);
+  if (!response.ok) {
+    throw new Error(`WASM fetch failed: HTTP ${response.status}`);
+  }
+  if (!response.body) {
+    throw new Error('WASM fetch failed: missing body');
   }
 
-  const contentLength = response.headers.get('Content-Length');
-  const encoding = response.headers.get('Content-Encoding');
-  const total = contentLength ? parseInt(contentLength, 10) : 1;
+  const total = Number(response.headers.get('Content-Length'));
+  if (!total) {
+    throw new Error('WASM fetch failed: missing Content-Length');
+  }
+
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
+
   let received = 0;
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {
+      break;
+    }
 
     chunks.push(value);
     received += value.byteLength;
-    const encodedRecieved = received / (encoding == 'gzip' ? 4 : 1); // account for ~4x compression with Gzip
 
-    const pct = total ? 5 + Math.round((encodedRecieved / total) * 85) : 50;
-    const sizeMsg = total
-      ? `${(encodedRecieved / MB).toFixed(1)} / ${(total / MB).toFixed(1)} MB`
-      : `${(encodedRecieved / MB).toFixed(1)} MB`;
+    const pct = 5 + Math.round((received / total) * 85);
+    const sizeMsg = `${(received / MB).toFixed(1)} / ${(total / MB).toFixed(1)} MB`;
 
-    progress(Math.min(pct, 90), `fetchingWasm`, sizeMsg);
+    progress(Math.min(pct, 90), 'fetchingWasm', sizeMsg);
   }
 
-  // Merge chunks
-  const merged = new Uint8Array(received);
+  const wasm = new Uint8Array(received);
   let offset = 0;
+
   for (const chunk of chunks) {
-    merged.set(chunk, offset);
+    wasm.set(chunk, offset);
     offset += chunk.byteLength;
   }
 
-  return merged.buffer;
+  return wasm.buffer;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
