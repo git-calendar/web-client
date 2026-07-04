@@ -12,9 +12,11 @@ import { useWindowSize } from '@vueuse/core';
 import AllDayBar from '@/components/AllDayBar.vue';
 import { settings } from '@/services/settings';
 import { eventsRevision } from '@/composables/useEventsRefresh';
+import { useCalendarFilters } from '@/services/calendarFilters';
 
 const { dayNameShort, dayNameSuperShort } = useTranslation();
 const { width } = useWindowSize(); // reactive window size
+const { filter } = useCalendarFilters();
 const isMobile = computed(() => width.value < 500);
 const route = useRoute();
 
@@ -27,7 +29,7 @@ const startDate = computed(() => {
 });
 
 watch(
-  [startDate, () => props.numOfDays, eventsRevision],
+  [startDate, () => props.numOfDays, eventsRevision, filter],
   () => {
     void updateData();
   },
@@ -70,7 +72,11 @@ const eventsWholeDay = ref<CalendarEvent[]>(Array.from({ length: props.numOfDays
 async function updateData() {
   const resultTimeline: CalendarEvent[][] = Array.from({ length: props.numOfDays }, () => []);
   const resultWholeDay: CalendarEvent[] = [];
-  const events = await CalendarCore.getEvents(startDate.value, startDate.value.plus({ day: props.numOfDays }));
+  const events = await CalendarCore.getEvents(
+    startDate.value,
+    startDate.value.plus({ days: props.numOfDays }),
+    filter.value,
+  );
   console.log('Client got events:', events);
 
   for (const event of events) {

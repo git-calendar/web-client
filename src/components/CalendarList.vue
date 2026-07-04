@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
-import { ref } from 'vue';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
 import { cachedCalendars, getTag } from '@/services/calendarCache';
 import { getEventColorCSSVariable, toColorId } from '@/colors';
+import { useCalendarFilters } from '@/services/calendarFilters';
 
+const { toggleCalendar, toggleTag, isCalendarVisible, isTagVisible } = useCalendarFilters();
 const calendarModal = useCalendarModal();
 const tagModal = useTagModal();
-const hidden = ref(new Map<string, boolean>());
 
 function getCalId(calName: string): string {
   return `cal_${calName}`;
@@ -16,14 +16,6 @@ function getCalId(calName: string): string {
 
 function getTagId(calName: string, tagName: string): string {
   return `tag_${calName}_${tagName}`;
-}
-
-function toggleVisibility(id: string) {
-  hidden.value.set(id, !(hidden.value.get(id) ?? false));
-}
-
-function isVisible(id: string): boolean {
-  return !(hidden.value.get(id) ?? false);
 }
 
 function getTagColor(calName: string, tagId?: string) {
@@ -49,8 +41,8 @@ function getTagColor(calName: string, tagId?: string) {
               type="checkbox"
               :id="getCalId(cal.name)"
               :name="getCalId(cal.name)"
-              :checked="isVisible(cal.name)"
-              @change="toggleVisibility(cal.name)"
+              :checked="isCalendarVisible(cal.name)"
+              @change="toggleCalendar(cal.name)"
             />
             <span class="name">{{ cal.name }}</span>
           </label>
@@ -60,15 +52,15 @@ function getTagColor(calName: string, tagId?: string) {
           </button>
         </div>
 
-        <div v-if="isVisible(cal.name)" class="tags-list">
+        <div v-if="isCalendarVisible(cal.name)" class="tags-list">
           <div class="tag" v-for="tag in cal.tags" :key="tag.name">
             <label>
               <input
                 type="checkbox"
                 :id="getTagId(cal.name, tag.name)"
                 :name="getTagId(cal.name, tag.name)"
-                :checked="isVisible(getTagId(cal.name, tag.name))"
-                @change="toggleVisibility(getTagId(cal.name, tag.name))"
+                :checked="isTagVisible(cal.name, tag.id ?? '')"
+                @change="toggleTag(cal.name, tag.id ?? '')"
                 :style="{ '--tag-color': getTagColor(cal.name, tag.id) }"
               />
               <span class="tag-name">{{ tag.name }}</span>

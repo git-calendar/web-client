@@ -52,7 +52,7 @@ export interface CalendarApi {
   removeEvent(event: CalendarEvent): void;
   removeRepeatingEvent(event: CalendarEvent, strategy: UpdateStrategy): void;
   getEvent(id: string): CalendarEvent;
-  getEvents(from: DateTime, to: DateTime): CalendarEvent[];
+  getEvents(from: DateTime, to: DateTime, filter: GetEventsFilter | null): CalendarEvent[];
 
   createTag(calendar: string, tag: Tag): Tag;
   updateTag(calendar: string, tag: Tag): Tag;
@@ -76,3 +76,5 @@ export enum UpdateStrategy {
   Following,
   All,
 }
+
+type GetEventsFilter = Record<string, string[]>;
