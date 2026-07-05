@@ -56,6 +56,20 @@ function progress(percentage: number, text_id: string, other: string = '') {
 // WASM Fetching
 // ─────────────────────────────────────────────────────────────────────────────
 
+function sizeHeader(headers: Headers, name: string): number | null {
+  const value = headers.get(name);
+  if (!value) {
+    return null;
+  }
+
+  const size = Number(value);
+  if (!Number.isFinite(size) || size <= 0) {
+    return null;
+  }
+
+  return size;
+}
+
 async function fetchWasm(url: string): Promise<ArrayBuffer> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -65,10 +79,8 @@ async function fetchWasm(url: string): Promise<ArrayBuffer> {
     throw new Error('WASM fetch failed: missing body');
   }
 
-  const total = Number(response.headers.get('Content-Length'));
-  if (!total) {
-    throw new Error('WASM fetch failed: missing Content-Length');
-  }
+  const encodedTotal = sizeHeader(response.headers, 'Content-Length');
+  const decodedTotal = __WASM_DECODED_SIZE__;
 
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -84,8 +96,20 @@ async function fetchWasm(url: string): Promise<ArrayBuffer> {
     chunks.push(value);
     received += value.byteLength;
 
-    const pct = 5 + Math.round((received / total) * 85);
-    const sizeMsg = `${(received / MB).toFixed(1)} / ${(total / MB).toFixed(1)} MB`;
+    const ratio = Math.min(received / decodedTotal, 1);
+    const pct = 5 + Math.round(ratio * 85);
+
+    let sizeMsg: string;
+
+    if (encodedTotal && encodedTotal < decodedTotal) {
+      // compressed response:
+      // JS receives decoded bytes, but the user should see network bytes
+      const encodedReceived = Math.round(encodedTotal * ratio);
+      sizeMsg = `${(encodedReceived / MB).toFixed(1)} / ${(encodedTotal / MB).toFixed(1)} MB`;
+    } else {
+      // uncompressed response or missing compression
+      sizeMsg = `${(received / MB).toFixed(1)} / ${(decodedTotal / MB).toFixed(1)} MB`;
+    }
 
     progress(Math.min(pct, 90), 'fetchingWasm', sizeMsg);
   }

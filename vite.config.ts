@@ -5,8 +5,13 @@ import vue from '@vitejs/plugin-vue';
 import { compression, defineAlgorithm } from 'vite-plugin-compression2';
 import { constants } from 'node:zlib';
 import { VitePWA } from 'vite-plugin-pwa';
+import { resolve } from 'node:path';
+import { statSync } from 'node:fs';
 
 const base = process.env.GITHUB_PAGES == 'true' ? '/web-client/' : '/';
+
+const wasmPath = resolve(__dirname, 'src/assets/core.wasm');
+const wasmDecodedSize = statSync(wasmPath).size;
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -71,5 +76,8 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  define: {
+    __WASM_DECODED_SIZE__: JSON.stringify(wasmDecodedSize),
   },
 });
