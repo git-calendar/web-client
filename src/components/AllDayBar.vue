@@ -2,9 +2,10 @@
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
 import { getCurrentViewDatetime } from '@/utils';
+import { DateTime } from 'luxon';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import AllDayEvent from './AllDayEvent.vue';
+import AllDayEvent from '@/components/AllDayEvent.vue';
 import { getTag } from '@/services/calendarCache';
 
 const route = useRoute();
@@ -19,6 +20,20 @@ const props = defineProps<{
 
 // Must be computed so route changes properly invalidate compEvents
 const currentDate = computed(() => getCurrentViewDatetime(route.params).startOf('day'));
+
+const todayGridColumn = computed(() => {
+  const today = DateTime.now()
+    .setZone(currentDate.value.zoneName ?? undefined)
+    .startOf('day');
+
+  for (let i = 0; i < props.numOfDays; i++) {
+    if (currentDate.value.plus({ days: i }).hasSame(today, 'day')) {
+      return `${i + 1} / span 1`;
+    }
+  }
+
+  return '';
+});
 
 const compEvents = computed(() => {
   const date = currentDate.value;
@@ -76,11 +91,13 @@ const compEvents = computed(() => {
       :color="getTag(v.event.calendar, v.event.tagId ?? '')?.color"
       @click="eventModal.open(v.event)"
     />
+    <div v-if="todayGridColumn" class="today-highlighter" :style="{ gridColumn: todayGridColumn }" />
   </div>
 </template>
 
 <style scoped>
 #allday-bar {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(v-bind('props.numOfDays'), minmax(0, 1fr));
   grid-auto-rows: 1.2rem;
@@ -89,5 +106,15 @@ const compEvents = computed(() => {
   padding: 1px;
   gap: 2.5px;
   padding-bottom: 1.5%;
+}
+
+.today-highlighter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  right: -1px;
+  background-color: color-mix(in srgb, var(--git-color-real) 8%, transparent);
+  pointer-events: none;
 }
 </style>

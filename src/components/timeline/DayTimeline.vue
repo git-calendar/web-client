@@ -211,6 +211,10 @@ const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart 
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+
+  &:has(.today-highlight) {
+    background-color: color-mix(in srgb, var(--git-color-real) 8%, transparent);
+  }
 }
 
 .timeline-grid {
