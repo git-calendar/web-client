@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getEventColorCSSVariable, toColorId } from '@/colors';
+import { settings } from '@/services/settings';
 import type { CalendarEvent } from '@/types/core';
 import { isWholeDay, timeRangeFormat } from '@/utils';
 import { computed } from 'vue';
@@ -10,14 +12,18 @@ const props = withDefaults(
     temporary?: boolean;
   }>(),
   {
-    color: '#6495ed',
+    color: settings.value.defaultEventColor,
     temporary: false,
   },
 );
 
-const dynamicStyles = computed(() => ({
-  '--event-color': props.color,
-}));
+const dynamicStyles = computed(() => {
+  let color = getEventColorCSSVariable(toColorId(props.color));
+  if (props.temporary) color = 'var(--event-color-git)';
+  return {
+    '--event-color': color,
+  };
+});
 </script>
 
 <template>

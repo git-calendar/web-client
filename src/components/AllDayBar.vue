@@ -5,6 +5,7 @@ import { getCurrentViewDatetime } from '@/utils';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AllDayEvent from './AllDayEvent.vue';
+import { getTag } from '@/services/calendarCache';
 
 const route = useRoute();
 const eventModal = useEventModal();
@@ -72,6 +73,7 @@ const compEvents = computed(() => {
       :key="v.event.id"
       :event="v.event"
       :style="v.gridStyle"
+      :color="getTag(v.event.calendar, v.event.tagId ?? '')?.color"
       @click="eventModal.open(v.event)"
     />
   </div>
