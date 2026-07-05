@@ -275,7 +275,7 @@ function validate(event: CalendarEvent): boolean {
       errors.badUntilDate = true;
       return false;
     }
-    if (event.repeat.until.diff(event.from).as('milliseconds') < 0) {
+    if (event.repeat.until.startOf('day') < event.from.startOf('day')) {
       errors.badUntilDate = true;
       return false;
     }

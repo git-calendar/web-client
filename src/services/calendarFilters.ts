@@ -37,6 +37,11 @@ export function useCalendarFilters() {
         continue;
       }
 
+      if (cal.tags == null) {
+        out[cal.name] = [];
+        continue;
+      }
+
       const tagIds = cal.tags.flatMap((tag) => {
         if (!tag.id || hiddenTags.has(tagKey(cal.name, tag.id))) {
           return [];
