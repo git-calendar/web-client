@@ -27,10 +27,6 @@ const dateIsToday = computed(function () {
 
 // ------------ layout ------------
 
-const DAY_MINUTES = 24 * 60;
-const HOUR_REM = 5;
-const TITLE_REM = 2;
-const SOFT_STEP = 7;
 const RIGHT_REM = 1.5;
 const GAP_REM = 0.25;
 
@@ -66,226 +62,110 @@ function end(event: CalendarEvent) {
 }
 
 function byTime(a: CalendarEvent, b: CalendarEvent) {
-  const timeDifference = start(a) - start(b);
-  if (timeDifference !== 0) {
-    return timeDifference;
+  const startDifference = start(a) - start(b);
+  if (startDifference !== 0) {
+    return startDifference;
   }
+
   return end(a) - end(b);
 }
 
-function overlaps(a: CalendarEvent, b: CalendarEvent) {
-  const highestStart = Math.max(start(a), start(b));
-  const lowestEnd = Math.min(end(a), end(b));
-  return highestStart < lowestEnd;
-}
+function splitIntoOverlapGroups(events: CalendarEvent[]) {
+  const groups: CalendarEvent[][] = [];
+  let group: CalendarEvent[] = [];
+  let groupEnd = Number.NEGATIVE_INFINITY;
 
-function remToPx(rem: number) {
-  if (typeof window === 'undefined') {
-    return rem * 16;
-  }
-  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  return rem * rootFontSize;
-}
-
-const titleMinutes = computed(function () {
-  let height = gridHeight.value;
-  if (height === 0) {
-    height = 24 * remToPx(HOUR_REM);
-  }
-  return remToPx(TITLE_REM) / (height / DAY_MINUTES);
-});
-
-function coversTitle(a: CalendarEvent, b: CalendarEvent) {
-  if (!overlaps(a, b)) {
-    return false;
-  }
-  const timeDifferenceInMinutes = Math.abs(start(a) - start(b)) / 60;
-  return timeDifferenceInMinutes < titleMinutes.value;
-}
-
-type ColumnLayout = {
-  column: number;
-  columns: number;
-};
-
-function getColumnLayout(events: CalendarEvent[]) {
-  let groups: CalendarEvent[][] = [];
-
-  // Group events that cover each other's titles
   for (const event of events) {
-    let hitGroups: CalendarEvent[][] = [];
-    let nonHitGroups: CalendarEvent[][] = [];
-
-    // Separate groups into 'hits' and 'non-hits'
-    for (const group of groups) {
-      let hasHit = false;
-      for (const item of group) {
-        if (coversTitle(item, event)) {
-          hasHit = true;
-          break; // Found a collision, stop checking this group
-        }
-      }
-
-      if (hasHit) {
-        hitGroups.push(group);
-      } else {
-        nonHitGroups.push(group);
-      }
+    if (group.length > 0 && start(event) >= groupEnd) {
+      groups.push(group);
+      group = [];
+      groupEnd = Number.NEGATIVE_INFINITY;
     }
 
-    groups = nonHitGroups;
+    group.push(event);
 
-    if (hitGroups.length > 0) {
-      // Manually flatten hitGroups and add the current event
-      let mergedGroup: CalendarEvent[] = [];
-      for (const group of hitGroups) {
-        for (const item of group) {
-          mergedGroup.push(item);
-        }
-      }
-      mergedGroup.push(event);
-
-      // Sort the merged group and add it back
-      mergedGroup.sort(byTime);
-      groups.push(mergedGroup);
-    } else {
-      // Create a brand new group
-      groups.push([event]);
+    if (end(event) > groupEnd) {
+      groupEnd = end(event);
     }
   }
 
-  // Calculate columns for the groups
-  const layout = new Map<CalendarEvent, ColumnLayout>();
-
-  for (const group of groups) {
-    if (group.length < 2) continue;
-
-    const columns: CalendarEvent[][] = [];
-
-    for (const event of group) {
-      let foundColumnIndex = -1;
-
-      // Find a column where the event doesn't overlap with existing items
-      for (let i = 0; i < columns.length; i++) {
-        const columnItems = columns[i];
-        let hasOverlap = false;
-
-        for (const item of columnItems) {
-          if (overlaps(item, event)) {
-            hasOverlap = true;
-            break;
-          }
-        }
-
-        if (!hasOverlap) {
-          foundColumnIndex = i;
-          break;
-        }
-      }
-
-      // If no column fits, create a new one
-      if (foundColumnIndex < 0) {
-        columns.push([]);
-        foundColumnIndex = columns.length - 1;
-      }
-
-      columns[foundColumnIndex].push(event);
-      layout.set(event, { column: foundColumnIndex, columns: 0 });
-    }
-
-    // Apply the total column count to every event in this group
-    for (const event of group) {
-      const eventLayout = layout.get(event);
-      if (eventLayout) {
-        eventLayout.columns = columns.length;
-      }
-    }
+  if (group.length > 0) {
+    groups.push(group);
   }
 
-  return layout;
+  return groups;
 }
 
-function columnStyle(layoutData: ColumnLayout) {
-  const column = layoutData.column;
-  const columns = layoutData.columns;
-  const width = 100 / columns;
-  const takenRem = RIGHT_REM + GAP_REM * (columns - 1);
+function firstFreeColumn(columns: CalendarEvent[][], event: CalendarEvent) {
+  for (let i = 0; i < columns.length; i++) {
+    const column = columns[i];
+    const lastEvent = column[column.length - 1];
+
+    if (end(lastEvent) <= start(event)) {
+      return i;
+    }
+  }
+
+  return columns.length;
+}
+
+function columnStyle(column: number, columns: number) {
+  if (columns === 1) {
+    return {
+      left: '0',
+      right: `${RIGHT_REM}rem`,
+      width: 'auto',
+    };
+  }
+
+  const widthPercent = 100 / columns;
+  const reservedRem = RIGHT_REM + GAP_REM * (columns - 1);
+  const columnReservedRem = reservedRem / columns;
 
   return {
-    left: `calc(${width * column}% - ${(takenRem / columns) * column}rem + ${GAP_REM * column}rem)`,
-    width: `calc(${width}% - ${takenRem / columns}rem)`,
+    left: `calc(${widthPercent * column}% - ${columnReservedRem * column}rem + ${GAP_REM * column}rem)`,
+    right: 'auto',
+    width: `calc(${widthPercent}% - ${columnReservedRem}rem)`,
   };
 }
 
-function softIndex(
-  event: CalendarEvent,
-  previousEvents: CalendarEvent[],
-  columns: Map<CalendarEvent, ColumnLayout>,
-  stack: Map<CalendarEvent, number>,
-) {
-  const usedIndexes = new Set<number>();
-
-  for (const prev of previousEvents) {
-    if (!columns.has(prev)) {
-      if (overlaps(prev, event)) {
-        if (!coversTitle(prev, event)) {
-          let index = stack.get(prev);
-          if (index === undefined) {
-            index = 0;
-          }
-          usedIndexes.add(index);
-        }
-      }
-    }
-  }
-
-  let index = 0;
-  while (usedIndexes.has(index)) {
-    index++;
-  }
-
-  stack.set(event, index);
-  return index;
-}
-
-const laidOutEvents = computed(function () {
-  const columns = getColumnLayout(props.events);
-  const stack = new Map<CalendarEvent, number>();
+function layoutEvents(events: CalendarEvent[]) {
+  const sortedEvents = [...events].sort(byTime);
+  const groups = splitIntoOverlapGroups(sortedEvents);
   const result = [];
 
-  for (let i = 0; i < props.events.length; i++) {
-    const event = props.events[i];
-    const column = columns.get(event);
+  for (const group of groups) {
+    const columns: CalendarEvent[][] = [];
+    const placedEvents = [];
 
-    // Get previous events manually instead of slice()
-    const previousEvents = [];
-    for (let j = 0; j < i; j++) {
-      previousEvents.push(props.events[j]);
+    for (const event of group) {
+      const column = firstFreeColumn(columns, event);
+
+      if (column === columns.length) {
+        columns.push([]);
+      }
+
+      columns[column].push(event);
+      placedEvents.push({ event, column });
     }
 
-    let styleOverrides = {};
-
-    if (column) {
-      styleOverrides = columnStyle(column);
-    } else {
-      const sIndex = softIndex(event, previousEvents, columns, stack);
-      styleOverrides = {
-        left: `${sIndex * SOFT_STEP}%`,
-        right: `${RIGHT_REM}rem`,
-      };
+    for (const placedEvent of placedEvents) {
+      result.push({
+        ...placedEvent.event,
+        layoutStyle: {
+          position: 'absolute',
+          zIndex: 10 + result.length,
+          ...columnStyle(placedEvent.column, columns.length),
+        },
+      });
     }
-
-    result.push({
-      ...event,
-      layoutStyle: {
-        position: 'absolute',
-        zIndex: 10 + i,
-        ...styleOverrides,
-      },
-    });
   }
 
   return result;
+}
+
+const laidOutEvents = computed(function () {
+  return layoutEvents(props.events);
 });
 
 // ------------ dragging ------------
