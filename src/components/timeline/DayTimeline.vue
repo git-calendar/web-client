@@ -1,12 +1,38 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watchEffect } from 'vue';
+import { computed, ref, useTemplateRef, watchEffect, type CSSProperties } from 'vue';
 import { DateTime } from 'luxon';
+
 import type { CalendarEvent } from '@/types/core.ts';
 import BaseEvent from '@/components/timeline/BaseEvent.vue';
 import CursorToday from '@/components/timeline/CursorToday.vue';
 import TimelineEvent from '@/components/timeline/TimelineEvent.vue';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { useDraggingEvent } from '@/composables/useDraggingEvent';
+
+type LaidOutEvent = CalendarEvent & {
+  layoutStyle: CSSProperties;
+};
+
+type GridSize = {
+  widthRem: number;
+  heightRem: number;
+};
+
+type EventLayout = {
+  column: number;
+  columns: number;
+  coverLevel: number;
+};
+
+type ActiveGroup = {
+  end: number;
+  coverLevel: number;
+};
+
+type PlacedEvent = {
+  event: CalendarEvent;
+  layout: EventLayout;
+};
 
 const props = withDefaults(
   defineProps<{
@@ -18,75 +44,157 @@ const props = withDefaults(
   },
 );
 
+const TITLE_HEIGHT_REM = 1.75;
+const TITLE_GAP_REM = 0.25;
+
+const COLUMN_GAP_REM = 0.25;
+const EVENT_RIGHT_REM = 1.5;
+const COVER_STEP_REM = 0.5;
+
+const DEFAULT_LAYOUT: EventLayout = {
+  column: 0,
+  columns: 1,
+  coverLevel: 0,
+};
+
 const eventModal = useEventModal();
 
-const dateIsToday = computed(function () {
-  const today = DateTime.now();
-  return props.date.day === today.day && props.date.month === today.month && props.date.year === today.year;
+const timelineRef = useTemplateRef<HTMLElement>('timeline-ref');
+const timelineGridRef = useTemplateRef<HTMLElement>('timeline-grid-ref');
+
+const grid = ref<GridSize>({
+  widthRem: 0,
+  heightRem: 0,
 });
 
-// ------------ layout ------------
+const timelineDate = computed(function () {
+  return props.date;
+});
 
-const RIGHT_REM = 1.5;
-const GAP_REM = 0.25;
+const dayStartSeconds = computed(function () {
+  return timelineDate.value.startOf('day').toSeconds();
+});
 
-const grid = useTemplateRef<HTMLElement>('timeline-grid-ref');
-const gridHeight = ref(0);
+const dayEndSeconds = computed(function () {
+  return timelineDate.value.startOf('day').plus({ days: 1 }).toSeconds();
+});
+
+const dayDurationSeconds = computed(function () {
+  return Math.max(dayEndSeconds.value - dayStartSeconds.value, 1);
+});
+
+const dateIsToday = computed(function () {
+  return timelineDate.value.hasSame(DateTime.now(), 'day');
+});
+
+const laidOutEvents = computed(function () {
+  return layoutEvents(props.events);
+});
+
+const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart } = useDraggingEvent(
+  timelineRef,
+  timelineDate,
+);
 
 watchEffect(function (cleanup) {
-  const el = grid.value;
+  const el = timelineGridRef.value;
   if (!el) return;
 
-  function sync() {
-    gridHeight.value = el?.clientHeight ?? 0;
+  syncGrid(el);
+
+  if (typeof ResizeObserver === 'undefined') {
+    return;
   }
 
-  const observer = new ResizeObserver(sync);
+  const observer = new ResizeObserver(function () {
+    syncGrid(el);
+  });
 
   observer.observe(el);
-  sync();
 
   cleanup(function () {
     observer.disconnect();
   });
 });
 
-// ------------ helpers ------------
+function syncGrid(el: HTMLElement) {
+  const rem = rootFontSize();
+  const nextGrid = {
+    widthRem: el.clientWidth / rem,
+    heightRem: el.clientHeight / rem,
+  };
 
-function start(event: CalendarEvent) {
-  return event.from.toSeconds();
+  if (grid.value.widthRem === nextGrid.widthRem && grid.value.heightRem === nextGrid.heightRem) {
+    return;
+  }
+
+  grid.value = nextGrid;
 }
 
-function end(event: CalendarEvent) {
-  return event.to.toSeconds();
+function rootFontSize() {
+  if (typeof document === 'undefined') {
+    return 16;
+  }
+
+  const fontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return fontSize || 16;
+}
+
+// ------------ time ------------
+
+function eventStart(event: CalendarEvent) {
+  return Math.max(event.from.toSeconds(), dayStartSeconds.value);
+}
+
+function eventEnd(event: CalendarEvent) {
+  return Math.min(event.to.toSeconds(), dayEndSeconds.value);
 }
 
 function byTime(a: CalendarEvent, b: CalendarEvent) {
-  const startDifference = start(a) - start(b);
+  const startDifference = eventStart(a) - eventStart(b);
   if (startDifference !== 0) {
     return startDifference;
   }
 
-  return end(a) - end(b);
+  return eventEnd(a) - eventEnd(b);
 }
 
-function splitIntoOverlapGroups(events: CalendarEvent[]) {
+function secondsToRem(seconds: number) {
+  if (grid.value.heightRem <= 0) {
+    return 0;
+  }
+
+  const dayProgress = (seconds - dayStartSeconds.value) / dayDurationSeconds.value;
+  return dayProgress * grid.value.heightRem;
+}
+
+// ------------ title collision ------------
+
+function titleTop(event: CalendarEvent) {
+  return secondsToRem(eventStart(event));
+}
+
+function titleBottom(event: CalendarEvent) {
+  return titleTop(event) + TITLE_HEIGHT_REM + TITLE_GAP_REM;
+}
+
+function splitIntoTitleGroups(events: CalendarEvent[]) {
   const groups: CalendarEvent[][] = [];
+
   let group: CalendarEvent[] = [];
-  let groupEnd = Number.NEGATIVE_INFINITY;
+  let groupBottom = Number.NEGATIVE_INFINITY;
 
   for (const event of events) {
-    if (group.length > 0 && start(event) >= groupEnd) {
+    const top = titleTop(event);
+
+    if (group.length > 0 && top >= groupBottom) {
       groups.push(group);
       group = [];
-      groupEnd = Number.NEGATIVE_INFINITY;
+      groupBottom = Number.NEGATIVE_INFINITY;
     }
 
     group.push(event);
-
-    if (end(event) > groupEnd) {
-      groupEnd = end(event);
-    }
+    groupBottom = Math.max(groupBottom, titleBottom(event));
   }
 
   if (group.length > 0) {
@@ -96,86 +204,162 @@ function splitIntoOverlapGroups(events: CalendarEvent[]) {
   return groups;
 }
 
-function firstFreeColumn(columns: CalendarEvent[][], event: CalendarEvent) {
-  for (let i = 0; i < columns.length; i++) {
-    const column = columns[i];
-    const lastEvent = column[column.length - 1];
+function firstFreeColumn(columnBottoms: number[], event: CalendarEvent) {
+  const top = titleTop(event);
 
-    if (end(lastEvent) <= start(event)) {
-      return i;
+  for (let column = 0; column < columnBottoms.length; column++) {
+    if (columnBottoms[column] <= top) {
+      return column;
     }
   }
 
-  return columns.length;
+  return columnBottoms.length;
 }
 
-function columnStyle(column: number, columns: number) {
-  if (columns === 1) {
+function layoutTitleGroup(group: CalendarEvent[], coverLevel: number): PlacedEvent[] {
+  const columnBottoms: number[] = [];
+  const placements: PlacedEvent[] = [];
+
+  for (const event of group) {
+    const column = firstFreeColumn(columnBottoms, event);
+
+    columnBottoms[column] = titleBottom(event);
+    placements.push({
+      event,
+      layout: {
+        column,
+        columns: 1,
+        coverLevel,
+      },
+    });
+  }
+
+  const columns = Math.max(columnBottoms.length, 1);
+
+  return placements.map(function (placement) {
     return {
-      left: '0',
-      right: `${RIGHT_REM}rem`,
+      event: placement.event,
+      layout: {
+        ...placement.layout,
+        columns,
+      },
+    };
+  });
+}
+
+// ------------ cover stack ------------
+
+function titleGroupEnd(group: CalendarEvent[]) {
+  const firstEvent = group[0];
+  if (!firstEvent) {
+    return 0;
+  }
+
+  let end = eventEnd(firstEvent);
+
+  for (const event of group) {
+    end = Math.max(end, eventEnd(event));
+  }
+
+  return end;
+}
+
+function removeInactiveGroups(groups: ActiveGroup[], start: number) {
+  for (let i = groups.length - 1; i >= 0; i--) {
+    const group = groups[i];
+    if (!group) continue;
+
+    if (group.end <= start) {
+      groups.splice(i, 1);
+    }
+  }
+}
+
+function nextCoverLevel(groups: ActiveGroup[]) {
+  let coverLevel = 0;
+
+  for (const group of groups) {
+    coverLevel = Math.max(coverLevel, group.coverLevel + 1);
+  }
+
+  return coverLevel;
+}
+
+// ------------ styles ------------
+
+function rem(value: number) {
+  return `${Math.round(value * 1000) / 1000}rem`;
+}
+
+function coverLeftRem(coverLevel: number) {
+  return coverLevel * COVER_STEP_REM;
+}
+
+function horizontalStyle(layout: EventLayout): CSSProperties {
+  const columns = Math.max(layout.columns, 1);
+  const coverLeft = coverLeftRem(layout.coverLevel);
+
+  if (grid.value.widthRem <= 0) {
+    return {
+      left: rem(coverLeft),
+      right: rem(EVENT_RIGHT_REM),
       width: 'auto',
     };
   }
 
-  const widthPercent = 100 / columns;
-  const reservedRem = RIGHT_REM + GAP_REM * (columns - 1);
-  const columnReservedRem = reservedRem / columns;
+  const totalGap = COLUMN_GAP_REM * (columns - 1);
+  const availableWidth = Math.max(grid.value.widthRem - coverLeft - EVENT_RIGHT_REM - totalGap, 0);
+  const columnWidth = availableWidth / columns;
+  const left = coverLeft + layout.column * (columnWidth + COLUMN_GAP_REM);
 
   return {
-    left: `calc(${widthPercent * column}% - ${columnReservedRem * column}rem + ${GAP_REM * column}rem)`,
+    left: rem(left),
     right: 'auto',
-    width: `calc(${widthPercent}% - ${columnReservedRem}rem)`,
+    width: rem(columnWidth),
   };
 }
 
-function layoutEvents(events: CalendarEvent[]) {
+// ------------ layout ------------
+
+function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
   const sortedEvents = [...events].sort(byTime);
-  const groups = splitIntoOverlapGroups(sortedEvents);
-  const result = [];
+  const groups = splitIntoTitleGroups(sortedEvents);
+
+  const layouts = new Map<CalendarEvent, EventLayout>();
+  const activeGroups: ActiveGroup[] = [];
 
   for (const group of groups) {
-    const columns: CalendarEvent[][] = [];
-    const placedEvents = [];
+    const firstEvent = group[0];
+    if (!firstEvent) continue;
 
-    for (const event of group) {
-      const column = firstFreeColumn(columns, event);
+    removeInactiveGroups(activeGroups, eventStart(firstEvent));
 
-      if (column === columns.length) {
-        columns.push([]);
-      }
-
-      columns[column].push(event);
-      placedEvents.push({ event, column });
-    }
+    const coverLevel = nextCoverLevel(activeGroups);
+    const placedEvents = layoutTitleGroup(group, coverLevel);
 
     for (const placedEvent of placedEvents) {
-      result.push({
-        ...placedEvent.event,
-        layoutStyle: {
-          position: 'absolute',
-          zIndex: 10 + result.length,
-          ...columnStyle(placedEvent.column, columns.length),
-        },
-      });
+      layouts.set(placedEvent.event, placedEvent.layout);
     }
+
+    activeGroups.push({
+      end: titleGroupEnd(group),
+      coverLevel,
+    });
   }
 
-  return result;
+  return sortedEvents.map(function (event, index) {
+    const layout = layouts.get(event) ?? DEFAULT_LAYOUT;
+
+    return {
+      ...event,
+      layoutStyle: {
+        position: 'absolute',
+        zIndex: 10 + index,
+        ...horizontalStyle(layout),
+      },
+    };
+  });
 }
-
-const laidOutEvents = computed(function () {
-  return layoutEvents(props.events);
-});
-
-// ------------ dragging ------------
-
-const timelineRef = useTemplateRef<HTMLElement>('timeline-ref');
-
-const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart } = useDraggingEvent(
-  timelineRef,
-  computed(() => props.date),
-);
 </script>
 
 <template>
@@ -220,7 +404,7 @@ const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart 
 .timeline-grid {
   position: relative;
   height: 100%;
-  padding: 0 min(10%, 1rem) 0 4px;
+  padding: 0 min(10%, 1rem) 0 0.25rem;
 
   &:has(.temporary) .timeline-event:hover {
     filter: none;
