@@ -27,6 +27,8 @@ type EventLayout = {
 type ActiveGroup = {
   end: number;
   coverLevel: number;
+  columns: number;
+  leftColumnEnd: number;
 };
 
 type PlacedEvent = {
@@ -249,6 +251,53 @@ function layoutTitleGroup(group: CalendarEvent[], coverLevel: number): PlacedEve
 
 // ------------ cover stack ------------
 
+function placedLeftColumnEnd(placedEvents: PlacedEvent[]) {
+  let end = Number.NEGATIVE_INFINITY;
+
+  for (const placedEvent of placedEvents) {
+    if (placedEvent.layout.column !== 0) continue;
+
+    end = Math.max(end, eventEnd(placedEvent.event));
+  }
+
+  return end;
+}
+
+function placeInFreeLeftColumn(
+  group: CalendarEvent[],
+  activeGroups: ActiveGroup[],
+): PlacedEvent | undefined {
+  if (group.length !== 1) {
+    return undefined;
+  }
+
+  const event = group[0];
+  const activeGroup = activeGroups[activeGroups.length - 1];
+
+  if (
+    !event ||
+    !activeGroup ||
+    activeGroup.columns <= 1 ||
+    activeGroup.leftColumnEnd > eventStart(event)
+  ) {
+    return undefined;
+  }
+
+  const end = eventEnd(event);
+
+  activeGroup.leftColumnEnd = end;
+  activeGroup.end = Math.max(activeGroup.end, end);
+
+  return {
+    event,
+    layout: {
+      column: 0,
+      columns: activeGroup.columns,
+      coverLevel: activeGroup.coverLevel,
+    },
+  };
+}
+
 function titleGroupEnd(group: CalendarEvent[]) {
   const firstEvent = group[0];
   if (!firstEvent) {
@@ -334,6 +383,12 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
 
     removeInactiveGroups(activeGroups, eventStart(firstEvent));
 
+    const reusedEvent = placeInFreeLeftColumn(group, activeGroups);
+    if (reusedEvent) {
+      layouts.set(reusedEvent.event, reusedEvent.layout);
+      continue;
+    }
+
     const coverLevel = nextCoverLevel(activeGroups);
     const placedEvents = layoutTitleGroup(group, coverLevel);
 
@@ -344,6 +399,8 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
     activeGroups.push({
       end: titleGroupEnd(group),
       coverLevel,
+      columns: placedEvents[0]?.layout.columns ?? 1,
+      leftColumnEnd: placedLeftColumnEnd(placedEvents),
     });
   }
 
