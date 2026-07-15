@@ -8,14 +8,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'node:path';
 import { statSync } from 'node:fs';
 
-const base = process.env.GITHUB_PAGES == 'true' ? '/web-client/' : '/';
-
 const wasmPath = resolve(__dirname, 'src/assets/core.wasm');
 const wasmDecodedSize = statSync(wasmPath).size;
 
 // https://vite.dev/config/
 export default defineConfig({
-  base,
   plugins: [
     vue(),
     // compress wasm files to brotli, zstd and gzip
@@ -40,9 +37,9 @@ export default defineConfig({
       manifest: {
         name: 'Git Calendar Web',
         short_name: 'Git Cal',
-        id: base,
-        start_url: base,
-        scope: base,
+        id: '/',
+        start_url: '/',
+        scope: '/',
         description: 'A web client for a Git-backed calendar.',
         display: 'standalone',
         background_color: '#ffffff',
@@ -50,12 +47,12 @@ export default defineConfig({
         orientation: 'portrait-primary',
         icons: [
           {
-            src: `${base}icon-192.png`,
+            src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: `${base}icon-512.png`,
+            src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
           },
@@ -68,7 +65,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,wasm,zst,br,gz}'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MiB (core.wasm is a big boy)
         cleanupOutdatedCaches: true,
-        navigateFallback: `${base}index.html`,
+        navigateFallback: '/index.html',
       },
     }),
   ],
