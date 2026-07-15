@@ -47,6 +47,13 @@ const views = {
 
 <template>
   <main id="calendar-view">
+    <div
+      v-if="sidebar.isOpen.value"
+      class="sidebar-backdrop"
+      aria-hidden="true"
+      @click="sidebar.close"
+    ></div>
+
     <SideBar :hidden="!sidebar.isOpen.value">
       <MonthSideMap />
       <CalendarList ref="calendars-list" />
@@ -62,6 +69,10 @@ const views = {
 </template>
 
 <style scoped>
+.sidebar-backdrop {
+  display: none;
+}
+
 #calendar-view:has(aside[hidden]) {
   grid-template-columns: auto;
   grid-template-areas:
@@ -92,6 +103,15 @@ component {
 }
 
 @media (max-width: 768px) {
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 599;
+    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
   aside {
     position: absolute;
     height: 100%;
