@@ -59,26 +59,9 @@ const views = {
     <TagModal v-if="tagModal.isOpen.value" />
     <CalendarModal v-if="calendarModal.isOpen.value" />
   </main>
-  <span id="alpha">Alpha version</span>
 </template>
 
 <style scoped>
-#alpha {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  padding: 0.1rem 0.3rem;
-
-  font-size: 0.7rem;
-  font-weight: bold;
-  color: var(--git-color);
-  border: 1px solid var(--git-color);
-  border-radius: 2rem;
-  z-index: 1;
-  pointer-events: none;
-  background-color: var(--bg-color);
-}
-
 #calendar-view:has(aside[hidden]) {
   grid-template-columns: auto;
   grid-template-areas:
