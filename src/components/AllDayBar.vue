@@ -105,7 +105,7 @@ const compEvents = computed(() => {
   min-height: 1.5rem;
   padding: 1px;
   gap: 2.5px;
-  padding-bottom: 1.5%;
+  padding-bottom: 1rem;
 }
 
 .today-highlighter {
