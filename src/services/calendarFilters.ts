@@ -50,9 +50,7 @@ export function useCalendarFilters() {
         return [tag.id];
       });
 
-      if (tagIds.length > 0) {
-        out[cal.name] = tagIds;
-      }
+      out[cal.name] = tagIds;
     }
 
     return out;
