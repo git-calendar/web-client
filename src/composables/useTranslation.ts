@@ -29,7 +29,9 @@ watch(
   () => settings.value.language,
   (newLang) => {
     (i18n.global.locale as any).value = newLang; // WHY TYPESCRIPT WHY
+    document.documentElement.lang = newLang === 'git' ? 'en' : newLang;
   },
+  { immediate: true },
 );
 
 function dayNameSuperShort(date: DateTime): string {
