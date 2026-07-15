@@ -3,11 +3,16 @@ import type { Ref } from 'vue';
 import type { CalendarEvent } from '@/types/core.ts';
 import { DateTime } from 'luxon';
 import { useMouse } from '@vueuse/core';
-import { numberOfHours, timeRangeFormat } from '@/utils';
+import { timeRangeFormat } from '@/utils';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { settings } from '@/services/settings';
 
-export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref<DateTime>) {
+export function useDraggingEvent(
+  timelineRef: Ref<HTMLElement | null>,
+  date: Ref<DateTime>,
+  startHour: Ref<number>,
+  endHour: Ref<number>,
+) {
   const { y } = useMouse();
   const eventModal = useEventModal();
 
@@ -16,7 +21,7 @@ export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref
 
   const snapToGridHeight = computed(() => {
     if (!timelineRef.value) return 0;
-    return timelineRef.value.clientHeight / numberOfHours() / (60 / settings.value.dragPrecisionMinutes);
+    return timelineRef.value.clientHeight / (endHour.value - startHour.value) / (60 / settings.value.dragPrecisionMinutes);
   });
 
   const maxY = computed(() => timelineRef.value?.clientHeight ?? 0);
@@ -59,11 +64,11 @@ export function useDraggingEvent(timelineRef: Ref<HTMLElement | null>, date: Ref
     const endTotalMinutes = (startSlots + durationSlots) * settings.value.dragPrecisionMinutes;
 
     const startTime = date.value
-      .set({ hour: settings.value.dayViewStartHour, minute: 0 })
+      .set({ hour: startHour.value, minute: 0 })
       .plus({ minutes: startTotalMinutes });
 
     const endTime = date.value
-      .set({ hour: settings.value.dayViewStartHour, minute: 0 })
+      .set({ hour: startHour.value, minute: 0 })
       .plus({ minutes: endTotalMinutes });
 
     return [startTime, endTime];

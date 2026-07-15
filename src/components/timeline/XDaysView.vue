@@ -42,16 +42,30 @@ const dates = computed(() => {
   });
 });
 
-const hoursOnGrid = computed(() => {
-  const start = settings.value.dayViewStartHour;
-  const end = settings.value.dayViewEndHour;
+const timelineRange = computed(() => {
+  const defaultStart = settings.value.dayViewStartHour;
+  const configuredEnd = settings.value.dayViewEndHour;
+  const defaultEnd = configuredEnd > defaultStart ? configuredEnd : configuredEnd + 24;
 
+  let startHour: number = defaultStart;
+  let endHour: number = defaultEnd;
+
+  for (const events of eventsTimeline.value) {
+    for (const event of events) {
+      startHour = Math.min(startHour, Math.floor(event.from.hour + event.from.minute / 60));
+      endHour = Math.max(endHour, Math.ceil(event.to.hour + event.to.minute / 60));
+    }
+  }
+
+  return { startHour, endHour };
+});
+
+const hoursOnGrid = computed(() => {
+  const { startHour, endHour } = timelineRange.value;
   const result: string[] = [];
 
-  const totalHours = end > start ? end - start : 24 - start + end;
-
-  for (let i = 0; i < totalHours; i++) {
-    const current = (start + i) % 24;
+  for (let i = 0; i < endHour - startHour; i++) {
+    const current = (startHour + i) % 24;
 
     // resolve formats manually ig
     if (settings.value.timeFormat === 'h12') {
@@ -130,7 +144,7 @@ async function updateData() {
     </div>
 
     <div id="content">
-      <CursorLine />
+      <CursorLine :start-hour="timelineRange.startHour" :end-hour="timelineRange.endHour" />
 
       <div class="hour-lines">
         <div
@@ -141,7 +155,14 @@ async function updateData() {
         ></div>
       </div>
 
-      <DayTimeline v-for="(d, i) in dates" :key="d.toMillis()" :date="d" :events="eventsTimeline[i]" />
+      <DayTimeline
+        v-for="(d, i) in dates"
+        :key="d.toMillis()"
+        :date="d"
+        :events="eventsTimeline[i]"
+        :start-hour="timelineRange.startHour"
+        :end-hour="timelineRange.endHour"
+      />
     </div>
   </div>
 </template>

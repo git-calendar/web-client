@@ -40,6 +40,8 @@ const props = withDefaults(
   defineProps<{
     date: DateTime;
     events?: CalendarEvent[];
+    startHour: number;
+    endHour: number;
   }>(),
   {
     events: () => [],
@@ -94,9 +96,14 @@ const laidOutEvents = computed(function () {
   return layoutEvents(props.events);
 });
 
+const rangeStartHour = computed(() => props.startHour);
+const rangeEndHour = computed(() => props.endHour);
+
 const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart } = useDraggingEvent(
   timelineRef,
   timelineDate,
+  rangeStartHour,
+  rangeEndHour,
 );
 
 watchEffect(function (cleanup) {
@@ -442,11 +449,13 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
         v-for="event in laidOutEvents"
         :key="event.id"
         :event="event"
+        :start-hour="startHour"
+        :end-hour="endHour"
         :style="event.layoutStyle"
         @click="eventModal.open(event)"
       />
 
-      <CursorToday v-if="dateIsToday" />
+      <CursorToday v-if="dateIsToday" :start-hour="startHour" :end-hour="endHour" />
     </div>
   </div>
 </template>

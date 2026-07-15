@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { CalendarEvent } from '@/types/core';
 import BaseEvent from '@/components/timeline/BaseEvent.vue';
-import { numberOfHours, timeRangeFormat } from '@/utils';
-import { settings } from '@/services/settings';
+import { timeRangeFormat } from '@/utils';
 import { getTag } from '@/services/calendarCache';
 
 interface Props {
   event: CalendarEvent;
+  startHour: number;
+  endHour: number;
 }
 const props = defineProps<Props>();
 
@@ -14,10 +15,10 @@ const props = defineProps<Props>();
 function getEventPosition(event: CalendarEvent): { start: number; end: number } {
   const eventStartHours = event.from.hour + event.from.minute / 60;
   const eventEndHours = event.to.hour + event.to.minute / 60;
-  const viewStart = settings.value.dayViewStartHour;
+  const numberOfHours = props.endHour - props.startHour;
 
-  const start = Math.max(0, (eventStartHours - viewStart) / numberOfHours());
-  const end = Math.min(1, (eventEndHours - viewStart) / numberOfHours());
+  const start = Math.max(0, (eventStartHours - props.startHour) / numberOfHours);
+  const end = Math.min(1, (eventEndHours - props.startHour) / numberOfHours);
 
   return { start, end };
 }

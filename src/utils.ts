@@ -106,16 +106,6 @@ export function numberOfHours(): number {
 }
 
 /**
- * Returns 0.0-1.0 for the datetime parameter based on settings.dayViewStartHour.
- */
-export function timeInPercentOnTimeline(datetime: DateTime): number {
-  const viewStart = settings.value.dayViewStartHour;
-  const startHours = datetime.hour + datetime.minute / 60;
-  const percent = Math.max(0, (startHours - viewStart) / numberOfHours());
-  return percent;
-}
-
-/**
  * Returns true/false whether event is wholeDay/allDay.
  */
 export function isWholeDay(event: CalendarEvent): boolean {

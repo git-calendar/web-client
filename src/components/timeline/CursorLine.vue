@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { settings } from '@/services/settings';
-import { timeInPercentOnTimeline } from '@/utils';
+
 import { DateTime } from 'luxon';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+
+const props = defineProps<{
+  startHour: number;
+  endHour: number;
+}>();
 
 const hour = ref(DateTime.now().hour);
 const minute = ref(DateTime.now().minute);
@@ -10,7 +15,9 @@ let interval: number;
 const today = DateTime.now();
 
 const topPos = computed(() => {
-  return `${timeInPercentOnTimeline(today.set({ hour: hour.value, minute: minute.value })) * 100}%`;
+  const currentHour = hour.value + minute.value / 60;
+  const position = (currentHour - props.startHour) / (props.endHour - props.startHour);
+  return `${Math.max(0, Math.min(1, position)) * 100}%`;
 });
 
 const timeFormat = computed(() => {
