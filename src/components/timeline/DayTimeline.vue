@@ -50,7 +50,8 @@ const TITLE_HEIGHT_REM = 1.75;
 const TITLE_GAP_REM = 0.25;
 
 const COLUMN_GAP_REM = 0.25;
-const EVENT_RIGHT_REM = 1.5;
+const MIN_EVENT_RIGHT_REM = 0.5;
+const EVENT_RIGHT_RATIO = 0.1;
 const COVER_STEP_REM = 0.5;
 
 const DEFAULT_LAYOUT: EventLayout = {
@@ -344,6 +345,10 @@ function coverLeftRem(coverLevel: number) {
   return coverLevel * COVER_STEP_REM;
 }
 
+function eventRightRem() {
+  return Math.max(grid.value.widthRem * EVENT_RIGHT_RATIO, MIN_EVENT_RIGHT_REM);
+}
+
 function horizontalStyle(layout: EventLayout): CSSProperties {
   const columns = Math.max(layout.columns, 1);
   const coverLeft = coverLeftRem(layout.coverLevel);
@@ -351,13 +356,13 @@ function horizontalStyle(layout: EventLayout): CSSProperties {
   if (grid.value.widthRem <= 0) {
     return {
       left: rem(coverLeft),
-      right: rem(EVENT_RIGHT_REM),
+      right: `max(${EVENT_RIGHT_RATIO * 100}%, ${rem(MIN_EVENT_RIGHT_REM)})`,
       width: 'auto',
     };
   }
 
   const totalGap = COLUMN_GAP_REM * (columns - 1);
-  const availableWidth = Math.max(grid.value.widthRem - coverLeft - EVENT_RIGHT_REM - totalGap, 0);
+  const availableWidth = Math.max(grid.value.widthRem - coverLeft - eventRightRem() - totalGap, 0);
   const columnWidth = availableWidth / columns;
   const left = coverLeft + layout.column * (columnWidth + COLUMN_GAP_REM);
 
@@ -422,6 +427,7 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
 <template>
   <div class="day-timeline" :class="{ 'dragging-cursor': drag.active }" @pointerdown="dragStart" ref="timeline-ref">
     <div class="timeline-grid" ref="timeline-grid-ref">
+      <!-- dragable placeholder -->
       <BaseEvent
         v-if="drag.active"
         :top-style="placeholderTop"
