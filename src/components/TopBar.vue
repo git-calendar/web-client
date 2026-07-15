@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
 import { DateTime } from 'luxon';
 import { FiChevronLeft, FiChevronRight } from 'vue-icons-plus/fi';
@@ -8,13 +8,14 @@ import { useSidebar } from '@/composables/useSidebar';
 import MultiToggle from '@/components/MultiToggle.vue';
 import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import NewEventBtn from '@/components/NewEventBtn.vue';
-import { useMobile } from '@/composables/useMobile';
 import SyncStatus from '@/components/SyncStatus.vue';
+import { useWindowSize } from '@vueuse/core';
 
 const router = useRouter();
 const sidebar = useSidebar();
 
-const isMobile = useMobile();
+const { width } = useWindowSize(); // reactive window size
+const isMobile = computed(() => width.value < 500);
 
 const views = ['4days', 'week', 'month'];
 const view = ref('');
@@ -58,13 +59,13 @@ function jumpToToday() {
     <MultiToggle
       v-model="view"
       :options="views"
-      :labels="views.map((s) => $t(`views.${s.toLocaleLowerCase()}`))"
+      :labels="views.map((s) => $t(`views.${s.toLocaleLowerCase()}.${isMobile ? 'short' : 'long'}`))"
       :disabled="['month']"
       name="view-selector"
     />
 
     <button id="today-btn" @click="jumpToToday">
-      {{ $t('todayBtn') }}
+      {{ $t(`todayBtn.${isMobile ? 'short' : 'long'}`) }}
     </button>
 
     <div id="view-nav-btns">

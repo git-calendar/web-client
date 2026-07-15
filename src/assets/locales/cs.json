@@ -51,9 +51,22 @@
     "notag": "Bez štítku"
   },
   "views": {
-    "4days": "4 dny",
-    "week": "Týden",
-    "month": "Měsíc"
+    "4days": {
+      "short": "4",
+      "long": "4 dny"
+    },
+    "week": {
+      "short": "T",
+      "long": "Týden"
+    },
+    "month": {
+      "short": "M",
+      "long": "Měsíc"
+    }
+  },
+  "todayBtn": {
+    "short": "D",
+    "long": "Dnes"
   },
   "saveBtn": "Uložit",
   "savingBtn": "Ukládání...",
@@ -62,7 +75,6 @@
   "cancelBtn": "Zrušit",
   "deleteBtn": "Smazat",
   "deletingBtn": "Mazání...",
-  "todayBtn": "Dnes",
   "newEventBtn": "Nová událost",
   "calendarsTitle": "Kalendáře",
   "optionalText": "nepovinné",

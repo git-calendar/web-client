@@ -51,9 +51,22 @@
     "notag": "Untagged"
   },
   "views": {
-    "4days": "4 days",
-    "week": "Week",
-    "month": "Month"
+    "4days": {
+      "short": "4",
+      "long": "4 days"
+    },
+    "week": {
+      "short": "W",
+      "long": "Week"
+    },
+    "month": {
+      "short": "M",
+      "long": "Month"
+    }
+  },
+  "todayBtn": {
+    "short": "T",
+    "long": "Today"
   },
   "saveBtn": "Save",
   "savingBtn": "Saving...",
@@ -62,7 +75,6 @@
   "cancelBtn": "Cancel",
   "deleteBtn": "Delete",
   "deletingBtn": "Deleting...",
-  "todayBtn": "Today",
   "newEventBtn": "New event",
   "calendarsTitle": "Calendars",
   "optionalText": "optional",
