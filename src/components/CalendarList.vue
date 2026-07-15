@@ -195,6 +195,13 @@ function getTagColor(calName: string, tagId?: string) {
   }
 }
 
+@media (max-width: 768px) {
+  .edit-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 .tags-list {
   display: flex;
   flex-direction: column;
