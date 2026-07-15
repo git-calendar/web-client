@@ -1,6 +1,12 @@
 import { ref, readonly } from 'vue';
 
-const isOpen = ref(window.innerWidth >= 768); // opened on load only when desktop width
+const storageKey = 'sidebar-open';
+const stored = localStorage.getItem(storageKey);
+const isOpen = ref(stored === null ? window.innerWidth >= 768 : JSON.parse(stored));
+
+function save() {
+  localStorage.setItem(storageKey, JSON.stringify(isOpen.value));
+}
 
 export function useSidebar() {
   return {
@@ -8,14 +14,17 @@ export function useSidebar() {
 
     open() {
       isOpen.value = true;
+      save();
     },
 
     close() {
       isOpen.value = false;
+      save();
     },
 
     toggle() {
       isOpen.value = !isOpen.value;
+      save();
     },
   };
 }
