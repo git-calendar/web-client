@@ -167,7 +167,7 @@ input.red,
   z-index: 1000;
 
   form {
-    width: 80%;
+    width: 90%;
     max-width: 30rem;
     border-radius: var(--small-border-radius);
     border: 1px solid var(--btn-bg-color-hover);
@@ -229,7 +229,7 @@ input.red,
   @media (max-width: 768px) {
     align-items: start;
     form {
-      margin-top: 10%;
+      margin-top: 5%;
     }
   }
 }

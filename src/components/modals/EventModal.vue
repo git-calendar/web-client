@@ -448,8 +448,20 @@ label:has(select[name='end']) {
 .datetime {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.7rem;
+
+  > input {
+    min-width: 0;
+  }
+
+  > input[type='date'] {
+    flex: 0 1 9rem;
+  }
+
+  > input[type='time'] {
+    flex: 0 1 7rem;
+  }
 }
 
 @media (max-width: 450px) {
