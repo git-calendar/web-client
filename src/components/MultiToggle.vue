@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const props = defineProps<{
-  options: string[];
-  labels?: string[];
-  disabled?: string[];
+  options: readonly string[];
+  labels?: readonly string[];
+  disabled?: readonly string[];
   modelValue: string;
   name?: string;
 }>();

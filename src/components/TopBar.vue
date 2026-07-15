@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
-import { DateTime } from 'luxon';
+
 import { FiChevronLeft, FiChevronRight } from 'vue-icons-plus/fi';
 import { useRouter } from 'vue-router';
 import { useSidebar } from '@/composables/useSidebar';
@@ -10,6 +10,8 @@ import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import NewEventBtn from '@/components/NewEventBtn.vue';
 import SyncStatus from '@/components/SyncStatus.vue';
 import { useWindowSize } from '@vueuse/core';
+import { CALENDAR_VIEWS } from '@/constants';
+import type { CalendarView } from '@/services/settings';
 
 const router = useRouter();
 const sidebar = useSidebar();
@@ -17,35 +19,29 @@ const sidebar = useSidebar();
 const { width } = useWindowSize(); // reactive window size
 const isMobile = computed(() => width.value < 500);
 
-const views = ['4days', 'week', 'month'];
-const view = ref('');
+const view = ref<CalendarView>('4d');
 watch(
   () => router.currentRoute.value.params.view,
-  (newView: string | string[]) => {
-    view.value = newView.toString();
+  (newView) => {
+    view.value = String(newView) as CalendarView;
   },
   { immediate: true },
 );
-watch(view, (newView: string) => {
-  if (view.value === 'week') {
+watch(view, (newView) => {
+  if (newView === 'w') {
     // week view should be aligned
     let current = getCurrentViewDatetime(router.currentRoute.value.params);
     router.push(getWeekAlignedRedirect(current));
   } else {
-    router.push({ name: 'calendar', params: { view: newView } });
+    router.push({
+      name: 'calendar',
+      params: { ...router.currentRoute.value.params, view: newView },
+    });
   }
 });
 
 function jumpToToday() {
-  const today = DateTime.now();
-  const params = router.currentRoute.value.params;
-
-  if (params.view === 'week') {
-    // special case for week
-    router.push(getWeekAlignedRedirect(today));
-  } else {
-    router.push({ name: 'calendar', params: { year: today.year, month: today.month, day: today.day } });
-  }
+  router.push({ name: 'calendar', params: { view: view.value } });
 }
 </script>
 
@@ -58,9 +54,9 @@ function jumpToToday() {
     <!-- TODO: remove disabled -->
     <MultiToggle
       v-model="view"
-      :options="views"
-      :labels="views.map((s) => $t(`views.${s.toLocaleLowerCase()}.${isMobile ? 'short' : 'long'}`))"
-      :disabled="['month']"
+      :options="CALENDAR_VIEWS"
+      :labels="CALENDAR_VIEWS.map((view) => $t(`views.${view}.${isMobile ? 'short' : 'long'}`))"
+      :disabled="['m']"
       name="view-selector"
     />
 

@@ -37,11 +37,13 @@ export function useKeyboard() {
       router.replace(getWeekAlignedRedirect(DateTime.now()));
     });
 
-    // 4 -> switch to 4days view
+    // 4 -> switch to 4-day view
     onKeyStroke('4', (e) => {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
-      router.replace({ params: { view: '4days' } });
+      router.replace({
+        params: { ...router.currentRoute.value.params, view: '4d' },
+      });
     });
 
     // W -> switch to week view
@@ -58,7 +60,9 @@ export function useKeyboard() {
       return; // TODO
       if (inputNeededElsewhere()) return;
       e.preventDefault();
-      router.replace({ params: { view: 'month' } });
+      router.replace({
+        params: { ...router.currentRoute.value.params, view: 'm' },
+      });
     });
 
     // < -> move view back

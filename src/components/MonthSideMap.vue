@@ -100,7 +100,7 @@ function changeMonthNum(up: boolean) {
 }
 
 function jumpToInterval(clickedDay: DateTime) {
-  if (route.params.view === 'week') {
+  if (route.params.view === 'w') {
     router.replace(getWeekAlignedRedirect(clickedDay));
   } else {
     router.replace({ params: { year: clickedDay.year, month: clickedDay.month, day: clickedDay.day } });
@@ -111,7 +111,7 @@ const hoveredDay = ref<DateTime | null>(null);
 const pressedDay = ref<DateTime | null>(null);
 
 function getIntervalFromDay(day: DateTime) {
-  if (route.params.view === 'week') {
+  if (route.params.view === 'w') {
     const start = getStartOfWeek(day);
 
     return {

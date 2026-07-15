@@ -5,12 +5,16 @@ import { CalendarCore } from './wasm/core-wrapper';
 import { settings } from './services/settings';
 
 /**
- * Returns the datetime from route parameters.
+ * Returns the datetime from route parameters. A dateless week route starts at
+ * the configured beginning of the current week.
  */
 export function getCurrentViewDatetime(params: RouteParamsGeneric): DateTime {
   const today = DateTime.now();
 
   if (!params) return today;
+
+  const hasDate = params.year != null || params.month != null || params.day != null;
+  if (!hasDate && params.view === 'w') return getStartOfWeek(today);
 
   let year = Number(params.year);
   let month = Number(params.month);
@@ -30,21 +34,28 @@ export function moveView(back: boolean, router: Router) {
   const currentDatetime = getCurrentViewDatetime(router.currentRoute.value.params);
   const sign = back ? -1 : 1;
 
+  const params = router.currentRoute.value.params;
   let newDate: DateTime;
-  switch (router.currentRoute.value.params.view) {
-    case 'month':
-      newDate = currentDatetime.plus({ month: 1 * sign });
-      router.replace({ name: 'calendar', params: { year: newDate.year, month: newDate.month, day: newDate.day } });
+
+  switch (params.view) {
+    case 'm':
+      newDate = currentDatetime.plus({ month: sign });
       break;
-    case 'week':
+    case 'w':
       newDate = currentDatetime.plus({ days: 7 * sign });
-      router.replace({ name: 'calendar', params: { year: newDate.year, month: newDate.month, day: newDate.day } });
-      break;
-    case '4days':
+      router.replace(getWeekAlignedRedirect(newDate));
+      return;
+    case '4d':
       newDate = currentDatetime.plus({ days: 4 * sign });
-      router.replace({ name: 'calendar', params: { year: newDate.year, month: newDate.month, day: newDate.day } });
       break;
+    default:
+      return;
   }
+
+  router.replace({
+    name: 'calendar',
+    params: { ...params, year: newDate.year, month: newDate.month, day: newDate.day },
+  });
 }
 
 /**
@@ -54,11 +65,11 @@ export function getViewLengthInDays(params: RouteParamsGeneric): number {
   const currentDatetime = getCurrentViewDatetime(params);
 
   switch (params.view) {
-    case 'month':
+    case 'm':
       return currentDatetime.daysInMonth ?? 30;
-    case 'week':
+    case 'w':
       return 7;
-    case '4days':
+    case '4d':
       return 4;
     default:
       return 1;
@@ -78,14 +89,18 @@ export function getStartOfWeek(dt: DateTime): DateTime {
  */
 export function getWeekAlignedRedirect(date: DateTime) {
   const startOfWeek = getStartOfWeek(date);
+  const currentWeekStart = getStartOfWeek(DateTime.now());
+
   return {
     name: 'calendar',
-    params: {
-      view: 'week',
-      year: startOfWeek.year,
-      month: startOfWeek.month,
-      day: startOfWeek.day,
-    },
+    params: startOfWeek.hasSame(currentWeekStart, 'day')
+      ? { view: 'w' }
+      : {
+          view: 'w',
+          year: startOfWeek.year,
+          month: startOfWeek.month,
+          day: startOfWeek.day,
+        },
   };
 }
 

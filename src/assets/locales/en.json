@@ -51,15 +51,15 @@
     "notag": "Untagged"
   },
   "views": {
-    "4days": {
+    "4d": {
       "short": "4",
       "long": "4 days"
     },
-    "week": {
+    "w": {
       "short": "W",
       "long": "Week"
     },
-    "month": {
+    "m": {
       "short": "M",
       "long": "Month"
     }

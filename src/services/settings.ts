@@ -31,7 +31,7 @@ export const settings = useStorage<UserSettings>(
     language: 'en',
     timeFormat: getBrowserHourCycle(),
     weekStart: 1, // monday
-    defaultView: 'week',
+    defaultView: 'w',
     dayViewStartHour: 6,
     dayViewEndHour: 0,
     dragPrecisionMinutes: 30,

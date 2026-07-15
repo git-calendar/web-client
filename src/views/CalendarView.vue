@@ -13,8 +13,7 @@ import { useKeyboard } from '@/composables/useKeyboard';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { useSidebar } from '@/composables/useSidebar';
-import { CALENDAR_VIEWS } from '@/constants';
-import { settings, type CalendarView } from '@/services/settings';
+import type { CalendarView } from '@/services/settings';
 import TagModal from '@/components/modals/TagModal.vue';
 import { useTagModal } from '@/composables/modals/useTagModal';
 
@@ -25,34 +24,18 @@ const tagModal = useTagModal();
 const route = useRoute();
 const sidebar = useSidebar();
 
-const activeView: ComputedRef<CalendarView> = computed(() => {
-  const param = route.params.view;
-  if (!param) {
-    return settings.value.defaultView;
-  }
-  const viewParam = Array.isArray(param) ? param[0] : String(param); // convert to string
-
-  if (CALENDAR_VIEWS.includes(viewParam as CalendarView)) {
-    return viewParam as CalendarView;
-  }
-  return settings.value.defaultView;
-});
+const activeView: ComputedRef<CalendarView> = computed(() => String(route.params.view) as CalendarView);
 
 const views = {
-  '4days': [XDaysView, 4],
-  week: [XDaysView, 7],
-  month: [null, null],
+  '4d': [XDaysView, 4],
+  w: [XDaysView, 7],
+  m: [null, null],
 };
 </script>
 
 <template>
   <main id="calendar-view">
-    <div
-      v-if="sidebar.isOpen.value"
-      class="sidebar-backdrop"
-      aria-hidden="true"
-      @click="sidebar.close"
-    ></div>
+    <div v-if="sidebar.isOpen.value" class="sidebar-backdrop" aria-hidden="true" @click="sidebar.close"></div>
 
     <SideBar :hidden="!sidebar.isOpen.value">
       <MonthSideMap />
