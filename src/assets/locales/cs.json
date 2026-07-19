@@ -33,7 +33,13 @@
       "daily": "Denně",
       "weekly": "Týdně",
       "monthly": "Měsíčně",
-      "yearly": "Ročně"
+      "yearly": "Ročně",
+      "custom": "Vlastní",
+      "edit": "Upravit",
+      "every": "Každých",
+      "on": "Ve dnech",
+      "ends": "Končí",
+      "times": "opakováních"
     }
   },
   "calendar": {

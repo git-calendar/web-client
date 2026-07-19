@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, useTemplateRef, toRaw, computed } from 'vue';
+import { ref, shallowRef, reactive, watch, onMounted, useTemplateRef, toRaw, computed, nextTick } from 'vue';
 import { UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
 import { RRule, RRuleSet, rrulestr, type Frequency } from 'rrule';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import StrategyModal from '@/components/modals/StrategyModal.vue';
+import RepeatModal from '@/components/modals/RepeatModal.vue';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { syncAllWrapper } from '@/services/gitSync';
@@ -18,16 +19,42 @@ const repeatEndOptions = [
   { value: 'after', label: 'After' },
 ];
 const frequencyOptions = [
-  { value: null, label: 'never' },
-  { value: RRule.DAILY, label: 'daily' },
-  { value: RRule.WEEKLY, label: 'weekly' },
-  { value: RRule.MONTHLY, label: 'monthly' },
-  { value: RRule.YEARLY, label: 'yearly' },
+  { value: 'never', frequency: null },
+  { value: 'daily', frequency: RRule.DAILY },
+  { value: 'weekly', frequency: RRule.WEEKLY },
+  { value: 'monthly', frequency: RRule.MONTHLY },
+  { value: 'yearly', frequency: RRule.YEARLY },
+  { value: 'custom', frequency: undefined },
 ];
+
+function defaultCustomRepeat(from: DateTime = DateTime.now()): RRule {
+  const start = from.isValid ? from : DateTime.now();
+  return new RRule({
+    freq: RRule.WEEKLY,
+    dtstart: start.toJSDate(),
+    interval: 2,
+    byweekday: [start.weekday - 1],
+    count: 5,
+  });
+}
+
+function frequencyForSelection(selection: string): Frequency | null {
+  return frequencyOptions.find((option) => option.value === selection)?.frequency ?? null;
+}
+
+function selectionForFrequency(frequency: Frequency): string {
+  return frequencyOptions.find((option) => option.frequency === frequency)?.value ?? 'never';
+}
 
 const thisModal = useEventModal();
 const strategyModal = useStrategyModal();
 const { alert } = useAlertModal();
+
+const isRepeatModalOpen = ref(false);
+let isNewCustomSelection = false;
+let hasCustomRepeat = false;
+let lastRegularRepeatSelection = 'never';
+const customRepeat = shallowRef(defaultCustomRepeat());
 
 const isSaving = ref(false);
 const isDeleting = ref(false);
@@ -46,9 +73,9 @@ const form = reactive({
   entireDay: false,
   tagId: '',
 
-  repeatFreq: null as Frequency | null,
+  repeatSelection: 'never',
   repeatEnd: 'after',
-  repeatEndOn: DateTime.now().plus({ week: 1 }).toISODate(),
+  repeatEndOn: DateTime.now().plus({ week: 1 }).toISODate() ?? '',
   repeatEndAfter: 5,
 });
 const errors = reactive({
@@ -90,10 +117,13 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
 
   [form.fromDate, form.fromTime] = dateTimeToIsoDateAndTime(event.from);
   [form.toDate, form.toTime] = dateTimeToIsoDateAndTime(event.to);
-  form.repeatFreq = null;
+  form.repeatSelection = 'never';
   form.repeatEnd = 'after';
   form.repeatEndAfter = 5;
   form.repeatEndOn = event.from.plus({ week: 1 }).toISODate() ?? ''; // the default
+  customRepeat.value = defaultCustomRepeat(event.from);
+  hasCustomRepeat = false;
+  lastRegularRepeatSelection = 'never';
 
   if (form.fromTime == '00:00' && form.toTime == '23:59') {
     form.entireDay = true;
@@ -106,10 +136,15 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   if (event.repeat) {
     const rule = parseRepeat(event.repeat).rrules()[0];
     if (rule) {
-      const { count, until } = rule.options;
-      form.repeatFreq = rule.options.freq;
+      const { count, freq, interval, until } = rule.options;
+      const isCustom = interval > 1 || rule.origOptions.byweekday !== undefined;
+      form.repeatSelection = isCustom ? 'custom' : selectionForFrequency(freq);
+      lastRegularRepeatSelection = selectionForFrequency(freq);
 
-      if (count && count > 0) {
+      if (isCustom) {
+        hasCustomRepeat = true;
+        customRepeat.value = rule;
+      } else if (count && count > 0) {
         form.repeatEndAfter = count;
       } else if (until) {
         form.repeatEnd = 'on';
@@ -120,6 +155,51 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
 
   form.calendar = event.calendar;
   form.tagId = event.tagId ?? '';
+}
+
+function handleRepeatSelectionChange() {
+  if (form.repeatSelection === 'custom') {
+    if (!hasCustomRepeat) {
+      const from = DateTime.fromISO(form.fromDate);
+      const start = from.isValid ? from : DateTime.now();
+      const frequency = frequencyForSelection(lastRegularRepeatSelection) ?? RRule.WEEKLY;
+      const until = DateTime.fromISO(form.repeatEndOn);
+      customRepeat.value = new RRule({
+        freq: frequency,
+        dtstart: start.toJSDate(),
+        interval: 2,
+        byweekday: frequency === RRule.WEEKLY ? [start.weekday - 1] : undefined,
+        count: form.repeatEnd === 'after' ? form.repeatEndAfter : undefined,
+        until: form.repeatEnd === 'on' && until.isValid ? until.toJSDate() : undefined,
+      });
+    }
+    isNewCustomSelection = true;
+    isRepeatModalOpen.value = true;
+    return;
+  }
+
+  lastRegularRepeatSelection = form.repeatSelection;
+}
+
+function editCustomRepeat() {
+  isNewCustomSelection = false;
+  isRepeatModalOpen.value = true;
+}
+
+function saveCustomRepeat(value: RRule) {
+  customRepeat.value = value;
+  form.repeatSelection = 'custom';
+  hasCustomRepeat = true;
+  isNewCustomSelection = false;
+  isRepeatModalOpen.value = false;
+  void nextTick(() => repeatSelect.value?.focus());
+}
+
+function cancelCustomRepeat() {
+  if (isNewCustomSelection) form.repeatSelection = lastRegularRepeatSelection;
+  isNewCustomSelection = false;
+  isRepeatModalOpen.value = false;
+  void nextTick(() => repeatSelect.value?.focus());
 }
 
 function reconstructEvent(): CalendarEvent {
@@ -148,25 +228,52 @@ function parseRepeat(repeat: string): RRuleSet {
 }
 
 function buildRepeat(from: DateTime): string | undefined {
-  if (form.repeatFreq === null || !from.isValid) return;
-
-  const until = DateTime.fromISO(form.repeatEndOn, { zone: from.zone }).set({
-    hour: from.hour,
-    minute: from.minute,
-    second: from.second,
-    millisecond: from.millisecond,
-  });
-  if (form.repeatEnd === 'on' && !until.isValid) return;
+  if (form.repeatSelection === 'never' || !from.isValid) return;
 
   const recurrence = new RRuleSet();
-  recurrence.rrule(
-    new RRule({
-      freq: form.repeatFreq,
-      dtstart: from.toJSDate(),
-      count: form.repeatEnd === 'after' ? form.repeatEndAfter : undefined,
-      until: form.repeatEnd === 'on' ? until.toJSDate() : undefined,
-    }),
-  );
+
+  if (form.repeatSelection === 'custom') {
+    const options = customRepeat.value.options;
+    const until = options.until
+      ? DateTime.fromJSDate(options.until, { zone: from.zone }).set({
+          hour: from.hour,
+          minute: from.minute,
+          second: from.second,
+          millisecond: from.millisecond,
+        })
+      : undefined;
+
+    recurrence.rrule(
+      new RRule({
+        freq: options.freq,
+        dtstart: from.toJSDate(),
+        interval: options.interval,
+        byweekday: options.freq === RRule.WEEKLY ? options.byweekday : undefined,
+        count: options.count || undefined,
+        until: until?.toJSDate(),
+      }),
+    );
+  } else {
+    const frequency = frequencyForSelection(form.repeatSelection);
+    if (frequency === null) return;
+
+    const until = DateTime.fromISO(form.repeatEndOn, { zone: from.zone }).set({
+      hour: from.hour,
+      minute: from.minute,
+      second: from.second,
+      millisecond: from.millisecond,
+    });
+    if (form.repeatEnd === 'on' && !until.isValid) return;
+
+    recurrence.rrule(
+      new RRule({
+        freq: frequency,
+        dtstart: from.toJSDate(),
+        count: form.repeatEnd === 'after' ? form.repeatEndAfter : undefined,
+        until: form.repeatEnd === 'on' ? until.toJSDate() : undefined,
+      }),
+    );
+  }
 
   if (originalEvent?.repeat) {
     for (const exception of parseRepeat(originalEvent.repeat).exdates()) recurrence.exdate(exception);
@@ -297,16 +404,37 @@ function validate(event: CalendarEvent): boolean {
     return false;
   }
 
-  if (form.repeatFreq !== null) {
-    if (form.repeatEnd === 'after') {
-      if (!Number.isInteger(form.repeatEndAfter) || form.repeatEndAfter < 1) {
+  if (form.repeatSelection !== 'never') {
+    const isCustom = form.repeatSelection === 'custom';
+    const options = customRepeat.value.options;
+    const repeatEnd = isCustom ? (options.until ? 'on' : 'after') : form.repeatEnd;
+    const repeatEndAfter = isCustom ? options.count : form.repeatEndAfter;
+    const repeatEndOn =
+      isCustom && options.until
+        ? (DateTime.fromJSDate(options.until, { zone: event.from.zone }).toISODate() ?? '')
+        : form.repeatEndOn;
+
+    if (
+      isCustom &&
+      (!Number.isInteger(options.interval) ||
+        options.interval < 1 ||
+        (options.freq === RRule.WEEKLY && options.byweekday.length === 0))
+    ) {
+      isRepeatModalOpen.value = true;
+      return false;
+    }
+
+    if (repeatEnd === 'after') {
+      if (!repeatEndAfter || !Number.isInteger(repeatEndAfter) || repeatEndAfter < 1) {
         errors.badRepeatCount = true;
+        if (isCustom) isRepeatModalOpen.value = true;
         return false;
       }
     } else {
-      const until = DateTime.fromISO(form.repeatEndOn, { zone: event.from.zone });
+      const until = DateTime.fromISO(repeatEndOn, { zone: event.from.zone });
       if (!until.isValid || until.startOf('day') < event.from.startOf('day')) {
         errors.badUntilDate = true;
+        if (isCustom) isRepeatModalOpen.value = true;
         return false;
       }
     }
@@ -316,6 +444,7 @@ function validate(event: CalendarEvent): boolean {
 }
 
 const titleInputField = useTemplateRef('title-input-field');
+const repeatSelect = useTemplateRef('repeat-select');
 onMounted(async () => {
   titleInputField.value?.focus(); // focus title field
 
@@ -331,7 +460,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div id="event-modal" class="modal">
+  <div id="event-modal" class="modal" :inert="isRepeatModalOpen">
     <form @submit.prevent="saveEvent" :aria-busy="isLocked">
       <fieldset :disabled="isLocked">
         <input
@@ -378,14 +507,22 @@ onMounted(async () => {
 
         <label>
           {{ $t('event.repeat.repeat') }}:
-          <select name="repeat" v-model="form.repeatFreq">
-            <option v-for="freq in frequencyOptions" :value="freq.value" :key="freq.label">
-              {{ $t(`event.repeat.${freq.label}`) }}
+          <select
+            name="repeat"
+            v-model="form.repeatSelection"
+            ref="repeat-select"
+            @change="handleRepeatSelectionChange"
+          >
+            <option v-for="freq in frequencyOptions" :value="freq.value" :key="freq.value">
+              {{ $t(`event.repeat.${freq.value}`) }}
             </option>
           </select>
+          <button v-if="form.repeatSelection === 'custom'" type="button" @click="editCustomRepeat">
+            {{ $t('event.repeat.edit') }}
+          </button>
         </label>
 
-        <label v-if="form.repeatFreq !== null">
+        <label v-if="form.repeatSelection !== 'never' && form.repeatSelection !== 'custom'">
           {{ $t('event.repeat.end') }}:
           <select name="end" v-model="form.repeatEnd">
             <option v-for="end in repeatEndOptions" :value="end.value" :key="end.label">
@@ -459,6 +596,13 @@ onMounted(async () => {
     </form>
   </div>
 
+  <RepeatModal
+    v-if="isRepeatModalOpen"
+    :model-value="customRepeat"
+    :start-date="form.fromDate"
+    @save="saveCustomRepeat"
+    @cancel="cancelCustomRepeat"
+  />
   <StrategyModal v-if="strategyModal.isOpen.value" @cancel-update="strategyModal.close" @update="updateWithStrategy" />
 </template>
 

@@ -33,7 +33,13 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "monthly": "Monthly",
-      "yearly": "Yearly"
+      "yearly": "Yearly",
+      "custom": "Custom",
+      "edit": "Edit",
+      "every": "Every",
+      "on": "On",
+      "ends": "Ends",
+      "times": "times"
     }
   },
   "calendar": {
