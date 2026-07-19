@@ -4,16 +4,11 @@ import { useEventModal } from '@/composables/modals/useEventModal';
 
 const eventModal = useEventModal();
 
-const props = defineProps({
-  large: {
-    type: Boolean,
-    default: false,
-  },
-});
+defineProps<{ large?: boolean }>();
 </script>
 
 <template>
-  <button class="new-event-btn" :class="{ large: large }" @click="eventModal.open(undefined)">
+  <button class="new-event-btn" :class="{ large }" @click="eventModal.open()">
     <FiPlusCircle />
     <span v-if="large">{{ $t('newEventBtn') }}</span>
   </button>

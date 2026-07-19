@@ -81,10 +81,6 @@ aside[hidden] {
   height: 100%;
 }
 
-component {
-  background-color: red;
-}
-
 @media (max-width: 768px) {
   .sidebar-backdrop {
     display: block;

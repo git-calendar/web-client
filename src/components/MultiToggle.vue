@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   options: readonly string[];
   labels?: readonly string[];
   disabled?: readonly string[];
@@ -16,7 +16,7 @@ const id = (i: number) => `toggle-${uid}-${i}`;
 </script>
 
 <template>
-  <div ref="toggle" class="toggle">
+  <div class="toggle">
     <!-- second template cuz why not, it would need anothed div instead -->
     <template v-for="(option, i) in options" :key="option">
       <input

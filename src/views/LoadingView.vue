@@ -46,7 +46,7 @@ import { CoreLoadingState } from '@/wasm/core-wrapper';
 
 .logo {
   width: 8rem;
-  height: 8rems;
+  height: 8rem;
 }
 
 .progress-container {

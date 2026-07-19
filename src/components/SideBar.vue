@@ -58,8 +58,6 @@ aside {
   display: flex;
   flex-direction: column;
   align-items: center;
-  display: flex;
-  flex-direction: column;
   height: 100%;
   overflow: hidden;
   min-height: 0;

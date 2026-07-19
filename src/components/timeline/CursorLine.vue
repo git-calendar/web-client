@@ -2,46 +2,29 @@
 import { settings } from '@/services/settings';
 
 import { DateTime } from 'luxon';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed } from 'vue';
+import { useNow } from '@vueuse/core';
 
 const props = defineProps<{
   startHour: number;
   endHour: number;
 }>();
 
-const hour = ref(DateTime.now().hour);
-const minute = ref(DateTime.now().minute);
-let interval: number;
-const today = DateTime.now();
+const now = useNow({ interval: 60_000 });
 
 const topPos = computed(() => {
-  const currentHour = hour.value + minute.value / 60;
+  const currentHour = now.value.getHours() + now.value.getMinutes() / 60;
   const position = (currentHour - props.startHour) / (props.endHour - props.startHour);
   return `${Math.max(0, Math.min(1, position)) * 100}%`;
 });
 
-const timeFormat = computed(() => {
-  const now = today.set({ hour: hour.value, minute: minute.value });
-  return now.toLocaleString({ hour: '2-digit', minute: '2-digit', hourCycle: settings.value.timeFormat });
-});
-
-function updateTime() {
-  const now = DateTime.now();
-  hour.value = now.hour;
-  minute.value = now.minute;
-}
-
-onMounted(() => {
-  const msTillFullMinute = (60 - DateTime.now().second) * 1000 + (1000 - DateTime.now().millisecond);
-  setTimeout(() => {
-    updateTime();
-    interval = setInterval(updateTime, 60 * 1000); // update every 1 minute
-  }, msTillFullMinute + 10); // match the second first, so that it doesnt update on XXh:XXm:30s every time but roughly at XXh:XXm:00s
-});
-
-onUnmounted(() => {
-  clearInterval(interval);
-});
+const timeFormat = computed(() =>
+  DateTime.fromJSDate(now.value).toLocaleString({
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: settings.value.timeFormat,
+  }),
+);
 </script>
 
 <template>

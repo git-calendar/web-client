@@ -60,7 +60,6 @@ export default defineConfig({
         lang: 'en',
         dir: 'ltr',
       },
-
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,wasm,zst,br,gz}'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MiB (core.wasm is a big boy)

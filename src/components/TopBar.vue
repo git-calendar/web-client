@@ -30,7 +30,7 @@ watch(
 watch(view, (newView) => {
   if (newView === 'w') {
     // week view should be aligned
-    let current = getCurrentViewDatetime(router.currentRoute.value.params);
+    const current = getCurrentViewDatetime(router.currentRoute.value.params);
     router.push(getWeekAlignedRedirect(current));
   } else {
     router.push({

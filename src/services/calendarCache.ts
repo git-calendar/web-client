@@ -19,7 +19,6 @@ const calendarMap = computed(() => {
 });
 
 export const cachedCalendars = readonly(calendars);
-export const calendarsLoaded = readonly(loaded);
 
 export async function loadCalendars(): Promise<void> {
   if (loaded.value) {
@@ -43,11 +42,6 @@ export async function loadCalendars(): Promise<void> {
 export async function refreshCalendars(): Promise<void> {
   loaded.value = false;
   await loadCalendars();
-}
-
-export function clearCalendarCache(): void {
-  calendars.value = [];
-  loaded.value = false;
 }
 
 export function getCalendar(calendarName: string): Calendar | undefined {

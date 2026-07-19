@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watchEffect, type CSSProperties } from 'vue';
+import { computed, ref, toRef, useTemplateRef, watchEffect, type CSSProperties } from 'vue';
 import { DateTime } from 'luxon';
 
 import type { CalendarEvent } from '@/types/core.ts';
@@ -72,32 +72,15 @@ const grid = ref<GridSize>({
   heightRem: 0,
 });
 
-const timelineDate = computed(function () {
-  return props.date;
-});
+const timelineDate = toRef(props, 'date');
+const rangeStartHour = toRef(props, 'startHour');
+const rangeEndHour = toRef(props, 'endHour');
 
-const dayStartSeconds = computed(function () {
-  return timelineDate.value.startOf('day').toSeconds();
-});
-
-const dayEndSeconds = computed(function () {
-  return timelineDate.value.startOf('day').plus({ days: 1 }).toSeconds();
-});
-
-const dayDurationSeconds = computed(function () {
-  return Math.max(dayEndSeconds.value - dayStartSeconds.value, 1);
-});
-
-const dateIsToday = computed(function () {
-  return timelineDate.value.hasSame(DateTime.now(), 'day');
-});
-
-const laidOutEvents = computed(function () {
-  return layoutEvents(props.events);
-});
-
-const rangeStartHour = computed(() => props.startHour);
-const rangeEndHour = computed(() => props.endHour);
+const dayStartSeconds = computed(() => timelineDate.value.startOf('day').toSeconds());
+const dayEndSeconds = computed(() => timelineDate.value.startOf('day').plus({ days: 1 }).toSeconds());
+const dayDurationSeconds = computed(() => Math.max(dayEndSeconds.value - dayStartSeconds.value, 1));
+const dateIsToday = computed(() => timelineDate.value.hasSame(DateTime.now(), 'day'));
+const laidOutEvents = computed(() => layoutEvents(props.events));
 
 const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart } = useDraggingEvent(
   timelineRef,
@@ -271,10 +254,7 @@ function placedLeftColumnEnd(placedEvents: PlacedEvent[]) {
   return end;
 }
 
-function placeInFreeLeftColumn(
-  group: CalendarEvent[],
-  activeGroups: ActiveGroup[],
-): PlacedEvent | undefined {
+function placeInFreeLeftColumn(group: CalendarEvent[], activeGroups: ActiveGroup[]): PlacedEvent | undefined {
   if (group.length !== 1) {
     return undefined;
   }
@@ -282,12 +262,7 @@ function placeInFreeLeftColumn(
   const event = group[0];
   const activeGroup = activeGroups[activeGroups.length - 1];
 
-  if (
-    !event ||
-    !activeGroup ||
-    activeGroup.columns <= 1 ||
-    activeGroup.leftColumnEnd > eventStart(event)
-  ) {
+  if (!event || !activeGroup || activeGroup.columns <= 1 || activeGroup.leftColumnEnd > eventStart(event)) {
     return undefined;
   }
 

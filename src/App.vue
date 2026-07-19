@@ -44,9 +44,3 @@ onBeforeMount(async () => {
   <LoadingView v-if="CoreLoadingState.percentage < 100 || !coreReady" />
   <RouterView v-else />
 </template>
-
-<style scoped>
-main {
-  height: 100%;
-}
-</style>

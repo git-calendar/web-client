@@ -52,8 +52,7 @@ LuxonSettings.defaultLocale = settings.value.language;
 
 // -------------------------- theme --------------------------
 function getSystemThemePreference() {
-  const name = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  return name!;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function getBrowserHourCycle(): HourCycle {
