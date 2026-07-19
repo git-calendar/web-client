@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, useTemplateRef, toRaw, computed } from 'vue';
-import { Freq, UpdateStrategy, type CalendarEvent } from '@/types/core';
+import { UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
+import { RRule, RRuleSet, rrulestr, type Frequency } from 'rrule';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import StrategyModal from '@/components/modals/StrategyModal.vue';
@@ -17,11 +18,11 @@ const repeatEndOptions = [
   { value: 'after', label: 'After' },
 ];
 const frequencyOptions = [
-  { value: Freq.Invalid, label: 'never' },
-  { value: Freq.Day, label: 'daily' },
-  { value: Freq.Week, label: 'weekly' },
-  { value: Freq.Month, label: 'monthly' },
-  { value: Freq.Year, label: 'yearly' },
+  { value: null, label: 'never' },
+  { value: RRule.DAILY, label: 'daily' },
+  { value: RRule.WEEKLY, label: 'weekly' },
+  { value: RRule.MONTHLY, label: 'monthly' },
+  { value: RRule.YEARLY, label: 'yearly' },
 ];
 
 const thisModal = useEventModal();
@@ -45,7 +46,7 @@ const form = reactive({
   entireDay: false,
   tagId: '',
 
-  repeatFreq: Freq.Invalid,
+  repeatFreq: null as Frequency | null,
   repeatEnd: 'after',
   repeatEndOn: DateTime.now().plus({ week: 1 }).toISODate(),
   repeatEndAfter: 5,
@@ -55,6 +56,7 @@ const errors = reactive({
   badToDate: false,
   badFromDate: false,
   badUntilDate: false,
+  badRepeatCount: false,
 });
 
 let originalEvent: CalendarEvent | undefined;
@@ -88,6 +90,9 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
 
   [form.fromDate, form.fromTime] = dateTimeToIsoDateAndTime(event.from);
   [form.toDate, form.toTime] = dateTimeToIsoDateAndTime(event.to);
+  form.repeatFreq = null;
+  form.repeatEnd = 'after';
+  form.repeatEndAfter = 5;
   form.repeatEndOn = event.from.plus({ week: 1 }).toISODate() ?? ''; // the default
 
   if (form.fromTime == '00:00' && form.toTime == '23:59') {
@@ -99,16 +104,17 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   }
 
   if (event.repeat) {
-    form.repeatFreq = event.repeat.frequency;
+    const rule = parseRepeat(event.repeat).rrules()[0];
+    if (rule) {
+      const { count, until } = rule.options;
+      form.repeatFreq = rule.options.freq;
 
-    if (event.repeat.count && event.repeat.count > 1) {
-      form.repeatEnd = 'after';
-      form.repeatEndAfter = event.repeat.count;
-    } else if (event.repeat.until) {
-      form.repeatEnd = 'on';
-      form.repeatEndOn = event.repeat.until.toISODate() ?? '';
-    } else {
-      console.log('Something went wrong with the events repetition. Both Until and Count are undefined or invalid.');
+      if (count && count > 0) {
+        form.repeatEndAfter = count;
+      } else if (until) {
+        form.repeatEnd = 'on';
+        form.repeatEndOn = DateTime.fromJSDate(until, { zone: event.from.zone }).toISODate() ?? '';
+      }
     }
   }
 
@@ -130,22 +136,43 @@ function reconstructEvent(): CalendarEvent {
     to: form.entireDay
       ? DateTime.fromISO(`${form.toDate}T23:59`, { zone: originalEvent?.to.zone })
       : DateTime.fromISO(`${form.toDate}T${form.toTime}`, { zone: originalEvent?.to.zone }),
-    repeat:
-      form.repeatFreq != Freq.Invalid
-        ? {
-            frequency: form.repeatFreq,
-            interval: 1,
-            until:
-              form.repeatEnd === 'on'
-                ? DateTime.fromISO(form.repeatEndOn, { zone: originalEvent?.repeat?.until?.zone })
-                : undefined,
-            count: form.repeatEnd === 'after' ? form.repeatEndAfter : 0,
-            exceptions: originalEvent?.repeat?.exceptions ?? [],
-          }
-        : undefined,
     parentId: originalEvent?.parentId,
   };
+  const repeat = buildRepeat(event.from);
+  if (repeat) event.repeat = repeat;
   return event;
+}
+
+function parseRepeat(repeat: string): RRuleSet {
+  return rrulestr(repeat, { forceset: true }) as RRuleSet;
+}
+
+function buildRepeat(from: DateTime): string | undefined {
+  if (form.repeatFreq === null || !from.isValid) return;
+
+  const until = DateTime.fromISO(form.repeatEndOn, { zone: from.zone }).set({
+    hour: from.hour,
+    minute: from.minute,
+    second: from.second,
+    millisecond: from.millisecond,
+  });
+  if (form.repeatEnd === 'on' && !until.isValid) return;
+
+  const recurrence = new RRuleSet();
+  recurrence.rrule(
+    new RRule({
+      freq: form.repeatFreq,
+      dtstart: from.toJSDate(),
+      count: form.repeatEnd === 'after' ? form.repeatEndAfter : undefined,
+      until: form.repeatEnd === 'on' ? until.toJSDate() : undefined,
+    }),
+  );
+
+  if (originalEvent?.repeat) {
+    for (const exception of parseRepeat(originalEvent.repeat).exdates()) recurrence.exdate(exception);
+  }
+
+  return recurrence.toString();
 }
 
 function dateTimeToIsoDateAndTime(time: DateTime): [string, string] {
@@ -270,14 +297,18 @@ function validate(event: CalendarEvent): boolean {
     return false;
   }
 
-  if (event.repeat && event.repeat.count == 0) {
-    if (!event.repeat.until?.isValid) {
-      errors.badUntilDate = true;
-      return false;
-    }
-    if (event.repeat.until.startOf('day') < event.from.startOf('day')) {
-      errors.badUntilDate = true;
-      return false;
+  if (form.repeatFreq !== null) {
+    if (form.repeatEnd === 'after') {
+      if (!Number.isInteger(form.repeatEndAfter) || form.repeatEndAfter < 1) {
+        errors.badRepeatCount = true;
+        return false;
+      }
+    } else {
+      const until = DateTime.fromISO(form.repeatEndOn, { zone: event.from.zone });
+      if (!until.isValid || until.startOf('day') < event.from.startOf('day')) {
+        errors.badUntilDate = true;
+        return false;
+      }
     }
   }
 
@@ -354,7 +385,7 @@ onMounted(async () => {
           </select>
         </label>
 
-        <label v-if="form.repeatFreq">
+        <label v-if="form.repeatFreq !== null">
           {{ $t('event.repeat.end') }}:
           <select name="end" v-model="form.repeatEnd">
             <option v-for="end in repeatEndOptions" :value="end.value" :key="end.label">
@@ -370,7 +401,16 @@ onMounted(async () => {
             :class="{ red: errors.badUntilDate }"
             @change="errors.badUntilDate = false"
           />
-          <input v-if="form.repeatEnd == 'after'" type="number" name="end-after" v-model="form.repeatEndAfter" />
+          <input
+            v-if="form.repeatEnd == 'after'"
+            type="number"
+            name="end-after"
+            min="1"
+            step="1"
+            v-model="form.repeatEndAfter"
+            :class="{ red: errors.badRepeatCount }"
+            @input="errors.badRepeatCount = false"
+          />
         </label>
 
         <label>

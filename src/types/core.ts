@@ -10,15 +10,7 @@ export interface CalendarEvent {
   calendar: string;
   tagId?: string;
   parentId?: string;
-  repeat?: Repetition;
-}
-
-export interface Repetition {
-  frequency: Freq;
-  interval: number;
-  until?: DateTime;
-  count?: number;
-  exceptions: readonly string[];
+  repeat?: string; // DTSTART/RRULE/EXDATE in RFC 5545 format
 }
 
 export interface Calendar {
@@ -61,14 +53,6 @@ export interface CalendarApi {
   setCorsProxy(url: string): void;
   syncAll(): void;
   exportZip(calendar: string): ArrayBuffer;
-}
-
-export enum Freq {
-  Invalid = 0,
-  Day,
-  Week,
-  Month,
-  Year,
 }
 
 export enum UpdateStrategy {
