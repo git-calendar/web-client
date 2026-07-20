@@ -266,8 +266,8 @@ async function updateData() {
 
 @media (max-width: 768px) {
   #view-container {
-    height: calc(100% - 0.2rem);
-    margin: 0.2rem;
+    height: calc(100% - 2 * 0.3rem);
+    margin: 0.3rem;
   }
 }
 </style>

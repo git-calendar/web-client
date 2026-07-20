@@ -7,6 +7,8 @@ import { settings } from '@/services/settings';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: '/week', redirect: '/w' }, // TODO: delete compatibility
+    { path: '/4days', redirect: '/4d' },
     {
       name: 'calendar',
       path: '/:view(4d|w|m)/:year(\\d+)?/:month(\\d+)?/:day(\\d+)?',
