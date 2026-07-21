@@ -47,6 +47,15 @@ button {
   }
 }
 
+/* prevents wrapped controls from inheriting label hover */
+label:has(input, select) {
+  pointer-events: none;
+
+  :is(input, select) {
+    pointer-events: auto;
+  }
+}
+
 input,
 textarea,
 select,
