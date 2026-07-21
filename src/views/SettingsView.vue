@@ -87,7 +87,7 @@ function formatHour(hour: number): string {
 
     <!-- TODO: prettier color picker -->
     <label>
-      {{ $t('tag.color') }}:
+      {{ $t('settings.defaultColor') }}:
       <select name="color" id="color" v-model="settings.defaultEventColor">
         <option v-for="color in colorsList" :key="color" :value="color">
           {{ $t(getColorI18nKey(color)) }}

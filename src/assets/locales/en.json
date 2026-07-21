@@ -12,7 +12,8 @@
     "24hourFormat": "24-hour time",
     "weekStart": "Week start",
     "dragPrecision": "Drag precision",
-    "hourRange": "Hour range"
+    "hourRange": "Hour range",
+    "defaultColor": "Default event color"
   },
   "event": {
     "new": "New Event",

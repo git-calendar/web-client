@@ -12,7 +12,8 @@
     "24hourFormat": "24ti hodinový čas",
     "weekStart": "Začátek týdne",
     "dragPrecision": "Přesnost při tažení",
-    "hourRange": "Rozmezí hodin"
+    "hourRange": "Rozmezí hodin",
+    "defaultColor": "Výchozí barva událostí"
   },
   "event": {
     "new": "Nová událost",
