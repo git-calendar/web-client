@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { getEventColorCSSVariable, toColorId } from '@/colors';
-import { settings } from '@/services/settings';
 import { computed } from 'vue';
 
 const props = withDefaults(
@@ -13,7 +12,6 @@ const props = withDefaults(
     temporary?: boolean;
   }>(),
   {
-    color: settings.value.defaultEventColor,
     temporary: false,
   },
 );
