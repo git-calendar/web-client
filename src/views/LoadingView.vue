@@ -29,6 +29,7 @@ import { CoreLoadingState } from '@/wasm/core-wrapper';
 #loader {
   position: fixed;
   inset: 0;
+  z-index: 900;
   display: flex;
   align-items: center;
   justify-content: center;

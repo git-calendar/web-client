@@ -130,4 +130,9 @@ form {
     }
   }
 }
+
+/* the label forwards the second select's hover to the first */
+label:has(select[name='day-view-end-hour']:hover) select[name='day-view-start-hour']:hover:not(:focus) {
+  background-color: var(--btn-bg-color);
+}
 </style>
