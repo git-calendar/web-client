@@ -36,7 +36,7 @@ function formatHour(hour: number): string {
 
     <label
       >{{ $t('settings.language') }}:
-      <select v-model="settings.language">
+      <select name="lang" v-model="settings.language">
         <option v-for="lang in LANGUAGES" :key="lang.code" :value="lang.code">
           {{ lang.label }}
         </option>
@@ -62,13 +62,15 @@ function formatHour(hour: number): string {
 
     <label>
       {{ $t('settings.hourRange') }}:
-      <select name="day-view-start-hour" v-model="settings.dayViewStartHour">
-        <option v-for="h in 25" :key="h - 1" :value="h - 1">{{ formatHour(h - 1) }}</option>
-      </select>
-      –
-      <select name="day-view-end-hour" v-model="settings.dayViewEndHour">
-        <option v-for="h in 25" :key="h - 1" :value="h - 1">{{ formatHour(h - 1) }}</option>
-      </select>
+      <div>
+        <select name="day-view-start-hour" v-model="settings.dayViewStartHour">
+          <option v-for="h in 25" :key="h - 1" :value="h - 1">{{ formatHour(h - 1) }}</option>
+        </select>
+        –
+        <select name="day-view-end-hour" v-model="settings.dayViewEndHour">
+          <option v-for="h in 25" :key="h - 1" :value="h - 1">{{ formatHour(h - 1) }}</option>
+        </select>
+      </div>
     </label>
 
     <label>
@@ -110,14 +112,18 @@ function formatHour(hour: number): string {
 
 <style scoped>
 form {
+  display: grid;
   justify-content: center;
   justify-items: start;
   padding: 2rem;
-  display: grid;
   gap: 1rem;
 
   > label {
-    width: auto;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
 
     > input[name='cors-proxy'] {
       width: 12rem;
