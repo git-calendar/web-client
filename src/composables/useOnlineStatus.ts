@@ -1,18 +1,23 @@
 import { ref, readonly } from 'vue';
 
-const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine);
+const isOnline = ref(true);
+
+function updateOnlineStatus() {
+  if (typeof navigator !== 'undefined') {
+    isOnline.value = navigator.onLine;
+  }
+}
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    isOnline.value = true;
-  });
-
-  window.addEventListener('offline', () => {
-    isOnline.value = false;
-  });
+  updateOnlineStatus();
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  window.addEventListener('pageshow', updateOnlineStatus);
 }
 
 export function useOnlineStatus() {
+  updateOnlineStatus();
+
   return {
     isOnline: readonly(isOnline),
   };
