@@ -21,7 +21,7 @@
     "description": "Description",
     "location": "Location",
     "from": "From",
-    "to": "Till",
+    "to": "To",
     "entireDay": "Entire day",
     "calendar": "Calendar",
     "tag": "Tag",

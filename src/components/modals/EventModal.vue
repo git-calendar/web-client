@@ -60,6 +60,9 @@ const isSaving = ref(false);
 const isDeleting = ref(false);
 const isUpdatingWithStrategy = ref(false);
 const isLocked = computed(() => isSaving.value || isDeleting.value || isUpdatingWithStrategy.value);
+const isReadonly = computed(
+  () => cachedCalendars.value.find((calendar) => calendar.name === thisModal.event.value?.calendar)?.readonly ?? false,
+);
 
 const form = reactive({
   title: '',
@@ -86,6 +89,13 @@ const errors = reactive({
   badRepeatCount: false,
 });
 
+function getDefaultWritableCalendar() {
+  const defaultCalendar = getDefaultCalendar();
+  return defaultCalendar && !defaultCalendar.readonly
+    ? defaultCalendar
+    : cachedCalendars.value.find((calendar) => !calendar.readonly);
+}
+
 let originalEvent: CalendarEvent | undefined;
 watch(
   () => thisModal.event.value,
@@ -99,8 +109,8 @@ watch(
     const eventForForm = cloneDeep(originalEvent);
 
     if (eventForForm.calendar === '') {
-      const defaultCal = getDefaultCalendar();
-      originalEvent.calendar = eventForForm.calendar = defaultCal?.name ?? '';
+      const defaultCalendar = getDefaultWritableCalendar();
+      originalEvent.calendar = eventForForm.calendar = defaultCalendar?.name ?? '';
     }
 
     updateFormFromEvent(originalEvent);
@@ -451,7 +461,7 @@ onMounted(async () => {
   await loadCalendars();
 
   if (form.calendar === '') {
-    const calendar = getDefaultCalendar();
+    const calendar = getDefaultWritableCalendar();
 
     form.calendar = calendar?.name ?? '';
     form.tagId = calendar?.tags[0]?.id ?? '';
@@ -462,7 +472,7 @@ onMounted(async () => {
 <template>
   <div id="event-modal" class="modal" :inert="isRepeatModalOpen">
     <form @submit.prevent="saveEvent" :aria-busy="isLocked">
-      <fieldset :disabled="isLocked">
+      <fieldset :disabled="isLocked || isReadonly" :class="{ readonly: isReadonly && !isLocked }">
         <input
           type="text"
           name="title"
@@ -553,7 +563,12 @@ onMounted(async () => {
         <label>
           {{ $t('event.calendar') }}:
           <select name="calendar" v-model="form.calendar">
-            <option v-for="calendar in cachedCalendars" :value="calendar.name" :key="calendar.name">
+            <option
+              v-for="calendar in cachedCalendars"
+              :key="calendar.name"
+              :value="calendar.name"
+              :disabled="calendar.readonly"
+            >
               {{ calendar.name }}
             </option>
           </select>
@@ -582,17 +597,26 @@ onMounted(async () => {
         />
 
         <textarea name="description" rows="3" :placeholder="$t('event.description')" v-model="form.description" />
+      </fieldset>
 
+      <div class="event-modal-footer">
         <div class="bottom-btns">
-          <button type="submit">
+          <button v-if="!isReadonly" type="submit" :disabled="isLocked">
             {{ isSaving ? $t('savingBtn') : $t('saveBtn') }}
           </button>
-          <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
-          <button v-if="!thisModal.isNew.value" type="button" @click="deleteEvent" class="delete-btn">
+          <button type="button" :disabled="isLocked" @click="thisModal.close">{{ $t('closeBtn') }}</button>
+          <button
+            v-if="!thisModal.isNew.value && !isReadonly"
+            type="button"
+            class="delete-btn"
+            :disabled="isLocked"
+            @click="deleteEvent"
+          >
             {{ isDeleting ? $t('deletingBtn') : $t('deleteBtn') }}
           </button>
         </div>
-      </fieldset>
+        <small v-if="isReadonly" class="readonly-tag">{{ $t('calendar.readonly') }}</small>
+      </div>
     </form>
   </div>
 
@@ -646,6 +670,38 @@ label:has(select[name='end']) {
   > input[type='time'] {
     flex: 0 1 7rem;
   }
+}
+
+fieldset.readonly:disabled {
+  label,
+  .dates > span {
+    opacity: 1;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    cursor: default;
+    opacity: 1;
+  }
+}
+
+.event-modal-footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 2rem;
+}
+
+.readonly-tag {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: #888;
+  font-size: 0.75rem;
+  line-height: 1;
 }
 
 @media (max-width: 450px) {
