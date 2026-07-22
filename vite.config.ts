@@ -64,7 +64,25 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,wasm,zst,br,gz}'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25MiB (core.wasm is a big boy)
         cleanupOutdatedCaches: true,
-        navigateFallback: '/index.html',
+        // Let navigation requests reach the network-first route instead of
+        // resolving `/` directly from the precached `index.html`.
+        directoryIndex: null,
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              fetchOptions: {
+                cache: 'no-cache',
+              },
+              precacheFallback: {
+                fallbackURL: '/index.html',
+              },
+            },
+          },
+        ],
       },
     }),
   ],
