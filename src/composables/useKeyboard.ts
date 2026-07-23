@@ -6,7 +6,7 @@ import { DateTime } from 'luxon';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
-import { useTagModal } from './modals/useTagModal';
+import { useTagModal } from '@/composables/modals/useTagModal';
 
 const calendarModal = useCalendarModal();
 const tagModal = useTagModal();

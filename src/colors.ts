@@ -1,4 +1,4 @@
-import { settings } from './services/settings';
+import { settings } from '@/services/settings';
 
 export const colorsList = [
   'blue',

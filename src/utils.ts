@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 import { type RouteParamsGeneric, type Router } from 'vue-router';
-import type { CalendarEvent } from './types/core';
-import { CalendarCore } from './wasm/core-wrapper';
-import { settings } from './services/settings';
+import type { CalendarEvent } from '@/types/core';
+import { CalendarCore } from '@/wasm/core-wrapper';
+import { settings } from '@/services/settings';
 
 /**
  * Returns the datetime from route parameters. A dateless week route starts at
