@@ -152,15 +152,11 @@
   }
 
   if (!globalThis.crypto) {
-    throw new Error(
-      'globalThis.crypto is not available, polyfill required (crypto.getRandomValues only)',
-    );
+    throw new Error('globalThis.crypto is not available, polyfill required (crypto.getRandomValues only)');
   }
 
   if (!globalThis.performance) {
-    throw new Error(
-      'globalThis.performance is not available, polyfill required (performance.now only)',
-    );
+    throw new Error('globalThis.performance is not available, polyfill required (performance.now only)');
   }
 
   if (!globalThis.TextEncoder) {

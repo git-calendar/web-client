@@ -21,7 +21,9 @@ export function useDraggingEvent(
 
   const snapToGridHeight = computed(() => {
     if (!timelineRef.value) return 0;
-    return timelineRef.value.clientHeight / (endHour.value - startHour.value) / (60 / settings.value.dragPrecisionMinutes);
+    return (
+      timelineRef.value.clientHeight / (endHour.value - startHour.value) / (60 / settings.value.dragPrecisionMinutes)
+    );
   });
 
   const maxY = computed(() => timelineRef.value?.clientHeight ?? 0);
@@ -63,13 +65,9 @@ export function useDraggingEvent(
     const startTotalMinutes = startSlots * settings.value.dragPrecisionMinutes;
     const endTotalMinutes = (startSlots + durationSlots) * settings.value.dragPrecisionMinutes;
 
-    const startTime = date.value
-      .set({ hour: startHour.value, minute: 0 })
-      .plus({ minutes: startTotalMinutes });
+    const startTime = date.value.set({ hour: startHour.value, minute: 0 }).plus({ minutes: startTotalMinutes });
 
-    const endTime = date.value
-      .set({ hour: startHour.value, minute: 0 })
-      .plus({ minutes: endTotalMinutes });
+    const endTime = date.value.set({ hour: startHour.value, minute: 0 }).plus({ minutes: endTotalMinutes });
 
     return [startTime, endTime];
   }
