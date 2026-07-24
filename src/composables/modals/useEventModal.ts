@@ -17,8 +17,8 @@ function createBlankEvent(): CalendarEvent {
     title: '',
     description: '',
     location: '',
-    from: DateTime.now(),
-    to: DateTime.now().plus({ hour: 2 }),
+    from: DateTime.now().set({ minute: 0 }).plus({ hour: 1 }),
+    to: DateTime.now().set({ minute: 0 }).plus({ hour: 3 }),
     calendar: '',
     tagId: '',
   };
