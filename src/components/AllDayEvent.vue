@@ -69,7 +69,7 @@ const dynamicStyles = computed(() => {
 
 .allday-event.temporary {
   pointer-events: none;
-  background-color: color-mix(in srgb, var(--event-color), transparent 85%); /* light */
+  background-color: color-mix(in srgb, var(--event-color), transparent 80%); /* light */
 }
 
 /* hover only for non-temporary events */

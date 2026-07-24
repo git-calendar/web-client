@@ -59,19 +59,6 @@ function gridStyle(startIndex: number, span: number, row: number) {
   };
 }
 
-const previewEvent = computed(() => {
-  const event = props.drag.active.value;
-  if (props.drag.mode.value !== 'create-all-day' || !event) return null;
-
-  const range = visibleRange(event);
-  if (!range) return null;
-
-  return {
-    event,
-    gridStyle: gridStyle(range.startIndex, range.span, 1),
-  };
-});
-
 const isCreating = computed(() => props.drag.mode.value === 'create-all-day');
 
 function startCreate(event: PointerEvent) {
@@ -100,11 +87,38 @@ const laidOutEvents = computed(() => {
       rowEnds[rowIndex] = item.endIndex;
     }
 
+    const row = rowIndex + 1;
+
     return {
       event: item.event,
-      gridStyle: gridStyle(item.startIndex, item.span, rowIndex + 1),
+      startIndex: item.startIndex,
+      endIndex: item.endIndex,
+      row,
+      gridStyle: gridStyle(item.startIndex, item.span, row),
     };
   });
+});
+
+const previewEvent = computed(() => {
+  const event = props.drag.active.value;
+  if (props.drag.mode.value !== 'create-all-day' || !event) return null;
+
+  const range = visibleRange(event);
+  if (!range) return null;
+
+  const occupiedRows = new Set(
+    laidOutEvents.value
+      .filter((item) => item.startIndex <= range.endIndex && item.endIndex >= range.startIndex)
+      .map((item) => item.row),
+  );
+
+  let row = 1;
+  while (occupiedRows.has(row)) row++;
+
+  return {
+    event,
+    gridStyle: gridStyle(range.startIndex, range.span, row),
+  };
 });
 </script>
 
