@@ -73,6 +73,7 @@ const dynamicStyles = computed(() => {
 
   user-select: none;
   -webkit-user-select: none;
+  cursor: pointer;
 
   /* solid left border by default */
   background-image: linear-gradient(to bottom, var(--event-color) 100%, transparent 0);
@@ -81,7 +82,7 @@ const dynamicStyles = computed(() => {
   background-repeat: no-repeat;
 
   &.interactive {
-    cursor: pointer;
+    cursor: var(--timeline-event-cursor, grab);
     touch-action: none;
   }
 }
@@ -92,7 +93,7 @@ const dynamicStyles = computed(() => {
   right: 0.25rem;
   height: min(0.55rem, 25%);
   z-index: 2;
-  cursor: ns-resize;
+  cursor: var(--timeline-resize-cursor, ns-resize);
 }
 
 .resize-handle-top {

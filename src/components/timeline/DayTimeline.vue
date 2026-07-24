@@ -501,7 +501,6 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
 
   &:has(.temporary) .timeline-event:hover {
     filter: none;
-    cursor: ns-resize;
   }
 }
 
