@@ -81,7 +81,7 @@ const dynamicStyles = computed(() => {
   background-repeat: no-repeat;
 
   &.interactive {
-    cursor: grab;
+    cursor: pointer;
     touch-action: none;
   }
 }

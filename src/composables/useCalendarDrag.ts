@@ -347,9 +347,8 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
       suppressClickUntil = Date.now() + CLICK_SUPPRESSION_MS;
     }
 
-    reset();
-
     if (completedMode === 'create' || completedMode === 'create-all-day') {
+      reset();
       eventModal.open(completedEvent);
       return;
     }
@@ -365,9 +364,12 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
       return;
     }
 
+    saving.value = true;
+
     try {
       await CalendarCore.updateEvent(completedEvent);
     } catch (error) {
+      reset();
       await alert(String(error));
       return;
     }
@@ -384,6 +386,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     reset();
     void syncAllWrapper();
   }
+
   function onPointerUp(event: PointerEvent) {
     if (event.pointerId !== pointerId) return;
     removePointerListeners();

@@ -95,6 +95,8 @@ const isResizing = computed(
   () =>
     (props.drag.mode.value === 'resize-top' || props.drag.mode.value === 'resize-bottom') && !props.drag.saving.value,
 );
+const isSaving = computed(() => props.drag.saving.value);
+
 watchEffect(function (cleanup) {
   const el = timelineGridRef.value;
   if (!el) return;
@@ -450,6 +452,7 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
       <TimelineEvent
         v-if="previewEvent"
         class="drag-preview"
+        :class="{ 'saving-preview': isSaving }"
         :event="previewEvent"
         :start-hour="startHour"
         :end-hour="endHour"
@@ -514,5 +517,15 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
 
 .moving-cursor {
   cursor: grabbing;
+}
+
+.saving-preview {
+  animation: saving-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes saving-pulse {
+  to {
+    opacity: 0.55;
+  }
 }
 </style>
