@@ -10,11 +10,17 @@ const props = withDefaults(
     subtitle: string;
     color?: string;
     temporary?: boolean;
+    interactive?: boolean;
   }>(),
   {
     temporary: false,
+    interactive: false,
   },
 );
+
+const emit = defineEmits<{
+  resizeStart: [edge: 'top' | 'bottom', event: PointerEvent];
+}>();
 
 const dynamicStyles = computed(() => {
   let color = getEventColorCSSVariable(toColorId(props.color));
@@ -29,9 +35,25 @@ const dynamicStyles = computed(() => {
 </script>
 
 <template>
-  <div class="timeline-event" :class="{ temporary: props.temporary }" :style="dynamicStyles">
+  <div
+    class="timeline-event"
+    :class="{ temporary: props.temporary, interactive: props.interactive }"
+    :style="dynamicStyles"
+  >
+    <div
+      v-if="interactive"
+      class="resize-handle resize-handle-top"
+      @pointerdown.stop="emit('resizeStart', 'top', $event)"
+      @click.stop
+    />
     <span class="title">{{ title }}</span>
     <span class="subtitle">{{ subtitle }}</span>
+    <div
+      v-if="interactive"
+      class="resize-handle resize-handle-bottom"
+      @pointerdown.stop="emit('resizeStart', 'bottom', $event)"
+      @click.stop
+    />
   </div>
 </template>
 
@@ -57,6 +79,28 @@ const dynamicStyles = computed(() => {
   background-position: left;
   background-size: 3px 100%;
   background-repeat: no-repeat;
+
+  &.interactive {
+    cursor: grab;
+    touch-action: none;
+  }
+}
+
+.resize-handle {
+  position: absolute;
+  left: 0.25rem;
+  right: 0.25rem;
+  height: min(0.55rem, 25%);
+  z-index: 2;
+  cursor: ns-resize;
+}
+
+.resize-handle-top {
+  top: 0;
+}
+
+.resize-handle-bottom {
+  bottom: 0;
 }
 
 /* temporary event styling */
