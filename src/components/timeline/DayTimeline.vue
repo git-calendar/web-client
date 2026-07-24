@@ -86,6 +86,15 @@ const previewEvent = computed(() => {
   return event && columnDate?.hasSame(timelineDate.value, 'day') ? event : null;
 });
 const previewLayoutStyle = computed<CSSProperties>(() => {
+  if (props.drag.mode.value === 'move') {
+    return {
+      left: 0,
+      right: 0,
+      width: 'auto',
+      zIndex: 600,
+    };
+  }
+
   const sourceEvent = laidOutEvents.value.find((event) => props.drag.isSourceEvent(event));
   return sourceEvent ? { ...sourceEvent.layoutStyle, zIndex: 600 } : { zIndex: 600 };
 });
