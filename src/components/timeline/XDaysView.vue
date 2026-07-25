@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch, watchEffect } from 'vue';
 import DayTimeline from '@/components/timeline/DayTimeline.vue';
 import type { CalendarEvent } from '@/types/core.ts';
 import { useTranslation } from '@/composables/useTranslation';
@@ -14,46 +14,58 @@ import { settings } from '@/services/settings';
 import { eventsRevision } from '@/composables/useEventsRefresh';
 import { useCalendarFilters } from '@/services/calendarFilters';
 
+import { useCalendarDrag } from '@/composables/useCalendarDrag';
+
+type TimelineRange = {
+  startHour: number;
+  endHour: number;
+};
+
 const { dayNameShort, dayNameSuperShort } = useTranslation();
-const { width } = useWindowSize(); // reactive window size
+const { width } = useWindowSize();
 const { filter } = useCalendarFilters();
-const isMobile = computed(() => width.value < 500);
 const route = useRoute();
 
 const props = defineProps<{
   numOfDays: number;
 }>();
 
-const startDate = computed(() => {
-  return getCurrentViewDatetime(route.params);
-});
-
-watch(
-  [startDate, () => props.numOfDays, eventsRevision, filter],
-  () => {
-    void updateData();
-  },
-  { immediate: true },
+const isMobile = computed(() => width.value < 500);
+const startDate = computed(() => getCurrentViewDatetime(route.params));
+const dates = computed(() =>
+  Array.from({ length: props.numOfDays }, (_, index) => startDate.value.plus({ days: index })),
 );
 
-const dates = computed(() => {
-  return Array.from({ length: props.numOfDays }, (_, i) => {
-    return startDate.value.plus({ days: i });
-  });
+const eventsTimeline = ref<CalendarEvent[][]>([]);
+const eventsWholeDay = ref<CalendarEvent[]>([]);
+
+const configuredTimelineRange = computed<TimelineRange>(() => {
+  const startHour = settings.value.dayViewStartHour;
+  const configuredEndHour = settings.value.dayViewEndHour;
+  const endHour = configuredEndHour > startHour ? configuredEndHour : configuredEndHour + 24;
+
+  return { startHour, endHour };
 });
 
-const timelineRange = computed(() => {
-  const defaultStart = settings.value.dayViewStartHour;
-  const configuredEnd = settings.value.dayViewEndHour;
-  const defaultEnd = configuredEnd > defaultStart ? configuredEnd : configuredEnd + 24;
+function timelineColumnDate(date: DateTime, range: TimelineRange) {
+  const postMidnightEndHour = range.endHour - 24;
+  const calendarDate = date.startOf('day');
 
-  let startHour: number = defaultStart;
-  let endHour: number = defaultEnd;
+  return range.endHour > 24 && date.hour < postMidnightEndHour ? calendarDate.minus({ days: 1 }) : calendarDate;
+}
+
+const timelineRange = computed<TimelineRange>(() => {
+  const configuredRange = configuredTimelineRange.value;
+  let startHour = configuredRange.startHour;
+  let endHour = configuredRange.endHour;
 
   for (const events of eventsTimeline.value) {
     for (const event of events) {
-      startHour = Math.min(startHour, Math.floor(event.from.hour + event.from.minute / 60));
-      endHour = Math.max(endHour, Math.ceil(event.to.hour + event.to.minute / 60));
+      const columnStart = timelineColumnDate(event.from, configuredRange).startOf('day');
+      const fromHour = event.from.diff(columnStart, 'hours').hours;
+      const toHour = event.to.diff(columnStart, 'hours').hours;
+      startHour = Math.min(startHour, Math.floor(fromHour));
+      endHour = Math.max(endHour, Math.ceil(toHour));
     }
   }
 
@@ -62,60 +74,67 @@ const timelineRange = computed(() => {
 
 const hoursOnGrid = computed(() => {
   const { startHour, endHour } = timelineRange.value;
-  const result: string[] = [];
+  const hours: string[] = [];
 
-  for (let i = 0; i < endHour - startHour; i++) {
-    const current = (startHour + i) % 24;
+  for (let offset = 0; offset < endHour - startHour; offset++) {
+    const hour = (startHour + offset) % 24;
 
-    // resolve formats manually ig
     if (settings.value.timeFormat === 'h12') {
-      const h = current % 12 || 12;
-      const period = current < 12 ? 'AM' : 'PM';
-      result.push(`${h} ${period}`);
+      const displayHour = hour % 12 || 12;
+      hours.push(`${displayHour} ${hour < 12 ? 'AM' : 'PM'}`);
     } else {
-      result.push(`${String(current).padStart(2, '0')}:00`);
+      hours.push(`${String(hour).padStart(2, '0')}:00`);
     }
   }
 
-  return result;
+  return hours;
 });
 
-const eventsTimeline = ref<CalendarEvent[][]>(Array.from({ length: props.numOfDays }, () => []));
-const eventsWholeDay = ref<CalendarEvent[]>(Array.from({ length: props.numOfDays }));
+let latestRequest = 0;
 
 async function updateData() {
-  const resultTimeline: CalendarEvent[][] = Array.from({ length: props.numOfDays }, () => []);
-  const resultWholeDay: CalendarEvent[] = [];
-  const events = await CalendarCore.getEvents(
-    startDate.value,
-    startDate.value.plus({ days: props.numOfDays }),
-    filter.value,
-  );
-  console.log('Client got events:', events);
+  const request = ++latestRequest;
+  const viewStart = startDate.value;
+  const numOfDays = props.numOfDays;
+  const range = configuredTimelineRange.value;
+  const queryEnd = viewStart.plus({ days: numOfDays + (range.endHour > 24 ? 1 : 0) });
+  const events = await CalendarCore.getEvents(viewStart, queryEnd, filter.value);
+
+  if (request !== latestRequest) return;
+
+  const timelineEvents: CalendarEvent[][] = Array.from({ length: numOfDays }, () => []);
+  const allDayEvents: CalendarEvent[] = [];
 
   for (const event of events) {
-    if (isWholeDay(event) || event.from.day != event.to.day) {
-      // add to whole day events, not timeline
-      resultWholeDay.push(event);
+    const eventDate = timelineColumnDate(event.from, range);
+    const fitsTimelineColumn = event.to <= eventDate.plus({ hours: range.endHour });
+
+    if (isWholeDay(event) || (!event.from.hasSame(event.to, 'day') && !fitsTimelineColumn)) {
+      allDayEvents.push(event);
       continue;
     }
 
-    // normalize to start of day
-    const eventDate = event.from.startOf('day');
-
-    // calculate the difference in days
-    const diffInDays = eventDate.diff(startDate.value.startOf('day'), 'days').days;
-    const dayIndex = Math.floor(diffInDays);
-
-    // add it to appropriate day
-    if (dayIndex >= 0 && dayIndex < props.numOfDays) {
-      resultTimeline[dayIndex]?.push(event);
+    const dayIndex = Math.floor(eventDate.diff(viewStart.startOf('day'), 'days').days);
+    if (dayIndex >= 0 && dayIndex < numOfDays) {
+      timelineEvents[dayIndex]?.push(event);
     }
   }
 
-  eventsTimeline.value = resultTimeline;
-  eventsWholeDay.value = resultWholeDay;
+  eventsTimeline.value = timelineEvents;
+  eventsWholeDay.value = allDayEvents;
 }
+
+const drag = useCalendarDrag(updateData);
+const contentRef = useTemplateRef<HTMLElement>('content-ref');
+
+watch([startDate, () => props.numOfDays, eventsRevision, filter, configuredTimelineRange], () => void updateData(), {
+  immediate: true,
+});
+
+watchEffect(() => {
+  const { startHour, endHour } = timelineRange.value;
+  drag.registerGrid(contentRef.value, dates.value, startHour, endHour);
+});
 </script>
 
 <template>
@@ -137,13 +156,13 @@ async function updateData() {
     </div>
 
     <span>{{ $t('allday') }}</span>
-    <AllDayBar :numOfDays="numOfDays" :events="eventsWholeDay" />
+    <AllDayBar :numOfDays="numOfDays" :events="eventsWholeDay" :drag="drag" />
 
     <div id="left-time-bar">
       <span v-for="h in hoursOnGrid" :key="h">{{ h }}</span>
     </div>
 
-    <div id="content">
+    <div id="content" ref="content-ref">
       <CursorLine :start-hour="timelineRange.startHour" :end-hour="timelineRange.endHour" />
 
       <div class="hour-lines">
@@ -162,6 +181,7 @@ async function updateData() {
         :events="eventsTimeline[i]"
         :start-hour="timelineRange.startHour"
         :end-hour="timelineRange.endHour"
+        :drag="drag"
       />
     </div>
   </div>

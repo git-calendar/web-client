@@ -3,11 +3,10 @@ import { computed, ref, toRef, useTemplateRef, watchEffect, type CSSProperties }
 import { DateTime } from 'luxon';
 
 import type { CalendarEvent } from '@/types/core.ts';
-import BaseEvent from '@/components/timeline/BaseEvent.vue';
 import CursorToday from '@/components/timeline/CursorToday.vue';
 import TimelineEvent from '@/components/timeline/TimelineEvent.vue';
 import { useEventModal } from '@/composables/modals/useEventModal';
-import { useDraggingEvent } from '@/composables/useDraggingEvent';
+import type { CalendarDragController } from '@/composables/useCalendarDrag';
 
 type LaidOutEvent = CalendarEvent & {
   layoutStyle: CSSProperties;
@@ -42,6 +41,7 @@ const props = withDefaults(
     events?: CalendarEvent[];
     startHour: number;
     endHour: number;
+    drag: CalendarDragController;
   }>(),
   {
     events: () => [],
@@ -64,7 +64,6 @@ const DEFAULT_LAYOUT: EventLayout = {
 
 const eventModal = useEventModal();
 
-const timelineRef = useTemplateRef<HTMLElement>('timeline-ref');
 const timelineGridRef = useTemplateRef<HTMLElement>('timeline-grid-ref');
 
 const grid = ref<GridSize>({
@@ -73,21 +72,39 @@ const grid = ref<GridSize>({
 });
 
 const timelineDate = toRef(props, 'date');
-const rangeStartHour = toRef(props, 'startHour');
-const rangeEndHour = toRef(props, 'endHour');
 
-const dayStartSeconds = computed(() => timelineDate.value.startOf('day').toSeconds());
-const dayEndSeconds = computed(() => timelineDate.value.startOf('day').plus({ days: 1 }).toSeconds());
+const dayStartSeconds = computed(() => timelineDate.value.startOf('day').plus({ hours: props.startHour }).toSeconds());
+const dayEndSeconds = computed(() => timelineDate.value.startOf('day').plus({ hours: props.endHour }).toSeconds());
 const dayDurationSeconds = computed(() => Math.max(dayEndSeconds.value - dayStartSeconds.value, 1));
 const dateIsToday = computed(() => timelineDate.value.hasSame(DateTime.now(), 'day'));
 const laidOutEvents = computed(() => layoutEvents(props.events));
+const previewEvent = computed(() => {
+  if (!props.drag.isTimedDrag.value || (!props.drag.moved.value && props.drag.mode.value !== 'create')) return null;
 
-const { drag, placeholderTop, placeholderHeight, placeholderSubtitle, dragStart } = useDraggingEvent(
-  timelineRef,
-  timelineDate,
-  rangeStartHour,
-  rangeEndHour,
+  const event = props.drag.active.value;
+  const columnDate = props.drag.activeColumnDate.value;
+  return event && columnDate?.hasSame(timelineDate.value, 'day') ? event : null;
+});
+const previewLayoutStyle = computed<CSSProperties>(() => {
+  if (props.drag.mode.value === 'move') {
+    return {
+      left: 0,
+      right: 0,
+      width: 'auto',
+      zIndex: 600,
+    };
+  }
+
+  const sourceEvent = laidOutEvents.value.find((event) => props.drag.isSourceEvent(event));
+  return sourceEvent ? { ...sourceEvent.layoutStyle, zIndex: 600 } : { zIndex: 600 };
+});
+const isCreating = computed(() => props.drag.mode.value === 'create');
+const isMoving = computed(() => props.drag.mode.value === 'move' && props.drag.moved.value && !props.drag.saving.value);
+const isResizing = computed(
+  () =>
+    (props.drag.mode.value === 'resize-top' || props.drag.mode.value === 'resize-bottom') && !props.drag.saving.value,
 );
+const isSaving = computed(() => props.drag.saving.value);
 
 watchEffect(function (cleanup) {
   const el = timelineGridRef.value;
@@ -131,6 +148,31 @@ function rootFontSize() {
 
   const fontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
   return fontSize || 16;
+}
+
+function startCreate(event: PointerEvent) {
+  if (event.target instanceof Element && event.target.closest('.timeline-event')) return;
+
+  props.drag.startCreate(event);
+}
+
+function eventLayoutStyle(event: LaidOutEvent): CSSProperties {
+  if (!props.drag.isSourceEvent(event)) return event.layoutStyle;
+
+  return {
+    ...event.layoutStyle,
+    visibility: 'hidden',
+  };
+}
+
+function openEvent(calendarEvent: CalendarEvent, event: MouseEvent) {
+  if (props.drag.consumeClick()) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
+  eventModal.open(calendarEvent);
 }
 
 // ------------ time ------------
@@ -407,17 +449,26 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
 </script>
 
 <template>
-  <div class="day-timeline" :class="{ 'dragging-cursor': drag.active }" @pointerdown="dragStart" ref="timeline-ref">
-    <div class="timeline-grid" ref="timeline-grid-ref">
-      <!-- dragable placeholder -->
-      <BaseEvent
-        v-if="drag.active"
-        :top-style="placeholderTop"
-        :height-style="placeholderHeight"
-        :title="$t('event.new')"
-        :subtitle="placeholderSubtitle"
+  <div
+    class="day-timeline"
+    :class="{
+      'dragging-cursor': isCreating,
+      'moving-cursor': isMoving,
+      'resizing-cursor': isResizing,
+    }"
+  >
+    <div class="timeline-grid" ref="timeline-grid-ref" @pointerdown="startCreate">
+      <TimelineEvent
+        v-if="previewEvent"
+        class="drag-preview"
+        :class="{ 'saving-preview': isSaving }"
+        :event="previewEvent"
+        :start-hour="startHour"
+        :end-hour="endHour"
+        :date="date"
         :temporary="true"
-        :color="'git-real'"
+        :interactive="false"
+        :style="previewLayoutStyle"
       />
 
       <TimelineEvent
@@ -426,8 +477,12 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
         :event="event"
         :start-hour="startHour"
         :end-hour="endHour"
-        :style="event.layoutStyle"
-        @click="eventModal.open(event)"
+        :date="date"
+        :style="eventLayoutStyle(event)"
+        :interactive="drag.canEdit(event)"
+        @move-start="drag.startMove($event, event)"
+        @resize-start="(edge, pointerEvent) => drag.startResize(pointerEvent, event, edge)"
+        @click="openEvent(event, $event)"
       />
 
       <CursorToday v-if="dateIsToday" :start-hour="startHour" :end-hour="endHour" />
@@ -455,11 +510,30 @@ function layoutEvents(events: CalendarEvent[]): LaidOutEvent[] {
 
   &:has(.temporary) .timeline-event:hover {
     filter: none;
-    cursor: ns-resize;
   }
 }
 
-.dragging-cursor {
+.drag-preview {
+  z-index: 600;
+  pointer-events: none;
+}
+
+.dragging-cursor,
+.resizing-cursor {
   cursor: ns-resize;
+}
+
+.moving-cursor {
+  cursor: grabbing;
+}
+
+.saving-preview {
+  animation: saving-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes saving-pulse {
+  to {
+    opacity: 0.55;
+  }
 }
 </style>

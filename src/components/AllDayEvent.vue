@@ -26,7 +26,7 @@ const dynamicStyles = computed(() => {
 
 <template>
   <div class="allday-event" :style="dynamicStyles" :class="{ temporary: temporary }">
-    <span class="title">{{ event.title }}</span>
+    <span class="title">{{ temporary && !event.title ? $t('event.new') : event.title }}</span>
     <span class="subtitle" v-show="!isWholeDay(event)">{{ timeRangeFormat(event.from, event.to) }}</span>
   </div>
 </template>
@@ -68,7 +68,8 @@ const dynamicStyles = computed(() => {
 }
 
 .allday-event.temporary {
-  background-color: color-mix(in srgb, var(--event-color), transparent 85%); /* light */
+  pointer-events: none;
+  background-color: color-mix(in srgb, var(--event-color), transparent 80%); /* light */
 }
 
 /* hover only for non-temporary events */

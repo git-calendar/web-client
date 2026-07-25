@@ -21,9 +21,10 @@ npm run dev         # run locally
   - [x] colors
 - [x] repetition
 - [x] multi-day events bar
-- [ ] dragging shortcuts
+- [x] dragging shortcuts
   - [x] drag to create event
-  - [ ] drag horizontally for multi-day event
+  - [x] drag horizontally for multi-day event
+  - [x] drag to move existing event
 - [ ] month view
 - [ ] mobile friendly
   - [x] basic responsiveness

@@ -3,22 +3,23 @@ import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
 import { getCurrentViewDatetime } from '@/utils';
 import { DateTime } from 'luxon';
-import { computed } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
 import AllDayEvent from '@/components/AllDayEvent.vue';
 import { getTag } from '@/services/calendarCache';
+import type { CalendarDragController } from '@/composables/useCalendarDrag';
 
 const route = useRoute();
 const eventModal = useEventModal();
 
-// TODO: horizontal drag
-
 const props = defineProps<{
   events: CalendarEvent[];
   numOfDays: number;
+  drag: CalendarDragController;
 }>();
 
-// Must be computed so route changes properly invalidate compEvents
+const allDayBarRef = useTemplateRef<HTMLElement>('all-day-bar-ref');
+
 const currentDate = computed(() => getCurrentViewDatetime(route.params).startOf('day'));
 
 const todayGridColumn = computed(() => {
@@ -35,33 +36,50 @@ const todayGridColumn = computed(() => {
   return '';
 });
 
-const compEvents = computed(() => {
-  const date = currentDate.value;
+function visibleRange(event: CalendarEvent) {
+  const startIndex = event.from.startOf('day').diff(currentDate.value, 'days').days;
+  const endIndex = event.to.startOf('day').diff(currentDate.value, 'days').days;
 
-  // 1. Map to indices, clamp to visible range, and drop fully out-of-range events
-  const visibleEvents = props.events
-    .filter(Boolean)
-    .map((e) => {
-      const startIndex = e.from.startOf('day').diff(date, 'days').days;
-      const endIndex = e.to.startOf('day').diff(date, 'days').days;
-      const clampedStart = Math.max(0, startIndex);
-      const clampedEnd = Math.min(props.numOfDays - 1, endIndex);
-      return {
-        event: e,
-        startIndex: clampedStart,
-        endIndex: clampedEnd,
-        span: Math.max(1, clampedEnd - clampedStart + 1),
-      };
-    })
-    .filter((e) => e.endIndex >= 0 && e.startIndex < props.numOfDays);
+  if (endIndex < 0 || startIndex >= props.numOfDays) return null;
 
-  // 2. Sort: earliest start first, then longest span first
+  const firstDay = Math.max(0, startIndex);
+  const lastDay = Math.min(props.numOfDays - 1, endIndex);
+
+  return {
+    startIndex: firstDay,
+    endIndex: lastDay,
+    span: Math.max(1, lastDay - firstDay + 1),
+  };
+}
+
+function gridStyle(startIndex: number, span: number, row: number) {
+  return {
+    gridColumn: `${startIndex + 1} / span ${span}`,
+    gridRow: String(row),
+  };
+}
+
+const isCreating = computed(() => props.drag.mode.value === 'create-all-day');
+
+function startCreate(event: PointerEvent) {
+  const element = allDayBarRef.value;
+  if (!element || (event.target instanceof Element && event.target.closest('.allday-event'))) return;
+
+  props.drag.startCreateAllDay(event, element);
+}
+
+const laidOutEvents = computed(() => {
+  const visibleEvents = props.events.flatMap((event) => {
+    const range = visibleRange(event);
+    return range ? [{ event, ...range }] : [];
+  });
+
   visibleEvents.sort((a, b) => (a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span));
 
-  // 3. Greedy row packing
   const rowEnds: number[] = [];
   return visibleEvents.map((item) => {
-    let rowIndex = rowEnds.findIndex((endIdx) => endIdx < item.startIndex);
+    let rowIndex = rowEnds.findIndex((endIndex) => endIndex < item.startIndex);
+
     if (rowIndex === -1) {
       rowIndex = rowEnds.length;
       rowEnds.push(item.endIndex);
@@ -69,26 +87,57 @@ const compEvents = computed(() => {
       rowEnds[rowIndex] = item.endIndex;
     }
 
+    const row = rowIndex + 1;
+
     return {
       event: item.event,
-      // Style object is diffed more efficiently than a style string
-      gridStyle: {
-        gridColumn: `${item.startIndex + 1} / span ${item.span}`,
-        gridRow: String(rowIndex + 1),
-      },
+      startIndex: item.startIndex,
+      endIndex: item.endIndex,
+      row,
+      gridStyle: gridStyle(item.startIndex, item.span, row),
     };
   });
+});
+
+const previewEvent = computed(() => {
+  const event = props.drag.active.value;
+  if (props.drag.mode.value !== 'create-all-day' || !event) return null;
+
+  const range = visibleRange(event);
+  if (!range) return null;
+
+  const occupiedRows = new Set(
+    laidOutEvents.value
+      .filter((item) => item.startIndex <= range.endIndex && item.endIndex >= range.startIndex)
+      .map((item) => item.row),
+  );
+
+  let row = 1;
+  while (occupiedRows.has(row)) row++;
+
+  return {
+    event,
+    gridStyle: gridStyle(range.startIndex, range.span, row),
+  };
 });
 </script>
 
 <template>
-  <div id="allday-bar">
+  <div id="allday-bar" ref="all-day-bar-ref" :class="{ 'creating-all-day': isCreating }" @pointerdown="startCreate">
     <AllDayEvent
-      v-for="v in compEvents"
+      v-if="previewEvent"
+      class="all-day-preview"
+      :event="previewEvent.event"
+      :style="previewEvent.gridStyle"
+      :temporary="true"
+    />
+    <AllDayEvent
+      v-for="v in laidOutEvents"
       :key="v.event.id"
       :event="v.event"
       :style="v.gridStyle"
       :color="getTag(v.event.calendar, v.event.tagId ?? '')?.color"
+      @pointerdown.stop
       @click="eventModal.open(v.event)"
     />
     <div v-if="todayGridColumn" class="today-highlighter" :style="{ gridColumn: todayGridColumn }" />
@@ -106,6 +155,17 @@ const compEvents = computed(() => {
   padding: 1px;
   gap: 2.5px;
   padding-bottom: 1rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.creating-all-day {
+  cursor: ew-resize;
+}
+
+.all-day-preview {
+  z-index: 500;
 }
 
 .today-highlighter {

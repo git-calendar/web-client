@@ -105,15 +105,15 @@ watch(
       return;
     }
 
-    originalEvent = cloneDeep(toRaw(newEvent));
-    const eventForForm = cloneDeep(originalEvent);
+    originalEvent = cloneDeep(toRaw(thisModal.originalEvent.value ?? newEvent));
+    const eventForForm = cloneDeep(toRaw(newEvent)) as CalendarEvent;
 
     if (eventForForm.calendar === '') {
       const defaultCalendar = getDefaultWritableCalendar();
       originalEvent.calendar = eventForForm.calendar = defaultCalendar?.name ?? '';
     }
 
-    updateFormFromEvent(originalEvent);
+    updateFormFromEvent(eventForForm);
   },
   { immediate: true },
 );
