@@ -48,7 +48,9 @@
     "password": "Password/Token",
     "encrypted": "Encrypted",
     "encryptionKey": "Encryption key/password",
-    "readonly": "Read-only"
+    "readonly": "Read-only",
+    "file": "File",
+    "destination": "Import into"
   },
   "tag": {
     "name": "Name",
@@ -94,6 +96,8 @@
   },
   "saveBtn": "Save",
   "savingBtn": "Saving...",
+  "importBtn": "Import",
+  "importingBtn": "Importing...",
   "createBtn": "Create",
   "closeBtn": "Close",
   "cancelBtn": "Cancel",
@@ -127,7 +131,9 @@
   },
   "message": {
     "confirmCalendarDelete": "Do you really want to delete the whole calendar?",
-    "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\"."
+    "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\".",
+    "errorICalUrlEndDotIcs": "iCalendar URL must end with \".ics\".",
+    "noWritableCalendars": "Create a writable calendar before importing a file."
   },
   "colors": {
     "blue": "Blue",

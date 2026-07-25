@@ -17,6 +17,8 @@ export interface Calendar {
   name: string;
   tags: Tag[];
   remoteUrl: string;
+  /** Source URL for URL-backed iCalendar calendars; empty otherwise. */
+  icalUrl: string;
   encrypted: boolean;
   readonly: boolean;
 }
@@ -34,9 +36,13 @@ export interface CalendarApi {
   cloneCalendar(url: string, password: string, readonly: boolean): void;
   removeCalendar(name: string): void;
   renameCalendar(oldName: string, newName: string): void;
+  updateRemote(calendar: string, remoteUrl: string, readonly: boolean): void;
   listCalendars(): Calendar[];
   loadCalendars(): void;
-  updateRemote(calendar: string, remoteUrl: string, readonly: boolean): void;
+
+  importICalFile(calendar: string, data: string): void;
+  importICalURL(name: string, url: string): void;
+  updateICalURL(calendar: string, url: string): void;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;

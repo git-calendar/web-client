@@ -48,7 +48,9 @@
     "password": "Heslo/Token",
     "encrypted": "Šifrování",
     "encryptionKey": "Šifrovací heslo",
-    "readonly": "Pouze čtení"
+    "readonly": "Pouze čtení",
+    "file": "Soubor",
+    "destination": "Importovat do"
   },
   "tag": {
     "name": "Jméno",
@@ -94,6 +96,8 @@
   },
   "saveBtn": "Uložit",
   "savingBtn": "Ukládání...",
+  "importBtn": "Importovat",
+  "importingBtn": "Importování...",
   "createBtn": "Vytvořit",
   "closeBtn": "Zavřít",
   "cancelBtn": "Zrušit",
@@ -127,7 +131,9 @@
   },
   "message": {
     "confirmCalendarDelete": "Chcete opravdu smazat celý kalenář?",
-    "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\"."
+    "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\".",
+    "errorICalUrlEndDotIcs": "iCalendar URL musí končit \".ics\".",
+    "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář."
   },
   "colors": {
     "blue": "Modrá",

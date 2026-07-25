@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, onMounted, useTemplateRef, ref, computed } from 'vue';
+import { reactive, watch, onMounted, useTemplateRef, ref, computed, type DeepReadonly } from 'vue';
 import MultiToggle from '@/components/MultiToggle.vue';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
@@ -7,21 +7,24 @@ import type { Calendar } from '@/types/core';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useI18n } from 'vue-i18n';
 import { syncAllWrapper } from '@/services/gitSync';
-import { refreshCalendars } from '@/services/calendarCache';
+import { cachedCalendars, refreshCalendars } from '@/services/calendarCache';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
 const { t } = useI18n();
 const thisModal = useCalendarModal();
 const { alert, confirm } = useAlertModal();
 
-const originalCalendar = ref<Calendar | undefined>();
+const originalCalendar = ref<DeepReadonly<Calendar>>();
 const isSaving = ref(false);
 const isDeleting = ref(false);
 const isLocked = computed(() => isSaving.value || isDeleting.value);
 
-const howOptions = ['Init', 'Clone'];
+const howOptions = ['Init', 'Clone', 'iCal'];
+const iCalSourceOptions = ['URL', 'File'];
+const writableCalendars = computed(() => cachedCalendars.value.filter((calendar) => !calendar.readonly));
 const form = reactive({
   how: 'Init',
+  iCalSource: 'URL',
   name: '',
   remoteURL: '',
   username: '',
@@ -29,39 +32,46 @@ const form = reactive({
   encrypted: false,
   encryptionKey: '',
   readonly: false,
+  destination: writableCalendars.value[0]?.name ?? '',
+  file: undefined as File | undefined,
 });
-const errors = reactive({
-  missingName: false,
-  badURL: false,
+
+const isICal = computed(() => form.how === 'iCal');
+const isICalURL = computed(() => isICal.value && form.iCalSource === 'URL');
+const isICalFile = computed(() => isICal.value && form.iCalSource === 'File');
+const saveButtonText = computed(() => {
+  if (thisModal.isNew.value && isICal.value) {
+    return t(isSaving.value ? 'importingBtn' : 'importBtn');
+  }
+  return t(isSaving.value ? 'savingBtn' : 'saveBtn');
+});
+const urlPlaceholder = computed(() => {
+  if (isICal.value) return 'URL';
+  return form.how === 'Init' ? `Remote URL (${t('optionalText')})` : 'Remote URL';
 });
 
 watch(
-  () => thisModal.openedCalendarName,
-  async (newName) => {
-    const calendars = await CalendarCore.listCalendars();
-    for (const cal of calendars) {
-      if (cal.name === newName.value) {
-        originalCalendar.value = cal;
-        break;
-      }
-    }
-    if (originalCalendar.value) {
-      updateFormFromCalendar(originalCalendar.value);
-    }
+  thisModal.openedCalendarName,
+  (name) => {
+    resetForm();
+    originalCalendar.value = cachedCalendars.value.find((calendar) => calendar.name === name);
+    if (originalCalendar.value) updateFormFromCalendar(originalCalendar.value);
   },
   { immediate: true },
 );
 
-function updateFormFromCalendar(calendar: Calendar) {
-  resetForm();
-
-  if (!calendar) return;
-
-  form.how = '';
-  form.name = calendar.name ?? '';
+function updateFormFromCalendar(calendar: DeepReadonly<Calendar>) {
+  form.name = calendar.name;
   form.encrypted = calendar.encrypted;
   form.encryptionKey = ''; // secret
   form.readonly = calendar.readonly;
+
+  if (calendar.icalUrl) {
+    form.how = 'iCal';
+    form.iCalSource = 'URL';
+    form.remoteURL = calendar.icalUrl;
+    return;
+  }
 
   if (calendar.remoteUrl) {
     const remoteUrl = authFromUrl(calendar.remoteUrl);
@@ -71,13 +81,11 @@ function updateFormFromCalendar(calendar: Calendar) {
   }
 }
 
-async function saveCalendar(e: Event) {
+async function saveCalendar() {
   if (isLocked.value) return;
   if (!validate()) return;
 
   isSaving.value = true;
-
-  e.preventDefault();
 
   try {
     if (thisModal.isNew.value) {
@@ -85,9 +93,11 @@ async function saveCalendar(e: Event) {
     } else {
       await updateCalendar();
     }
-    await CalendarCore.loadCalendars();
+    if (!isICal.value) {
+      await CalendarCore.loadCalendars();
+    }
 
-    refreshCalendars();
+    await refreshCalendars();
     notifyEventsChanged();
     thisModal.close();
   } catch (err) {
@@ -119,27 +129,42 @@ async function createCalendar() {
         form.readonly,
       );
       break;
+
+    case 'iCal':
+      if (form.iCalSource === 'URL') {
+        await CalendarCore.importICalURL(form.name, form.remoteURL);
+      } else {
+        if (!form.file) throw new Error('No iCalendar file selected');
+
+        await CalendarCore.importICalFile(form.destination, await form.file.text());
+        void syncAllWrapper();
+      }
+      break;
   }
 }
 
 async function updateCalendar() {
   const calendar = originalCalendar.value;
-  const origName = calendar?.name;
+  if (!calendar) throw new Error('Cannot update calendar. This should not happen...');
+  let calendarName = calendar.name;
+  console.log('updating calendar', calendarName);
 
-  console.log('updating calendar', origName);
-
-  if (!origName) throw new Error('Cannot update calendar. This should not happen...');
-
-  let calendarName = origName;
-  if (origName !== form.name) {
-    await CalendarCore.renameCalendar(origName, form.name);
+  if (calendar.name !== form.name) {
+    await CalendarCore.renameCalendar(calendar.name, form.name);
     calendarName = form.name;
   }
 
-  const rawUrl = form.remoteURL.trim();
-  if (rawUrl !== '') {
+  const rawUrl = form.remoteURL;
+  if (calendar.icalUrl) {
+    if (calendar.icalUrl !== rawUrl) {
+      await CalendarCore.updateICalURL(calendarName, rawUrl);
+    }
+    return;
+  }
+
+  if (rawUrl) {
     const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
-    if (calendar.remoteUrl !== newRemoteUrl || originalCalendar.value?.readonly !== form.readonly) {
+    if (calendar.remoteUrl !== newRemoteUrl || calendar.readonly !== form.readonly) {
       await CalendarCore.updateRemote(calendarName, newRemoteUrl, form.readonly);
       await syncAllWrapper(); // merge/pull or whatever
     }
@@ -154,13 +179,13 @@ async function deleteCal() {
   isDeleting.value = true;
 
   try {
-    let ok = await confirm(t('message.confirmCalendarDelete'));
+    const ok = await confirm(t('message.confirmCalendarDelete'));
     if (!ok) return;
 
     await CalendarCore.removeCalendar(originalCalendar.value.name);
     await CalendarCore.loadCalendars();
 
-    refreshCalendars();
+    await refreshCalendars();
     notifyEventsChanged();
     thisModal.close();
   } catch (err) {
@@ -171,50 +196,35 @@ async function deleteCal() {
 }
 
 function validate(): boolean {
-  resetErrors();
-
-  const needsName = !thisModal.isNew.value || form.how === 'Init';
-  const needsURL = thisModal.isNew.value && form.how === 'Clone';
-
   form.name = form.name.trim();
-  if (needsName && form.name === '') {
-    errors.missingName = true;
-    return false;
-  }
-
   form.remoteURL = form.remoteURL.trim();
-  if (needsURL && form.remoteURL === '') {
-    errors.badURL = true;
-    return false;
-  }
+  if (!form.remoteURL || isICalFile.value) return true;
 
-  if (form.remoteURL !== '') {
-    if (!isValidUrl(form.remoteURL)) {
-      errors.badURL = true;
-      return false;
-    }
+  const url = parseURL(form.remoteURL);
+  if (!url) return false;
 
-    if (!form.remoteURL.endsWith('.git')) {
-      errors.badURL = true;
-      alert(t('message.errorRemoteUrlEndDotGit'));
-      return false;
-    }
-  }
+  const suffix = isICalURL.value ? '.ics' : '.git';
+  if (url.pathname.toLowerCase().endsWith(suffix)) return true;
 
-  return true;
+  alert(t(isICalURL.value ? 'message.errorICalUrlEndDotIcs' : 'message.errorRemoteUrlEndDotGit'));
+  return false;
 }
 
-function isValidUrl(value: string): boolean {
+function parseURL(value: string): URL | undefined {
   try {
-    new URL(value);
-    return true;
+    return new URL(value);
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+function selectICalFile(event: Event) {
+  form.file = (event.target as HTMLInputElement).files?.[0];
 }
 
 function resetForm() {
   form.how = howOptions[0];
+  form.iCalSource = iCalSourceOptions[0];
   form.name = '';
   form.remoteURL = '';
   form.username = '';
@@ -222,13 +232,8 @@ function resetForm() {
   form.encrypted = false;
   form.encryptionKey = '';
   form.readonly = false;
-
-  resetErrors();
-}
-
-function resetErrors() {
-  errors.missingName = false;
-  errors.badURL = false;
+  form.destination = writableCalendars.value[0]?.name ?? '';
+  form.file = undefined;
 }
 
 function urlWithAuth(repoUrl: string, username: string, password: string): string {
@@ -281,75 +286,110 @@ onMounted(() => {
   <div id="calendar-modal" class="modal">
     <form @submit.prevent="saveCalendar" :aria-busy="isLocked">
       <fieldset :disabled="isLocked">
-        <MultiToggle v-if="thisModal.isNew.value" v-model="form.how" :options="howOptions" style="align-self: center" />
+        <MultiToggle v-if="thisModal.isNew.value" v-model="form.how" :options="howOptions" class="mode-toggle" />
+
+        <MultiToggle
+          v-if="thisModal.isNew.value && isICal"
+          v-model="form.iCalSource"
+          :options="iCalSourceOptions"
+          :labels="['URL', $t('calendar.file')]"
+          class="mode-toggle"
+        />
 
         <input
+          v-if="form.how !== 'Clone' && !isICalFile"
+          v-model="form.name"
+          ref="name-input-field"
           type="text"
           name="name"
           :placeholder="$t('calendar.name')"
-          autocomplete="none"
-          :disabled="thisModal.isNew.value && form.how != 'Init'"
-          v-model="form.name"
-          ref="name-input-field"
-          :class="{ red: errors.missingName }"
-          @input="errors.missingName = false"
+          autocomplete="off"
+          required
         />
 
         <input
+          v-if="!isICalFile"
+          v-model="form.remoteURL"
           type="url"
           name="url"
-          :placeholder="`Remote URL ${form.how == 'Init' ? '(' + $t('optionalText') + ')' : ''}`"
-          autocomplete="none"
-          v-model="form.remoteURL"
-          :class="{ red: errors.badURL }"
-          @input="errors.badURL = false"
+          :placeholder="urlPlaceholder"
+          autocomplete="url"
+          :required="form.how === 'Clone' || isICalURL"
         />
 
-        <div id="git-credentials">
-          {{ $t('calendar.gitCredentials') }}
-          <div class="form-row">
-            <input
-              type="text"
-              name="username"
-              :placeholder="$t('calendar.username')"
-              autocomplete="username"
-              v-model="form.username"
-            />
-            <input
-              type="password"
-              name="password"
-              :placeholder="$t('calendar.password')"
-              autocomplete="current-password"
-              v-model="form.password"
-            />
-          </div>
-        </div>
-
-        <label v-if="form.how === 'Clone' || (form.how === '' && form.remoteURL !== '')">
-          {{ $t('calendar.readonly') }}
-          <input type="checkbox" name="readonly" v-model="form.readonly" />
-        </label>
-
-        <div id="encryption" v-if="thisModal.isNew.value">
-          <!-- TODO: re-encrypt option for existing calendars -->
-          <label>
-            {{ $t('calendar.encrypted') }}
-            <input type="checkbox" name="encrypted" v-model="form.encrypted" />
-          </label>
+        <template v-if="isICalFile">
+          <select
+            v-model="form.destination"
+            name="destination-calendar"
+            :aria-label="$t('calendar.destination')"
+            required
+          >
+            <option v-for="calendar in writableCalendars" :key="calendar.name" :value="calendar.name">
+              {{ calendar.name }}
+            </option>
+          </select>
 
           <input
-            v-if="form.encrypted"
-            type="password"
-            name="encryption-key"
-            :placeholder="$t('calendar.encryptionKey')"
-            autocomplete="current-password"
-            v-model="form.encryptionKey"
+            class="ical-file-input"
+            type="file"
+            name="ical-file"
+            accept=".ics,text/calendar"
+            :aria-label="$t('calendar.file')"
+            required
+            @change="selectICalFile"
           />
-        </div>
+
+          <small v-if="writableCalendars.length === 0" class="ical-warning">
+            {{ $t('message.noWritableCalendars') }}
+          </small>
+        </template>
+
+        <template v-if="!isICal">
+          <div id="git-credentials">
+            {{ $t('calendar.gitCredentials') }}
+            <div>
+              <input
+                v-model="form.username"
+                type="text"
+                name="username"
+                :placeholder="$t('calendar.username')"
+                autocomplete="username"
+              />
+              <input
+                v-model="form.password"
+                type="password"
+                name="password"
+                :placeholder="$t('calendar.password')"
+                autocomplete="current-password"
+              />
+            </div>
+          </div>
+
+          <label v-if="form.how === 'Clone' || (!thisModal.isNew.value && form.remoteURL)">
+            {{ $t('calendar.readonly') }}
+            <input v-model="form.readonly" type="checkbox" name="readonly" />
+          </label>
+
+          <div v-if="thisModal.isNew.value" id="encryption">
+            <!-- TODO: re-encrypt option for existing calendars -->
+            <label>
+              {{ $t('calendar.encrypted') }}
+              <input v-model="form.encrypted" type="checkbox" name="encrypted" />
+            </label>
+            <input
+              v-if="form.encrypted"
+              v-model="form.encryptionKey"
+              type="password"
+              name="encryption-key"
+              :placeholder="$t('calendar.encryptionKey')"
+              autocomplete="current-password"
+            />
+          </div>
+        </template>
 
         <div class="bottom-btns">
-          <button type="submit">
-            {{ isSaving ? $t('savingBtn') : $t('saveBtn') }}
+          <button type="submit" :disabled="isICalFile && writableCalendars.length === 0">
+            {{ saveButtonText }}
           </button>
           <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
           <button v-if="!thisModal.isNew.value" type="button" @click="deleteCal" class="delete-btn">
@@ -362,6 +402,32 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.mode-toggle {
+  align-self: center;
+}
+
+.ical-file-input {
+  padding: 0.2rem;
+  cursor: pointer;
+
+  &::file-selector-button {
+    height: 1.6rem;
+    margin-right: 0.6rem;
+    padding: 0 0.6rem;
+    border: 0;
+    border-radius: var(--small-border-radius);
+    background-color: var(--btn-bg-color-checked);
+    color: var(--text-color-harder);
+    cursor: pointer;
+    font: inherit;
+  }
+}
+
+.ical-warning {
+  color: var(--git-color);
+  font-size: 0.8rem;
+}
+
 #git-credentials,
 #encryption {
   display: flex;
