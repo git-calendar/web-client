@@ -11,10 +11,12 @@ const props = withDefaults(
     color?: string;
     temporary?: boolean;
     interactive?: boolean;
+    resizable?: boolean;
   }>(),
   {
     temporary: false,
     interactive: false,
+    resizable: false,
   },
 );
 
@@ -41,7 +43,7 @@ const dynamicStyles = computed(() => {
     :style="dynamicStyles"
   >
     <div
-      v-if="interactive"
+      v-if="resizable"
       class="resize-handle resize-handle-top"
       @pointerdown.stop="emit('resizeStart', 'top', $event)"
       @click.stop
@@ -49,7 +51,7 @@ const dynamicStyles = computed(() => {
     <span class="title">{{ title }}</span>
     <span class="subtitle">{{ subtitle }}</span>
     <div
-      v-if="interactive"
+      v-if="resizable"
       class="resize-handle resize-handle-bottom"
       @pointerdown.stop="emit('resizeStart', 'bottom', $event)"
       @click.stop

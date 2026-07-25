@@ -14,6 +14,8 @@ export type CalendarDragMode = 'none' | 'create' | 'create-all-day' | 'move' | '
 type ResizeEdge = 'top' | 'bottom';
 
 const DRAG_THRESHOLD_PX = 4;
+const LONG_PRESS_MS = 200;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 const CLICK_SUPPRESSION_MS = 350;
 
 export function useCalendarDrag(refreshEvents: () => Promise<void>) {
@@ -41,6 +43,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
   let createAnchor: DateTime | null = null;
   let allDayAnchorIndex = 0;
   let suppressClickUntil = 0;
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
   const isTimedDrag = computed(() => mode.value === 'create' || mode.value === 'move' || isResizeMode(mode.value));
 
@@ -122,7 +125,11 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     return event.isPrimary && (event.pointerType !== 'mouse' || event.button === 0);
   }
 
-  function startPointer(event: PointerEvent) {
+  function hasPointerInteraction() {
+    return pointerId !== null;
+  }
+
+  function startPointer(event: PointerEvent, activate: () => void) {
     pointerId = event.pointerId;
     pointerStartX = event.clientX;
     pointerStartY = event.clientY;
@@ -138,61 +145,98 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerCancel);
     window.addEventListener('blur', onWindowBlur);
+
+    if (event.pointerType === 'mouse') {
+      activate();
+      return;
+    }
+
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null;
+      if (pointerId === event.pointerId) activate();
+    }, LONG_PRESS_MS);
   }
 
   function startCreate(event: PointerEvent) {
-    if (!isSupportedPointer(event) || isActive() || !timedRect() || dates.length === 0) return;
+    if (!isSupportedPointer(event) || hasPointerInteraction() || isActive() || !timedRect() || dates.length === 0) {
+      return;
+    }
 
     const dayIndex = snapDay(event.clientX);
     const latestStart = Math.max(0, totalGridMinutes() - precisionMinutes());
     const from = dateAt(dayIndex, Math.min(snapMinutes(event.clientY), latestStart));
 
-    mode.value = 'create';
-    activeColumnDate.value = dates[dayIndex] ?? null;
-    createAnchor = from;
-    active.value = blankEvent(from, from.plus({ minutes: precisionMinutes() }));
-    source.value = null;
-    startPointer(event);
+    startPointer(event, () => {
+      mode.value = 'create';
+      activeColumnDate.value = dates[dayIndex] ?? null;
+      createAnchor = from;
+      active.value = blankEvent(from, from.plus({ minutes: precisionMinutes() }));
+      source.value = null;
+    });
   }
 
   function startMove(event: PointerEvent, calendarEvent: CalendarEvent) {
-    if (!isSupportedPointer(event) || isActive() || !timedRect() || !canEdit(calendarEvent)) return;
+    if (
+      !isSupportedPointer(event) ||
+      hasPointerInteraction() ||
+      isActive() ||
+      !timedRect() ||
+      !canEdit(calendarEvent)
+    ) {
+      return;
+    }
 
-    mode.value = 'move';
-    source.value = calendarEvent;
-    active.value = { ...calendarEvent };
-    activeColumnDate.value = dates[snapDay(event.clientX)] ?? calendarEvent.from.startOf('day');
-
+    const columnDate = dates[snapDay(event.clientX)] ?? calendarEvent.from.startOf('day');
     const snappedPointerMinutes = snapMinutes(event.clientY);
-    const snappedStartMinutes = snap(gridMinutesFor(calendarEvent.from, activeColumnDate.value ?? calendarEvent.from));
-    moveGrabOffsetMinutes = snappedPointerMinutes - snappedStartMinutes;
-    startPointer(event);
+    const snappedStartMinutes = snap(gridMinutesFor(calendarEvent.from, columnDate));
+
+    startPointer(event, () => {
+      mode.value = 'move';
+      source.value = calendarEvent;
+      active.value = { ...calendarEvent };
+      activeColumnDate.value = columnDate;
+      moveGrabOffsetMinutes = snappedPointerMinutes - snappedStartMinutes;
+    });
   }
 
   function startResize(event: PointerEvent, calendarEvent: CalendarEvent, edge: ResizeEdge) {
-    if (!isSupportedPointer(event) || isActive() || !timedRect() || !canEdit(calendarEvent)) return;
+    if (
+      event.pointerType !== 'mouse' ||
+      !isSupportedPointer(event) ||
+      hasPointerInteraction() ||
+      isActive() ||
+      !timedRect() ||
+      !canEdit(calendarEvent)
+    ) {
+      return;
+    }
 
-    mode.value = edge === 'top' ? 'resize-top' : 'resize-bottom';
-    source.value = calendarEvent;
-    active.value = { ...calendarEvent };
-    activeColumnDate.value = dates[snapDay(event.clientX)] ?? calendarEvent.from.startOf('day');
-    resizeDate = activeColumnDate.value ?? calendarEvent.from.startOf('day');
-    startPointer(event);
+    const columnDate = dates[snapDay(event.clientX)] ?? calendarEvent.from.startOf('day');
+
+    startPointer(event, () => {
+      mode.value = edge === 'top' ? 'resize-top' : 'resize-bottom';
+      source.value = calendarEvent;
+      active.value = { ...calendarEvent };
+      activeColumnDate.value = columnDate;
+      resizeDate = columnDate;
+    });
   }
 
   function startCreateAllDay(event: PointerEvent, element: HTMLElement) {
-    if (!isSupportedPointer(event) || isActive() || dates.length === 0) return;
+    if (!isSupportedPointer(event) || hasPointerInteraction() || isActive() || dates.length === 0) return;
 
-    allDayGrid = element;
     const rect = element.getBoundingClientRect();
-    allDayAnchorIndex = snapDay(event.clientX, rect);
-    const date = dates[allDayAnchorIndex] ?? DateTime.now();
+    const anchorIndex = snapDay(event.clientX, rect);
+    const date = dates[anchorIndex] ?? DateTime.now();
 
-    mode.value = 'create-all-day';
-    activeColumnDate.value = null;
-    source.value = null;
-    active.value = blankEvent(date.startOf('day'), date.endOf('day'));
-    startPointer(event);
+    startPointer(event, () => {
+      allDayGrid = element;
+      allDayAnchorIndex = anchorIndex;
+      mode.value = 'create-all-day';
+      activeColumnDate.value = null;
+      source.value = null;
+      active.value = blankEvent(date.startOf('day'), date.endOf('day'));
+    });
   }
 
   function updateMove(clientX: number, clientY: number) {
@@ -284,6 +328,15 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     }
 
     const distance = Math.hypot(event.clientX - pointerStartX, event.clientY - pointerStartY);
+
+    if (longPressTimer !== null) {
+      if (distance < LONG_PRESS_MOVE_TOLERANCE_PX) return;
+
+      removePointerListeners();
+      reset();
+      return;
+    }
+
     if (!moved.value && distance < DRAG_THRESHOLD_PX) return;
 
     moved.value = true;
@@ -307,6 +360,11 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
   }
 
   function removePointerListeners() {
+    if (longPressTimer !== null) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointercancel', onPointerCancel);

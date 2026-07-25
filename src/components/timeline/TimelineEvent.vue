@@ -5,6 +5,7 @@ import { timeRangeFormat } from '@/utils';
 import { getTag } from '@/services/calendarCache';
 import { computed, useAttrs } from 'vue';
 import type { DateTime } from 'luxon';
+import { useMediaQuery } from '@vueuse/core';
 
 defineOptions({ inheritAttrs: false });
 
@@ -23,6 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const attrs = useAttrs();
+const hasCoarsePointer = useMediaQuery('(pointer: coarse)');
 
 const emit = defineEmits<{
   moveStart: [event: PointerEvent];
@@ -32,6 +34,8 @@ const emit = defineEmits<{
 function startMove(event: PointerEvent) {
   if (props.interactive) emit('moveStart', event);
 }
+
+const canResize = computed(() => props.interactive && !hasCoarsePointer.value);
 
 const eventStyle = computed(() => {
   const rangeMinutes = Math.max((props.endHour - props.startHour) * 60, 1);
@@ -56,6 +60,7 @@ const eventStyle = computed(() => {
     :color="getTag(event.calendar, event.tagId ?? '')?.color"
     :temporary="temporary"
     :interactive="interactive"
+    :resizable="canResize"
     @pointerdown="startMove"
     @resize-start="(edge, event) => emit('resizeStart', edge, event)"
   />
