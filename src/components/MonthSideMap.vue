@@ -257,20 +257,25 @@ const pressedInterval = computed(() => {
   &.today {
     font-weight: 900;
     position: relative;
+    /*text-decoration: underline;
+    text-decoration-thickness: 0.15rem;
+    text-underline-offset: 0.2rem;*/
 
     &:not(.in-range) {
       color: var(--git-color);
     }
 
-    /* the dot */
+    /* the line */
     &::after {
       content: '';
       position: absolute;
-      bottom: 4px;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background-color: currentColor;
+      left: 0;
+      top: 1.5rem;
+      height: 0.15rem;
+      width: calc(100% - 2 * 0.4rem);
+      margin: 0 0.4rem;
+      background-color: currentColor; /* same as color of parent */
+      border-radius: 100rem;
     }
   }
 
