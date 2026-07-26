@@ -46,6 +46,7 @@ const timeFormat = computed(() =>
   border-radius: 5px;
   padding: 0 0.2rem;
   font-size: 0.7rem;
+  user-select: none;
 
   &.time-24h {
     margin-right: 0.39rem;

@@ -209,6 +209,7 @@ watchEffect(() => {
     padding-right: 0.6rem;
     position: relative;
     top: -3px;
+    user-select: none;
   }
 }
 
@@ -240,6 +241,7 @@ watchEffect(() => {
   grid-area: timebar;
   display: grid;
   width: 3rem;
+  user-select: none;
 
   span {
     border-top: 1px solid transparent;

@@ -234,6 +234,7 @@ const pressedInterval = computed(() => {
 #day-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  user-select: none;
 
   .day-name {
     text-align: center;
