@@ -8,7 +8,13 @@ defineProps<{ large?: boolean }>();
 </script>
 
 <template>
-  <button class="new-event-btn" :class="{ large }" @click="eventModal.open()">
+  <button
+    class="new-event-btn"
+    :class="{ large }"
+    :title="$t('actions.newEvent')"
+    :aria-label="$t('actions.newEvent')"
+    @click="eventModal.open()"
+  >
     <FiPlusCircle />
     <span v-if="large">{{ $t('newEventBtn') }}</span>
   </button>

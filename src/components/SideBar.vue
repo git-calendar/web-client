@@ -36,16 +36,32 @@ async function syncAndReload() {
 
     <hr style="margin-top: auto" />
     <div id="links">
-      <router-link to="/settings">
+      <router-link to="/settings" :title="$t('actions.settings')" :aria-label="$t('actions.settings')">
         <FiSettings />
       </router-link>
-      <button type="button" @click="exportZip('')">
+      <button
+        type="button"
+        :title="$t('actions.exportCalendars')"
+        :aria-label="$t('actions.exportCalendars')"
+        @click="exportZip('')"
+      >
         <LuFolderArchive style="transform: scale(1.1)" />
       </button>
-      <button type="button" @click="syncAndReload">
+      <button
+        type="button"
+        :title="$t('actions.syncCalendars')"
+        :aria-label="$t('actions.syncCalendars')"
+        @click="syncAndReload"
+      >
         <LuRefreshCcw />
       </button>
-      <a href="https://github.com/git-calendar/web-client" target="_blank">
+      <a
+        href="https://github.com/git-calendar/web-client"
+        target="_blank"
+        rel="noopener noreferrer"
+        :title="$t('actions.sourceCode')"
+        :aria-label="$t('actions.sourceCode')"
+      >
         <FiGithub style="position: relative; left: -2%; top: 2%" />
       </a>
     </div>

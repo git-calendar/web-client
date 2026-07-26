@@ -60,13 +60,26 @@ function jumpToToday() {
       name="view-selector"
     />
 
-    <button id="today-btn" @click="jumpToToday">
+    <button
+      id="today-btn"
+      :title="$t('actions.jumpToToday')"
+      :aria-label="$t('actions.jumpToToday')"
+      @click="jumpToToday"
+    >
       {{ $t(`todayBtn.${isMobile ? 'short' : 'long'}`) }}
     </button>
 
     <div id="view-nav-btns">
-      <button @click="moveView(true, router)"><FiChevronLeft /></button>
-      <button @click="moveView(false, router)"><FiChevronRight /></button>
+      <button
+        :title="$t('actions.previousPeriod')"
+        :aria-label="$t('actions.previousPeriod')"
+        @click="moveView(true, router)"
+      >
+        <FiChevronLeft />
+      </button>
+      <button :title="$t('actions.nextPeriod')" :aria-label="$t('actions.nextPeriod')" @click="moveView(false, router)">
+        <FiChevronRight />
+      </button>
     </div>
   </header>
 </template>

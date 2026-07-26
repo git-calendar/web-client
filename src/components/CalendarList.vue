@@ -28,7 +28,12 @@ function getTagColor(calName: string, tagId?: string) {
   <div class="calendars">
     <div class="top-bar">
       <span class="title">{{ $t('calendarsTitle') }}:</span>
-      <button class="create-new" @click="calendarModal.open()">
+      <button
+        class="create-new"
+        :title="$t('actions.createCalendar')"
+        :aria-label="$t('actions.createCalendar')"
+        @click="calendarModal.open()"
+      >
         <FiPlus />
       </button>
     </div>
@@ -47,7 +52,12 @@ function getTagColor(calName: string, tagId?: string) {
             <span class="name">{{ cal.name }}</span>
           </label>
 
-          <button class="edit-btn" @click="calendarModal.open(cal.name)">
+          <button
+            class="edit-btn"
+            :title="$t('actions.editCalendar', { name: cal.name })"
+            :aria-label="$t('actions.editCalendar', { name: cal.name })"
+            @click="calendarModal.open(cal.name)"
+          >
             <FiEdit2 />
           </button>
         </div>
@@ -66,13 +76,24 @@ function getTagColor(calName: string, tagId?: string) {
               <span class="tag-name">{{ tag.name }}</span>
             </label>
 
-            <button class="edit-btn" @click="tagModal.open(cal.name, tag)">
+            <button
+              class="edit-btn"
+              :title="$t('actions.editTag', { name: tag.name })"
+              :aria-label="$t('actions.editTag', { name: tag.name })"
+              @click="tagModal.open(cal.name, tag)"
+            >
               <FiEdit2 />
             </button>
           </div>
-          <div class="tag new" @click="tagModal.open(cal.name)">
+          <button
+            type="button"
+            class="tag new"
+            :title="$t('actions.createTag', { calendar: cal.name })"
+            :aria-label="$t('actions.createTag', { calendar: cal.name })"
+            @click="tagModal.open(cal.name)"
+          >
             <FiPlus />
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -241,6 +262,7 @@ function getTagColor(calName: string, tagId?: string) {
 
 .tag.new {
   width: max-content;
+  background-color: transparent;
 
   svg {
     transform: scale(1.3);

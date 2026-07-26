@@ -148,8 +148,16 @@ const pressedInterval = computed(() => {
         {{ `${monthNameLong(DateTime.now().set({ month: monthTracker }))} ${yearTracker}` }}
       </span>
       <span id="month-nav">
-        <button @click="changeMonthNum(false)"><FiChevronUp /></button>
-        <button @click="changeMonthNum(true)"><FiChevronDown /></button>
+        <button
+          :title="$t('actions.previousMonth')"
+          :aria-label="$t('actions.previousMonth')"
+          @click="changeMonthNum(false)"
+        >
+          <FiChevronUp />
+        </button>
+        <button :title="$t('actions.nextMonth')" :aria-label="$t('actions.nextMonth')" @click="changeMonthNum(true)">
+          <FiChevronDown />
+        </button>
       </span>
     </div>
 
