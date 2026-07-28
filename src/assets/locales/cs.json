@@ -55,7 +55,8 @@
   "tag": {
     "name": "Jméno",
     "color": "Barva",
-    "notag": "Bez štítku"
+    "notag": "Bez štítku",
+    "create": "Vytvořit štítek"
   },
   "views": {
     "4d": {

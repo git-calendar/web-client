@@ -55,7 +55,8 @@
   "tag": {
     "name": "Name",
     "color": "Color",
-    "notag": "Untagged"
+    "notag": "Untagged",
+    "create": "Create tag"
   },
   "views": {
     "4d": {
