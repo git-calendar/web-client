@@ -43,6 +43,8 @@
   },
   "calendar": {
     "name": "Name",
+    "gitRepository": "Git repository",
+    "ical": "iCalendar subscribtion using URL",
     "gitCredentials": "Git credentials",
     "username": "Username",
     "password": "Password/Token",

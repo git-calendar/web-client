@@ -43,6 +43,8 @@
   },
   "calendar": {
     "name": "Název",
+    "gitRepository": "Git repozitář",
+    "ical": "iCalendar pomocí odkazu",
     "gitCredentials": "Git přihlašovací údaje",
     "username": "Uživatelské jméno",
     "password": "Heslo/Token",
