@@ -5,6 +5,8 @@
 
 :root, /* default */
 [data-theme='dark'] {
+  color-scheme: dark;
+
   --bg-color: #1a1a1a;
   --text-color: #c1c1c1;
   --text-color-harder: #d9d9d9;
@@ -42,6 +44,8 @@
 }
 
 [data-theme='light'] {
+  color-scheme: light;
+
   --bg-color: #f2f2f2;
   --text-color: #1a1a1a;
   --text-color-harder: #101010;
