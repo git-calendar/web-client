@@ -44,6 +44,7 @@ function getTagColor(calName: string, tagId?: string) {
             :title="$t('tag.create')"
             :aria-label="$t('tag.create')"
             @click="tagModal.open(cal.name)"
+            v-show="!cal.icalUrl"
           >
             <FiPlus />
           </button>
@@ -160,10 +161,15 @@ function getTagColor(calName: string, tagId?: string) {
   .calendar {
     height: 2rem;
     padding: 0 0.25rem 0 0.4rem;
+    gap: 0.2rem;
 
     .name {
       flex-grow: 1;
       font-weight: 600;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
@@ -221,6 +227,10 @@ function getTagColor(calName: string, tagId?: string) {
       flex-grow: 1;
       font-size: 0.9em;
       opacity: 0.9;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .action-btn {
