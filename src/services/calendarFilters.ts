@@ -5,9 +5,16 @@ export type GetEventsFilter = Record<string, string[]>;
 
 const storageKey = 'calendar-filters';
 
-const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
+function loadHiddenTags(): string[] {
+  try {
+    const tags: unknown = JSON.parse(localStorage.getItem(storageKey) ?? '{}')?.['hidden-tags'];
+    return Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [];
+  } catch {
+    return [];
+  }
+}
 
-const hiddenTags = reactive(new Set<string>(stored['hidden-tags'] ?? []));
+const hiddenTags = reactive(new Set(loadHiddenTags()));
 
 function tagKey(calendar: string, tagId: string): string {
   return `${calendar}:${tagId}`;
@@ -24,30 +31,18 @@ function saveFilters() {
 
 export function useCalendarFilters() {
   const filter = computed<GetEventsFilter | null>(() => {
-    if (hiddenTags.size === 0) {
-      return null;
-    }
-
     const out: GetEventsFilter = {};
+    let hasActiveFilter = false;
 
     for (const cal of cachedCalendars.value) {
-      if (cal.tags == null) {
-        out[cal.name] = [];
-        continue;
-      }
+      const tagIds = ['', ...(cal.tags ?? []).flatMap((tag) => (tag.id ? [tag.id] : []))];
+      const visibleTagIds = tagIds.filter((tagId) => !hiddenTags.has(tagKey(cal.name, tagId)));
 
-      const tagIds = cal.tags.flatMap((tag) => {
-        if (!tag.id || hiddenTags.has(tagKey(cal.name, tag.id))) {
-          return [];
-        }
-
-        return [tag.id];
-      });
-
-      out[cal.name] = tagIds;
+      hasActiveFilter ||= visibleTagIds.length < tagIds.length;
+      out[cal.name] = visibleTagIds;
     }
 
-    return out;
+    return hasActiveFilter ? out : null;
   });
 
   function toggleTag(calendar: string, tagId: string) {
