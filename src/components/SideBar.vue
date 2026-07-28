@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FiSettings, FiGithub } from 'vue-icons-plus/fi';
+import { FiSettings, FiGithub, FiHelpCircle } from 'vue-icons-plus/fi';
 import { useSlots } from 'vue';
 import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import { useSidebar } from '@/composables/useSidebar';
@@ -38,6 +38,9 @@ async function syncAndReload() {
     <div id="links">
       <router-link to="/settings" :title="$t('actions.settings')" :aria-label="$t('actions.settings')">
         <FiSettings />
+      </router-link>
+      <router-link to="/guide" title="Guide" aria-label="Guide">
+        <FiHelpCircle />
       </router-link>
       <button
         type="button"

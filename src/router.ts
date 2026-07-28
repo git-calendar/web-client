@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import CalendarView from '@/views/CalendarView.vue';
 import SettingsView from '@/views/SettingsView.vue';
 import FileExplorer from '@/views/FileExplorer.vue';
+import Guide from '@/views/Guide.vue';
 import { settings } from '@/services/settings';
 
 const router = createRouter({
@@ -16,6 +17,7 @@ const router = createRouter({
     },
 
     { path: '/settings', component: SettingsView },
+    { path: '/guide', component: Guide },
     { path: '/files', component: FileExplorer },
     {
       path: '/:pathMatch(.*)*', // anything
