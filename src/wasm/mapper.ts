@@ -82,6 +82,10 @@ export function dehydrateDates<T>(data: T): T {
     return data.map(dehydrateDates) as unknown as T;
   }
 
+  if (data instanceof Map) {
+    return Object.fromEntries(Array.from(data, ([key, value]) => [String(key), dehydrateDates(value)])) as unknown as T;
+  }
+
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(data)) {

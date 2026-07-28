@@ -1,7 +1,6 @@
 import { computed, reactive } from 'vue';
 import { cachedCalendars } from '@/services/calendarCache';
-
-export type GetEventsFilter = Record<string, string[]>;
+import type { GetEventsFilter } from '@/types/core';
 
 const storageKey = 'calendar-filters';
 
@@ -31,18 +30,20 @@ function saveFilters() {
 
 export function useCalendarFilters() {
   const filter = computed<GetEventsFilter | null>(() => {
-    const out: GetEventsFilter = {};
-    let hasActiveFilter = false;
+    const out: GetEventsFilter = new Map();
 
     for (const cal of cachedCalendars.value) {
-      const tagIds = ['', ...(cal.tags ?? []).flatMap((tag) => (tag.id ? [tag.id] : []))];
-      const visibleTagIds = tagIds.filter((tagId) => !hiddenTags.has(tagKey(cal.name, tagId)));
+      const hiddenTagIds = (cal.tags ?? []).flatMap((tag) =>
+        tag.id && hiddenTags.has(tagKey(cal.name, tag.id)) ? [tag.id] : [],
+      );
+      const hideUntagged = hiddenTags.has(tagKey(cal.name, ''));
 
-      hasActiveFilter ||= visibleTagIds.length < tagIds.length;
-      out[cal.name] = visibleTagIds;
+      if (hiddenTagIds.length > 0 || hideUntagged) {
+        out.set(cal.name, { hiddenTagIds, hideUntagged });
+      }
     }
 
-    return hasActiveFilter ? out : null;
+    return out.size > 0 ? out : null;
   });
 
   function toggleTag(calendar: string, tagId: string) {
@@ -62,14 +63,9 @@ export function useCalendarFilters() {
     return !hiddenTags.has(tagKey(calendar, tagId ?? ''));
   }
 
-  function isEventVisible(calendar: string, tagId?: string): boolean {
-    return isTagVisible(calendar, tagId);
-  }
-
   return {
     filter,
     toggleTag,
     isTagVisible,
-    isEventVisible,
   };
 }

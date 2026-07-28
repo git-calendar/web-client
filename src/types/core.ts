@@ -29,6 +29,13 @@ export interface Tag {
   color: string;
 }
 
+export interface CalendarEventsFilter {
+  hiddenTagIds: string[];
+  hideUntagged: boolean;
+}
+
+export type GetEventsFilter = Map<string, CalendarEventsFilter>;
+
 // Interface showing all the methods of CalendarCore.
 // The response types are all made async (Promise<T>) using Asyncify type.
 export interface CalendarApi {
@@ -66,5 +73,3 @@ export enum UpdateStrategy {
   Following,
   All,
 }
-
-type GetEventsFilter = Record<string, string[]>;
