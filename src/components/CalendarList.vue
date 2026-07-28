@@ -230,6 +230,10 @@ function getTagColor(calName: string, tagId?: string) {
     &:hover {
       background-color: var(--sidebar-hover-color);
     }
+
+    &:active {
+      transform: translateY(1px);
+    }
   }
 }
 
