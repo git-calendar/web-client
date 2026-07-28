@@ -7,7 +7,6 @@ const storageKey = 'calendar-filters';
 
 const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
 
-const hiddenCalendars = reactive(new Set<string>(stored['hidden-calendars'] ?? []));
 const hiddenTags = reactive(new Set<string>(stored['hidden-tags'] ?? []));
 
 function tagKey(calendar: string, tagId: string): string {
@@ -18,7 +17,6 @@ function saveFilters() {
   localStorage.setItem(
     storageKey,
     JSON.stringify({
-      'hidden-calendars': [...hiddenCalendars],
       'hidden-tags': [...hiddenTags],
     }),
   );
@@ -26,17 +24,13 @@ function saveFilters() {
 
 export function useCalendarFilters() {
   const filter = computed<GetEventsFilter | null>(() => {
-    if (hiddenCalendars.size === 0 && hiddenTags.size === 0) {
+    if (hiddenTags.size === 0) {
       return null;
     }
 
     const out: GetEventsFilter = {};
 
     for (const cal of cachedCalendars.value) {
-      if (hiddenCalendars.has(cal.name)) {
-        continue;
-      }
-
       if (cal.tags == null) {
         out[cal.name] = [];
         continue;
@@ -56,17 +50,6 @@ export function useCalendarFilters() {
     return out;
   });
 
-  function toggleCalendar(calendar: string) {
-    if (hiddenCalendars.has(calendar)) {
-      hiddenCalendars.delete(calendar);
-      saveFilters();
-      return;
-    }
-
-    hiddenCalendars.add(calendar);
-    saveFilters();
-  }
-
   function toggleTag(calendar: string, tagId: string) {
     const key = tagKey(calendar, tagId);
 
@@ -80,23 +63,18 @@ export function useCalendarFilters() {
     saveFilters();
   }
 
-  function isCalendarVisible(calendar: string): boolean {
-    return !hiddenCalendars.has(calendar);
+  function isTagVisible(calendar: string, tagId?: string): boolean {
+    return !hiddenTags.has(tagKey(calendar, tagId ?? ''));
   }
 
-  function isTagVisible(calendar: string, tagId?: string): boolean {
-    if (!tagId) {
-      return false;
-    }
-
-    return !hiddenTags.has(tagKey(calendar, tagId));
+  function isEventVisible(calendar: string, tagId?: string): boolean {
+    return isTagVisible(calendar, tagId);
   }
 
   return {
     filter,
-    toggleCalendar,
     toggleTag,
-    isCalendarVisible,
     isTagVisible,
+    isEventVisible,
   };
 }

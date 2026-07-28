@@ -6,16 +6,12 @@ import { cachedCalendars, getTag } from '@/services/calendarCache';
 import { getEventColorCSSVariable, toColorId } from '@/colors';
 import { useCalendarFilters } from '@/services/calendarFilters';
 
-const { toggleCalendar, toggleTag, isCalendarVisible, isTagVisible } = useCalendarFilters();
+const { toggleTag, isTagVisible } = useCalendarFilters();
 const calendarModal = useCalendarModal();
 const tagModal = useTagModal();
 
-function getCalId(calName: string): string {
-  return `cal_${calName}`;
-}
-
-function getTagId(calName: string, tagName: string): string {
-  return `tag_${calName}_${tagName}`;
+function getTagId(calName: string, tagId: string): string {
+  return `tag_${calName}_${tagId || 'untagged'}`;
 }
 
 function getTagColor(calName: string, tagId?: string) {
@@ -41,59 +37,54 @@ function getTagColor(calName: string, tagId?: string) {
     <div class="calendar-list">
       <div v-for="cal in cachedCalendars" :key="cal.name" class="calendar-wrap">
         <div class="calendar">
-          <label>
-            <input
-              type="checkbox"
-              :id="getCalId(cal.name)"
-              :name="getCalId(cal.name)"
-              :checked="isCalendarVisible(cal.name)"
-              @change="toggleCalendar(cal.name)"
-            />
-            <span class="name">{{ cal.name }}</span>
-          </label>
+          <span class="name">{{ cal.name }}</span>
 
           <button
-            class="edit-btn"
-            :title="$t('actions.editCalendar', { name: cal.name })"
-            :aria-label="$t('actions.editCalendar', { name: cal.name })"
-            @click="calendarModal.open(cal.name)"
-          >
-            <FiEdit2 />
-          </button>
-        </div>
-
-        <div v-if="isCalendarVisible(cal.name)" class="tags-list">
-          <div class="tag" v-for="tag in cal.tags" :key="tag.name">
-            <label>
-              <input
-                type="checkbox"
-                :id="getTagId(cal.name, tag.name)"
-                :name="getTagId(cal.name, tag.name)"
-                :checked="isTagVisible(cal.name, tag.id ?? '')"
-                @change="toggleTag(cal.name, tag.id ?? '')"
-                :style="{ '--tag-color': getTagColor(cal.name, tag.id) }"
-              />
-              <span class="tag-name">{{ tag.name }}</span>
-            </label>
-
-            <button
-              class="edit-btn"
-              :title="$t('actions.editTag', { name: tag.name })"
-              :aria-label="$t('actions.editTag', { name: tag.name })"
-              @click="tagModal.open(cal.name, tag)"
-            >
-              <FiEdit2 />
-            </button>
-          </div>
-          <button
-            type="button"
-            class="tag new"
-            :title="$t('actions.createTag', { calendar: cal.name })"
-            :aria-label="$t('actions.createTag', { calendar: cal.name })"
+            class="action-btn"
+            :title="$t('tag.create')"
+            :aria-label="$t('tag.create')"
             @click="tagModal.open(cal.name)"
           >
             <FiPlus />
           </button>
+
+          <button class="action-btn" @click="calendarModal.open(cal.name)">
+            <FiEdit2 />
+          </button>
+        </div>
+
+        <div class="tags-list">
+          <div class="tag" @click="toggleTag(cal.name, '')">
+            <input
+              type="checkbox"
+              :id="getTagId(cal.name, '')"
+              :name="getTagId(cal.name, '')"
+              :aria-label="$t('tag.notag')"
+              :checked="isTagVisible(cal.name, '')"
+              @click.stop
+              @change="toggleTag(cal.name, '')"
+              :style="{ '--tag-color': getTagColor(cal.name) }"
+            />
+            <span class="tag-name">{{ $t('tag.notag') }}</span>
+          </div>
+
+          <div class="tag" v-for="tag in cal.tags" :key="tag.name" @click="toggleTag(cal.name, tag.id ?? '')">
+            <input
+              type="checkbox"
+              :id="getTagId(cal.name, tag.id ?? '')"
+              :name="getTagId(cal.name, tag.id ?? '')"
+              :aria-label="tag.name"
+              :checked="isTagVisible(cal.name, tag.id ?? '')"
+              @click.stop
+              @change="toggleTag(cal.name, tag.id ?? '')"
+              :style="{ '--tag-color': getTagColor(cal.name, tag.id) }"
+            />
+            <span class="tag-name">{{ tag.name }}</span>
+
+            <button class="action-btn" @click.stop="tagModal.open(cal.name, tag)">
+              <FiEdit2 />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -108,9 +99,13 @@ function getTagColor(calName: string, tagId?: string) {
   gap: 0.4rem;
   min-height: 0;
 }
+
 .calendar-list {
   --fade-size: 2rem;
 
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
   height: 100%;
   min-height: 0;
   padding-bottom: var(--fade-size); /* leaves space at the bottom so that the shadow isnt always visible */
@@ -164,20 +159,11 @@ function getTagColor(calName: string, tagId?: string) {
 
   .calendar {
     height: 2rem;
-    padding-right: 0.25rem;
-
-    label {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      cursor: pointer;
-      user-select: none;
-      flex-grow: 1;
-      padding: 0.3rem;
-    }
+    padding: 0 0.25rem 0 0.4rem;
 
     .name {
-      font-weight: 500;
+      flex-grow: 1;
+      font-weight: 600;
     }
   }
 }
@@ -188,18 +174,17 @@ function getTagColor(calName: string, tagId?: string) {
   align-items: center;
   border-radius: var(--small-border-radius);
 
-  &:hover {
-    background-color: var(--sidebar-hover-color);
+  .action-btn:first-of-type {
+    padding: 0.15rem;
+  }
 
-    /* reveal the edit button on row hover */
-    .edit-btn {
-      opacity: 1;
-      pointer-events: auto;
-    }
+  &:hover .action-btn {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
-.edit-btn {
+.action-btn {
   height: 76%;
   aspect-ratio: 1/1;
   padding: 0.25rem;
@@ -216,46 +201,34 @@ function getTagColor(calName: string, tagId?: string) {
   }
 }
 
-@media (max-width: 768px) {
-  .edit-btn {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
 .tags-list {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  padding-left: 1.8rem;
 
   .tag {
-    padding-right: 0.25rem;
     height: 1.7rem;
+    padding: 0 0.25rem 0 0.4rem;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
 
-    label,
-    &.new {
-      display: flex;
-      padding: 0.25rem 0.4rem;
-      align-items: center;
-      gap: 0.5rem;
-      border-radius: var(--small-border-radius);
-      cursor: pointer;
-      user-select: none;
+    input[type='checkbox']:checked::before {
+      background-color: var(--tag-color);
+    }
+
+    .tag-name {
       flex-grow: 1;
-
-      input[type='checkbox']:checked::before {
-        background-color: var(--tag-color);
-      }
-    }
-
-    .name {
       font-size: 0.9em;
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
-    .edit-btn {
+    .action-btn {
       padding: 0.15rem;
+    }
+
+    &:hover {
+      background-color: var(--sidebar-hover-color);
     }
   }
 }
@@ -268,6 +241,13 @@ function getTagColor(calName: string, tagId?: string) {
     transform: scale(1.3);
     width: 1rem;
     height: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .action-btn {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 </style>

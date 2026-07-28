@@ -23,7 +23,7 @@ type TimelineRange = {
 
 const { dayNameShort, dayNameSuperShort } = useTranslation();
 const { width } = useWindowSize();
-const { filter } = useCalendarFilters();
+const { filter, isEventVisible } = useCalendarFilters();
 const route = useRoute();
 
 const props = defineProps<{
@@ -106,6 +106,8 @@ async function updateData() {
   const allDayEvents: CalendarEvent[] = [];
 
   for (const event of events) {
+    if (!isEventVisible(event.calendar, event.tagId)) continue;
+
     const eventDate = timelineColumnDate(event.from, range);
     const fitsTimelineColumn = event.to <= eventDate.plus({ hours: range.endHour });
 
@@ -290,6 +292,14 @@ watchEffect(() => {
   #view-container {
     height: calc(100% - 2 * 0.3rem);
     margin: 0.3rem;
+  }
+
+  .hour-lines,
+  .day-lines {
+    .day-line,
+    .hour-line {
+      background: var(--grid-color-harder);
+    }
   }
 }
 </style>
