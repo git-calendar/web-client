@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
-import { getCurrentViewDatetime } from '@/utils';
+import { getAllDayEndDate, getCurrentViewDatetime, isWholeDay } from '@/utils';
 import { DateTime } from 'luxon';
 import { computed, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
@@ -37,8 +37,9 @@ const todayGridColumn = computed(() => {
 });
 
 function visibleRange(event: CalendarEvent) {
+  const end = isWholeDay(event) ? getAllDayEndDate(event) : event.to;
   const startIndex = event.from.startOf('day').diff(currentDate.value, 'days').days;
-  const endIndex = event.to.startOf('day').diff(currentDate.value, 'days').days;
+  const endIndex = end.startOf('day').diff(currentDate.value, 'days').days;
 
   if (endIndex < 0 || startIndex >= props.numOfDays) return null;
 

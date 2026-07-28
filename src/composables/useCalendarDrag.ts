@@ -315,7 +315,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     const lastDate = dates[lastIndex];
     if (!firstDate || !lastDate) return;
 
-    active.value = blankEvent(firstDate.startOf('day'), lastDate.endOf('day'));
+    active.value = blankEvent(firstDate.startOf('day'), lastDate.plus({ days: 1 }).startOf('day'));
   }
 
   function onPointerMove(event: PointerEvent) {
