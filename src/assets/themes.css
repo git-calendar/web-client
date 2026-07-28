@@ -25,6 +25,7 @@
   --sidebar-hover-color: color-mix(in srgb, transparent, white 10%);
 
   --grid-color: #262626;
+  --grid-color-harder: #303030;
 
   --event-color-blue: #00579f;
   --event-color-green: #0d7b00;
@@ -60,4 +61,5 @@
   --sidebar-hover-color: color-mix(in srgb, transparent, black 10%);
 
   --grid-color: #d1d1d1;
+  --grid-color-harder: #bdbdbd;
 }

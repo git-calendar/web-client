@@ -293,5 +293,13 @@ watchEffect(() => {
     height: calc(100% - 2 * 0.3rem);
     margin: 0.3rem;
   }
+
+  .hour-lines,
+  .day-lines {
+    .day-line,
+    .hour-line {
+      background: var(--grid-color-harder);
+    }
+  }
 }
 </style>

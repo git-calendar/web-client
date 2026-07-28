@@ -249,6 +249,10 @@ body:has(#alert-modal) .modal:not(#alert-modal) {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --grid-border: var(--grid-thickness) solid var(--grid-color-harder);
+  }
+
   html {
     font-size: clamp(14px, 1vw + 8px, 16px); /* scales everything down by 13,5% (14px from 16px default) */
   }

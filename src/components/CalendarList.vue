@@ -201,13 +201,6 @@ function getTagColor(calName: string, tagId?: string) {
   }
 }
 
-@media (max-width: 768px) {
-  .action-btn {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
 .tags-list {
   display: flex;
   flex-direction: column;
@@ -227,7 +220,7 @@ function getTagColor(calName: string, tagId?: string) {
     .tag-name {
       flex-grow: 1;
       font-size: 0.9em;
-      opacity: 0.85;
+      opacity: 0.9;
     }
 
     .action-btn {
@@ -248,6 +241,13 @@ function getTagColor(calName: string, tagId?: string) {
     transform: scale(1.3);
     width: 1rem;
     height: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .action-btn {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 </style>
