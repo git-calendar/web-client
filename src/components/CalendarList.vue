@@ -203,6 +203,10 @@ function getTagColor(calName: string, tagId?: string) {
       flex-shrink: 0;
       width: 1rem;
       height: 1rem;
+
+      /* hidden by default until hovered */
+      opacity: 0;
+      pointer-events: none;
     }
   }
 }
@@ -217,9 +221,12 @@ function getTagColor(calName: string, tagId?: string) {
     padding: 0.15rem;
   }
 
-  &:hover .action-btn {
-    opacity: 1;
-    pointer-events: auto;
+  &:hover {
+    .action-btn,
+    .calendar-icon {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 }
 
