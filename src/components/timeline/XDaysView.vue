@@ -61,8 +61,11 @@ const eventGroups = computed(() => {
   for (const event of events.value) {
     const eventDate = timelineColumnDate(event.from, range);
     const fitsTimelineColumn = event.to <= eventDate.plus({ hours: range.endHour });
+    const endsAtNextMidnight =
+      event.to.toMillis() === event.to.startOf('day').toMillis() &&
+      event.from.startOf('day').plus({ days: 1 }).hasSame(event.to, 'day');
 
-    if (isWholeDay(event) || (!event.from.hasSame(event.to, 'day') && !fitsTimelineColumn)) {
+    if (isWholeDay(event) || (!event.from.hasSame(event.to, 'day') && !endsAtNextMidnight && !fitsTimelineColumn)) {
       allDay.push(event);
       continue;
     }
