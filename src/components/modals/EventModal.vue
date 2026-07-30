@@ -515,9 +515,10 @@ onMounted(async () => {
           <input type="checkbox" v-model="form.entireDay" />
         </label>
 
-        <label>
-          {{ $t('event.repeat.repeat') }}:
+        <div class="repeat-row">
+          <label for="repeat">{{ $t('event.repeat.repeat') }}:</label>
           <select
+            id="repeat"
             name="repeat"
             v-model="form.repeatSelection"
             ref="repeat-select"
@@ -530,7 +531,7 @@ onMounted(async () => {
           <button v-if="form.repeatSelection === 'custom'" type="button" @click="editCustomRepeat">
             {{ $t('event.repeat.edit') }}
           </button>
-        </label>
+        </div>
 
         <label v-if="form.repeatSelection !== 'never' && form.repeatSelection !== 'custom'">
           {{ $t('event.repeat.end') }}:
@@ -631,6 +632,16 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+
+  select {
+    flex: 1 1 auto;
+  }
+}
+
 label:has(select[name='end']) {
   margin-left: 4.3rem;
 
