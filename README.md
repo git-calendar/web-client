@@ -29,3 +29,5 @@ npm run dev         # run locally
 - [ ] mobile friendly
   - [x] basic responsiveness
   - [ ] verify drag-to-create on ios etc.
+- [ ] prettier tag/color picker
+- [ ] infinite repeat option (idk if core supports it)
