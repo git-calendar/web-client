@@ -23,8 +23,6 @@
     "from": "From",
     "to": "To",
     "entireDay": "Entire day",
-    "calendar": "Calendar",
-    "tag": "Tag",
     "repeat": {
       "repeat": "Repeat",
       "end": "End",

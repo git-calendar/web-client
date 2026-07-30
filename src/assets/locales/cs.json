@@ -23,8 +23,6 @@
     "from": "Od",
     "to": "Do",
     "entireDay": "Celý den",
-    "calendar": "Kalendář",
-    "tag": "Štítek",
     "repeat": {
       "repeat": "Opakování",
       "end": "Konec",

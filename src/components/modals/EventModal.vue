@@ -561,8 +561,7 @@ onMounted(async () => {
           />
         </label>
 
-        <label>
-          {{ $t('event.calendar') }}:
+        <div class="form-row">
           <select name="calendar" v-model="form.calendar">
             <option
               v-for="calendar in cachedCalendars"
@@ -573,10 +572,7 @@ onMounted(async () => {
               {{ calendar.name }}
             </option>
           </select>
-        </label>
 
-        <label>
-          {{ $t('event.tag') }}:
           <select name="tag" id="tag" v-model="form.tagId">
             <option value="">{{ $t('tag.notag') }}</option>
             <option
@@ -587,7 +583,7 @@ onMounted(async () => {
               {{ tag.name }}
             </option>
           </select>
-        </label>
+        </div>
 
         <input
           type="text"

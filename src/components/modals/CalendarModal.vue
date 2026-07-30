@@ -307,7 +307,7 @@ onMounted(() => {
 
         <div id="git-credentials">
           {{ $t('calendar.gitCredentials') }}
-          <div>
+          <div class="form-row">
             <input
               type="text"
               name="username"
@@ -367,17 +367,5 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-
-  > div {
-    width: 100%;
-    display: flex;
-    gap: 1rem;
-    justify-content: stretch;
-
-    > * {
-      flex: 1;
-      width: 100%;
-    }
-  }
 }
 </style>

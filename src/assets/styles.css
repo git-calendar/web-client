@@ -217,6 +217,16 @@ input.red,
         flex: 1 1 auto;
       }
     }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+
+      > * {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+    }
   }
 
   .bottom-btns {
