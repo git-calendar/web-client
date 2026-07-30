@@ -52,7 +52,11 @@
     "encryptionKey": "Encryption key/password",
     "readonly": "Read-only",
     "file": "File",
-    "destination": "Import into"
+    "destination": "Import into",
+    "initDescription": "Create an empty calendar, optionally connected to a Git repository.",
+    "cloneDescription": "Clone an existing calendar from a Git repository URL.",
+    "fileImportDescription": "Select an .ics file, then choose the calendar and tag to import the events in.",
+    "urlImportDescription": "Enter a name and an .ics URL to add it as a read-only calendar linked to that source."
   },
   "tag": {
     "name": "Name",

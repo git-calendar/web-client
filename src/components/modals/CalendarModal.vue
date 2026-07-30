@@ -22,6 +22,9 @@ const isLocked = computed(() => isSaving.value || isDeleting.value);
 const howOptions = ['Init', 'Clone', 'iCal'];
 const iCalSourceOptions = ['URL', 'File'];
 const writableCalendars = computed(() => cachedCalendars.value.filter((calendar) => !calendar.readonly));
+const destinationTags = computed(
+  () => writableCalendars.value.find((calendar) => calendar.name === form.destination)?.tags ?? [],
+);
 const form = reactive({
   how: 'Init',
   iCalSource: 'URL',
@@ -33,12 +36,24 @@ const form = reactive({
   encryptionKey: '',
   readonly: false,
   destination: writableCalendars.value[0]?.name ?? '',
+  destinationTagId: '',
   file: undefined as File | undefined,
 });
 
 const isICal = computed(() => form.how === 'iCal');
 const isICalURL = computed(() => isICal.value && form.iCalSource === 'URL');
 const isICalFile = computed(() => isICal.value && form.iCalSource === 'File');
+const modeDescription = computed(() => {
+  if (!thisModal.isNew.value || isICalFile.value) return '';
+  switch (form.how) {
+    case 'Init':
+      return 'calendar.initDescription';
+    case 'Clone':
+      return 'calendar.cloneDescription';
+    case 'iCal':
+      return 'calendar.urlImportDescription';
+  }
+});
 const saveButtonText = computed(() => {
   if (thisModal.isNew.value && isICal.value) {
     return t(isSaving.value ? 'importingBtn' : 'importBtn');
@@ -58,6 +73,13 @@ watch(
     if (originalCalendar.value) updateFormFromCalendar(originalCalendar.value);
   },
   { immediate: true },
+);
+
+watch(
+  () => form.destination,
+  () => {
+    form.destinationTagId = '';
+  },
 );
 
 function updateFormFromCalendar(calendar: DeepReadonly<Calendar>) {
@@ -136,7 +158,7 @@ async function createCalendar() {
       } else {
         if (!form.file) throw new Error('No iCalendar file selected');
 
-        await CalendarCore.importICalFile(form.destination, await form.file.text());
+        await CalendarCore.importICalFile(form.destination, form.destinationTagId, await form.file.text());
         void syncAllWrapper();
       }
       break;
@@ -233,6 +255,7 @@ function resetForm() {
   form.encryptionKey = '';
   form.readonly = false;
   form.destination = writableCalendars.value[0]?.name ?? '';
+  form.destinationTagId = '';
   form.file = undefined;
 }
 
@@ -296,6 +319,8 @@ onMounted(() => {
           class="mode-toggle"
         />
 
+        <p v-if="modeDescription" class="ical-import-description">{{ $t(modeDescription) }}</p>
+
         <input
           v-if="form.how !== 'Clone' && !isICalFile"
           v-model="form.name"
@@ -317,37 +342,10 @@ onMounted(() => {
           :required="form.how === 'Clone' || isICalURL"
         />
 
-        <template v-if="isICalFile">
-          <select
-            v-model="form.destination"
-            name="destination-calendar"
-            :aria-label="$t('calendar.destination')"
-            required
-          >
-            <option v-for="calendar in writableCalendars" :key="calendar.name" :value="calendar.name">
-              {{ calendar.name }}
-            </option>
-          </select>
-
-          <input
-            class="ical-file-input"
-            type="file"
-            name="ical-file"
-            accept=".ics,text/calendar"
-            :aria-label="$t('calendar.file')"
-            required
-            @change="selectICalFile"
-          />
-
-          <small v-if="writableCalendars.length === 0" class="ical-warning">
-            {{ $t('message.noWritableCalendars') }}
-          </small>
-        </template>
-
         <template v-if="!isICal">
           <div id="git-credentials">
-            {{ $t('calendar.gitCredentials') }}
-            <div>
+            {{ $t('calendar.gitCredentials') }} ({{ $t('optionalText') }})
+            <div class="form-row">
               <input
                 v-model="form.username"
                 type="text"
@@ -387,6 +385,43 @@ onMounted(() => {
           </div>
         </template>
 
+        <template v-if="isICalFile">
+          <p class="ical-import-description">{{ $t('calendar.fileImportDescription') }}</p>
+
+          <input
+            class="ical-file-input"
+            type="file"
+            name="ical-file"
+            accept=".ics,text/calendar"
+            :aria-label="$t('calendar.file')"
+            required
+            @change="selectICalFile"
+          />
+
+          <div class="ical-destination">
+            <select
+              v-model="form.destination"
+              name="destination-calendar"
+              :aria-label="$t('calendar.destination')"
+              required
+            >
+              <option v-for="calendar in writableCalendars" :key="calendar.name" :value="calendar.name">
+                {{ calendar.name }}
+              </option>
+            </select>
+            <select v-model="form.destinationTagId" name="destination-tag" :aria-label="$t('event.tag')">
+              <option value="">{{ $t('tag.notag') }}</option>
+              <option v-for="tag in destinationTags" :key="tag.id" :value="tag.id">
+                {{ tag.name }}
+              </option>
+            </select>
+          </div>
+
+          <small v-if="writableCalendars.length === 0" class="ical-warning">
+            {{ $t('message.noWritableCalendars') }}
+          </small>
+        </template>
+
         <div class="bottom-btns">
           <button type="submit" :disabled="isICalFile && writableCalendars.length === 0">
             {{ saveButtonText }}
@@ -406,6 +441,25 @@ onMounted(() => {
   align-self: center;
 }
 
+.bottom-btns:has(> button:nth-child(2):last-child) {
+  position: relative;
+  display: block;
+  align-self: stretch;
+  height: 2rem;
+
+  > button {
+    position: absolute;
+  }
+
+  > button:first-child {
+    right: calc(50% + 0.5rem);
+  }
+
+  > button:last-child {
+    left: calc(50% + 0.5rem);
+  }
+}
+
 .ical-file-input {
   padding: 0.2rem;
   cursor: pointer;
@@ -421,6 +475,22 @@ onMounted(() => {
     cursor: pointer;
     font: inherit;
   }
+}
+
+.ical-destination {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+
+  select {
+    width: 100%;
+  }
+}
+
+.ical-import-description {
+  margin: 0;
+  color: color-mix(in srgb, var(--text-color) 75%, transparent);
+  font-size: 0.9rem;
 }
 
 .ical-warning {

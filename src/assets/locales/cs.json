@@ -52,7 +52,11 @@
     "encryptionKey": "Šifrovací heslo",
     "readonly": "Pouze čtení",
     "file": "Soubor",
-    "destination": "Importovat do"
+    "destination": "Importovat do",
+    "initDescription": "Vytvořte prázdný kalendář, který můžete volitelně připojit ke Git repozitáři.",
+    "cloneDescription": "Naklonujte existující kalendář z adresy URL Git repozitáře.",
+    "fileImportDescription": "Vyberte soubor .ics a poté kalendář a štítek, do kterého se události importují.",
+    "urlImportDescription": "Zadejte název a adresu URL souboru .ics. Kalendář bude pouze pro čtení a zůstane propojený se zdrojem."
   },
   "tag": {
     "name": "Jméno",

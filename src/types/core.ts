@@ -47,7 +47,7 @@ export interface CalendarApi {
   listCalendars(): Calendar[];
   loadCalendars(): void;
 
-  importICalFile(calendar: string, data: string): void;
+  importICalFile(calendar: string, tagId: string, data: string): void;
   importICalURL(name: string, url: string): void;
   updateICalURL(calendar: string, url: string): void;
 
