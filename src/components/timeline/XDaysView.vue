@@ -13,7 +13,6 @@ import AllDayBar from '@/components/AllDayBar.vue';
 import { settings } from '@/services/settings';
 import { eventsRevision } from '@/composables/useEventsRefresh';
 import { useCalendarFilters } from '@/services/calendarFilters';
-
 import { useCalendarDrag } from '@/composables/useCalendarDrag';
 
 type TimelineRange = {
@@ -23,7 +22,7 @@ type TimelineRange = {
 
 const { dayNameShort, dayNameSuperShort } = useTranslation();
 const { width } = useWindowSize();
-const { filter, isEventVisible } = useCalendarFilters();
+const { filter } = useCalendarFilters();
 const route = useRoute();
 
 const props = defineProps<{
@@ -36,8 +35,7 @@ const dates = computed(() =>
   Array.from({ length: props.numOfDays }, (_, index) => startDate.value.plus({ days: index })),
 );
 
-const eventsTimeline = ref<CalendarEvent[][]>([]);
-const eventsWholeDay = ref<CalendarEvent[]>([]);
+const events = ref<CalendarEvent[]>([]);
 
 const configuredTimelineRange = computed<TimelineRange>(() => {
   const startHour = settings.value.dayViewStartHour;
@@ -54,19 +52,42 @@ function timelineColumnDate(date: DateTime, range: TimelineRange) {
   return range.endHour > 24 && date.hour < postMidnightEndHour ? calendarDate.minus({ days: 1 }) : calendarDate;
 }
 
+const eventGroups = computed(() => {
+  const timeline: CalendarEvent[][] = Array.from({ length: props.numOfDays }, () => []);
+  const allDay: CalendarEvent[] = [];
+  const viewStart = startDate.value.startOf('day');
+  const range = configuredTimelineRange.value;
+
+  for (const event of events.value) {
+    const eventDate = timelineColumnDate(event.from, range);
+    const fitsTimelineColumn = event.to <= eventDate.plus({ hours: range.endHour });
+    const endsAtNextMidnight =
+      event.to.toMillis() === event.to.startOf('day').toMillis() &&
+      event.from.startOf('day').plus({ days: 1 }).hasSame(event.to, 'day');
+
+    if (isWholeDay(event) || (!event.from.hasSame(event.to, 'day') && !endsAtNextMidnight && !fitsTimelineColumn)) {
+      allDay.push(event);
+      continue;
+    }
+
+    const dayIndex = Math.floor(eventDate.diff(viewStart, 'days').days);
+    timeline[dayIndex]?.push(event);
+  }
+
+  return { timeline, allDay };
+});
+
 const timelineRange = computed<TimelineRange>(() => {
   const configuredRange = configuredTimelineRange.value;
   let startHour = configuredRange.startHour;
   let endHour = configuredRange.endHour;
 
-  for (const events of eventsTimeline.value) {
-    for (const event of events) {
-      const columnStart = timelineColumnDate(event.from, configuredRange).startOf('day');
-      const fromHour = event.from.diff(columnStart, 'hours').hours;
-      const toHour = event.to.diff(columnStart, 'hours').hours;
-      startHour = Math.min(startHour, Math.floor(fromHour));
-      endHour = Math.max(endHour, Math.ceil(toHour));
-    }
+  for (const event of eventGroups.value.timeline.flat()) {
+    const columnStart = timelineColumnDate(event.from, configuredRange).startOf('day');
+    const fromHour = event.from.diff(columnStart, 'hours').hours;
+    const toHour = event.to.diff(columnStart, 'hours').hours;
+    startHour = Math.min(startHour, Math.floor(fromHour));
+    endHour = Math.max(endHour, Math.ceil(toHour));
   }
 
   return { startHour, endHour };
@@ -74,20 +95,16 @@ const timelineRange = computed<TimelineRange>(() => {
 
 const hoursOnGrid = computed(() => {
   const { startHour, endHour } = timelineRange.value;
-  const hours: string[] = [];
 
-  for (let offset = 0; offset < endHour - startHour; offset++) {
+  return Array.from({ length: endHour - startHour }, (_, offset) => {
     const hour = (startHour + offset) % 24;
 
     if (settings.value.timeFormat === 'h12') {
-      const displayHour = hour % 12 || 12;
-      hours.push(`${displayHour} ${hour < 12 ? 'AM' : 'PM'}`);
-    } else {
-      hours.push(`${String(hour).padStart(2, '0')}:00`);
+      return `${hour % 12 || 12} ${hour < 12 ? 'AM' : 'PM'}`;
     }
-  }
 
-  return hours;
+    return `${String(hour).padStart(2, '0')}:00`;
+  });
 });
 
 let latestRequest = 0;
@@ -95,35 +112,11 @@ let latestRequest = 0;
 async function updateData() {
   const request = ++latestRequest;
   const viewStart = startDate.value;
-  const numOfDays = props.numOfDays;
   const range = configuredTimelineRange.value;
-  const queryEnd = viewStart.plus({ days: numOfDays + (range.endHour > 24 ? 1 : 0) });
-  const events = await CalendarCore.getEvents(viewStart, queryEnd, filter.value);
+  const queryEnd = viewStart.plus({ days: props.numOfDays + (range.endHour > 24 ? 1 : 0) });
+  const result = await CalendarCore.getEvents(viewStart, queryEnd, filter.value);
 
-  if (request !== latestRequest) return;
-
-  const timelineEvents: CalendarEvent[][] = Array.from({ length: numOfDays }, () => []);
-  const allDayEvents: CalendarEvent[] = [];
-
-  for (const event of events) {
-    if (!isEventVisible(event.calendar, event.tagId)) continue;
-
-    const eventDate = timelineColumnDate(event.from, range);
-    const fitsTimelineColumn = event.to <= eventDate.plus({ hours: range.endHour });
-
-    if (isWholeDay(event) || (!event.from.hasSame(event.to, 'day') && !fitsTimelineColumn)) {
-      allDayEvents.push(event);
-      continue;
-    }
-
-    const dayIndex = Math.floor(eventDate.diff(viewStart.startOf('day'), 'days').days);
-    if (dayIndex >= 0 && dayIndex < numOfDays) {
-      timelineEvents[dayIndex]?.push(event);
-    }
-  }
-
-  eventsTimeline.value = timelineEvents;
-  eventsWholeDay.value = allDayEvents;
+  if (request === latestRequest) events.value = result;
 }
 
 const drag = useCalendarDrag(updateData);
@@ -143,8 +136,7 @@ watchEffect(() => {
   <div id="view-container">
     <div id="top-bar">
       <span v-for="day in dates" :key="day.toMillis()" :class="{ today: day.hasSame(DateTime.now(), 'day') }">
-        <template v-if="isMobile">{{ `${day.day}. ${dayNameSuperShort(day)}` }}</template>
-        <template v-else>{{ `${day.day}. ${dayNameShort(day)}` }}</template>
+        {{ `${day.day}. ${isMobile ? dayNameSuperShort(day) : dayNameShort(day)}` }}
       </span>
     </div>
 
@@ -158,7 +150,7 @@ watchEffect(() => {
     </div>
 
     <span>{{ $t('allday') }}</span>
-    <AllDayBar :numOfDays="numOfDays" :events="eventsWholeDay" :drag="drag" />
+    <AllDayBar :numOfDays="numOfDays" :events="eventGroups.allDay" :drag="drag" />
 
     <div id="left-time-bar">
       <span v-for="h in hoursOnGrid" :key="h">{{ h }}</span>
@@ -180,7 +172,7 @@ watchEffect(() => {
         v-for="(d, i) in dates"
         :key="d.toMillis()"
         :date="d"
-        :events="eventsTimeline[i]"
+        :events="eventGroups.timeline[i]"
         :start-hour="timelineRange.startHour"
         :end-hour="timelineRange.endHour"
         :drag="drag"

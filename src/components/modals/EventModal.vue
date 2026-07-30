@@ -13,6 +13,7 @@ import { syncAllWrapper } from '@/services/gitSync';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 import { cachedCalendars, getDefaultCalendar, loadCalendars } from '@/services/calendarCache';
+import { getAllDayEndDate, isWholeDay } from '@/utils';
 
 const repeatEndOptions = [
   { value: 'on', label: 'On' },
@@ -135,9 +136,10 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   hasCustomRepeat = false;
   lastRegularRepeatSelection = 'never';
 
-  if (form.fromTime == '00:00' && form.toTime == '23:59') {
+  if (isWholeDay(event)) {
     form.entireDay = true;
-    form.fromTime = '14:00'; // TODO some defaults
+    form.toDate = getAllDayEndDate(event).toISODate() ?? form.toDate;
+    form.fromTime = '14:00'; // defaults used when switching back to a timed event
     form.toTime = '16:00';
   } else {
     form.entireDay = false;
@@ -224,7 +226,7 @@ function reconstructEvent(): CalendarEvent {
       ? DateTime.fromISO(`${form.fromDate}T00:00`, { zone: originalEvent?.from.zone })
       : DateTime.fromISO(`${form.fromDate}T${form.fromTime}`, { zone: originalEvent?.from.zone }),
     to: form.entireDay
-      ? DateTime.fromISO(`${form.toDate}T23:59`, { zone: originalEvent?.to.zone })
+      ? DateTime.fromISO(`${form.toDate}T00:00`, { zone: originalEvent?.to.zone }).plus({ days: 1 })
       : DateTime.fromISO(`${form.toDate}T${form.toTime}`, { zone: originalEvent?.to.zone }),
     parentId: originalEvent?.parentId,
   };

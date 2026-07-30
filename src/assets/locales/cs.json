@@ -43,12 +43,20 @@
   },
   "calendar": {
     "name": "Název",
+    "gitRepository": "Git repozitář",
+    "ical": "iCalendar pomocí odkazu",
     "gitCredentials": "Git přihlašovací údaje",
     "username": "Uživatelské jméno",
     "password": "Heslo/Token",
     "encrypted": "Šifrování",
     "encryptionKey": "Šifrovací heslo",
-    "readonly": "Pouze čtení"
+    "readonly": "Pouze čtení",
+    "file": "Soubor",
+    "destination": "Importovat do",
+    "initDescription": "Vytvořte prázdný kalendář, který můžete volitelně připojit ke Git repozitáři.",
+    "cloneDescription": "Naklonujte existující kalendář z adresy URL Git repozitáře.",
+    "fileImportDescription": "Vyberte soubor .ics a poté kalendář a štítek, do kterého se události importují.",
+    "urlImportDescription": "Zadejte název a adresu URL souboru .ics. Kalendář bude pouze pro čtení a zůstane propojený se zdrojem."
   },
   "tag": {
     "name": "Jméno",
@@ -94,6 +102,8 @@
   },
   "saveBtn": "Uložit",
   "savingBtn": "Ukládání...",
+  "importBtn": "Importovat",
+  "importingBtn": "Importování...",
   "createBtn": "Vytvořit",
   "closeBtn": "Zavřít",
   "cancelBtn": "Zrušit",
@@ -127,7 +137,9 @@
   },
   "message": {
     "confirmCalendarDelete": "Chcete opravdu smazat celý kalenář?",
-    "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\"."
+    "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\".",
+    "errorICalUrlEndDotIcs": "iCalendar URL musí končit \".ics\".",
+    "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář."
   },
   "colors": {
     "blue": "Modrá",

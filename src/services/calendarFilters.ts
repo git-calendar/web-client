@@ -1,13 +1,19 @@
 import { computed, reactive } from 'vue';
 import { cachedCalendars } from '@/services/calendarCache';
-
-export type GetEventsFilter = Record<string, string[]>;
+import type { GetEventsFilter } from '@/types/core';
 
 const storageKey = 'calendar-filters';
 
-const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
+function loadHiddenTags(): string[] {
+  try {
+    const tags: unknown = JSON.parse(localStorage.getItem(storageKey) ?? '{}')?.['hidden-tags'];
+    return Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [];
+  } catch {
+    return [];
+  }
+}
 
-const hiddenTags = reactive(new Set<string>(stored['hidden-tags'] ?? []));
+const hiddenTags = reactive(new Set(loadHiddenTags()));
 
 function tagKey(calendar: string, tagId: string): string {
   return `${calendar}:${tagId}`;
@@ -24,30 +30,20 @@ function saveFilters() {
 
 export function useCalendarFilters() {
   const filter = computed<GetEventsFilter | null>(() => {
-    if (hiddenTags.size === 0) {
-      return null;
-    }
-
-    const out: GetEventsFilter = {};
+    const out: GetEventsFilter = new Map();
 
     for (const cal of cachedCalendars.value) {
-      if (cal.tags == null) {
-        out[cal.name] = [];
-        continue;
+      const hiddenTagIds = (cal.tags ?? []).flatMap((tag) =>
+        tag.id && hiddenTags.has(tagKey(cal.name, tag.id)) ? [tag.id] : [],
+      );
+      const hideUntagged = hiddenTags.has(tagKey(cal.name, ''));
+
+      if (hiddenTagIds.length > 0 || hideUntagged) {
+        out.set(cal.name, { hiddenTagIds, hideUntagged });
       }
-
-      const tagIds = cal.tags.flatMap((tag) => {
-        if (!tag.id || hiddenTags.has(tagKey(cal.name, tag.id))) {
-          return [];
-        }
-
-        return [tag.id];
-      });
-
-      out[cal.name] = tagIds;
     }
 
-    return out;
+    return out.size > 0 ? out : null;
   });
 
   function toggleTag(calendar: string, tagId: string) {
@@ -67,14 +63,9 @@ export function useCalendarFilters() {
     return !hiddenTags.has(tagKey(calendar, tagId ?? ''));
   }
 
-  function isEventVisible(calendar: string, tagId?: string): boolean {
-    return isTagVisible(calendar, tagId);
-  }
-
   return {
     filter,
     toggleTag,
     isTagVisible,
-    isEventVisible,
   };
 }

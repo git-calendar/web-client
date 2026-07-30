@@ -43,12 +43,20 @@
   },
   "calendar": {
     "name": "Name",
+    "gitRepository": "Git repository",
+    "ical": "iCalendar subscribtion using URL",
     "gitCredentials": "Git credentials",
     "username": "Username",
     "password": "Password/Token",
     "encrypted": "Encrypted",
     "encryptionKey": "Encryption key/password",
-    "readonly": "Read-only"
+    "readonly": "Read-only",
+    "file": "File",
+    "destination": "Import into",
+    "initDescription": "Create an empty calendar, optionally connected to a Git repository.",
+    "cloneDescription": "Clone an existing calendar from a Git repository URL.",
+    "fileImportDescription": "Select an .ics file, then choose the calendar and tag to import the events in.",
+    "urlImportDescription": "Enter a name and an .ics URL to add it as a read-only calendar linked to that source."
   },
   "tag": {
     "name": "Name",
@@ -94,6 +102,8 @@
   },
   "saveBtn": "Save",
   "savingBtn": "Saving...",
+  "importBtn": "Import",
+  "importingBtn": "Importing...",
   "createBtn": "Create",
   "closeBtn": "Close",
   "cancelBtn": "Cancel",
@@ -127,7 +137,9 @@
   },
   "message": {
     "confirmCalendarDelete": "Do you really want to delete the whole calendar?",
-    "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\"."
+    "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\".",
+    "errorICalUrlEndDotIcs": "iCalendar URL must end with \".ics\".",
+    "noWritableCalendars": "Create a writable calendar before importing a file."
   },
   "colors": {
     "blue": "Blue",

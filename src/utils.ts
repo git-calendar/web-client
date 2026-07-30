@@ -124,7 +124,15 @@ export function numberOfHours(): number {
  * Returns true/false whether event is wholeDay/allDay.
  */
 export function isWholeDay(event: CalendarEvent): boolean {
-  return event.from.toFormat('HH:mm') == '00:00' && event.to.toFormat('HH:mm') == '23:59';
+  const startsAtMidnight = event.from.toMillis() === event.from.startOf('day').toMillis();
+  const usesExclusiveEnd = event.to.toMillis() === event.to.startOf('day').toMillis();
+  const usesLegacyEnd = event.to.toFormat('HH:mm') === '23:59';
+  return startsAtMidnight && (usesExclusiveEnd || usesLegacyEnd) && event.to > event.from;
+}
+
+export function getAllDayEndDate(event: CalendarEvent): DateTime {
+  const usesExclusiveEnd = event.to.toMillis() === event.to.startOf('day').toMillis();
+  return usesExclusiveEnd ? event.to.minus({ days: 1 }) : event.to;
 }
 
 /**

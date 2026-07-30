@@ -17,6 +17,8 @@ export interface Calendar {
   name: string;
   tags: Tag[];
   remoteUrl: string;
+  /** Source URL for URL-backed iCalendar calendars; empty otherwise. */
+  icalUrl: string;
   encrypted: boolean;
   readonly: boolean;
 }
@@ -27,6 +29,13 @@ export interface Tag {
   color: string;
 }
 
+export interface CalendarEventsFilter {
+  hiddenTagIds: string[];
+  hideUntagged: boolean;
+}
+
+export type GetEventsFilter = Map<string, CalendarEventsFilter>;
+
 // Interface showing all the methods of CalendarCore.
 // The response types are all made async (Promise<T>) using Asyncify type.
 export interface CalendarApi {
@@ -34,9 +43,13 @@ export interface CalendarApi {
   cloneCalendar(url: string, password: string, readonly: boolean): void;
   removeCalendar(name: string): void;
   renameCalendar(oldName: string, newName: string): void;
+  updateRemote(calendar: string, remoteUrl: string, readonly: boolean): void;
   listCalendars(): Calendar[];
   loadCalendars(): void;
-  updateRemote(calendar: string, remoteUrl: string, readonly: boolean): void;
+
+  importICalFile(calendar: string, tagId: string, data: string): void;
+  importICalURL(name: string, url: string): void;
+  updateICalURL(calendar: string, url: string): void;
 
   createEvent(event: CalendarEvent): CalendarEvent;
   updateEvent(event: CalendarEvent): CalendarEvent;
@@ -60,5 +73,3 @@ export enum UpdateStrategy {
   Following,
   All,
 }
-
-type GetEventsFilter = Record<string, string[]>;

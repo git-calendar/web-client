@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FiPlus, FiEdit2 } from 'vue-icons-plus/fi';
+import { FiPlus, FiEdit2, FiGitBranch, FiLink } from 'vue-icons-plus/fi';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
 import { cachedCalendars, getTag } from '@/services/calendarCache';
@@ -37,18 +37,36 @@ function getTagColor(calName: string, tagId?: string) {
     <div class="calendar-list">
       <div v-for="cal in cachedCalendars" :key="cal.name" class="calendar-wrap">
         <div class="calendar">
-          <span class="name">{{ cal.name }}</span>
+          <span class="calendar-label">
+            <span class="name">{{ cal.name }}</span>
+
+            <span
+              class="calendar-icon"
+              role="img"
+              :title="$t(cal.icalUrl ? 'calendar.ical' : 'calendar.gitRepository')"
+              :aria-label="$t(cal.icalUrl ? 'calendar.ical' : 'calendar.gitRepository')"
+            >
+              <FiLink v-if="cal.icalUrl" />
+              <FiGitBranch v-else />
+            </span>
+          </span>
 
           <button
             class="action-btn"
             :title="$t('tag.create')"
             :aria-label="$t('tag.create')"
             @click="tagModal.open(cal.name)"
+            v-show="!cal.icalUrl && !cal.readonly"
           >
             <FiPlus />
           </button>
 
-          <button class="action-btn" @click="calendarModal.open(cal.name)">
+          <button
+            class="action-btn"
+            :title="$t('event.repeat.edit')"
+            :aria-label="$t('event.repeat.edit')"
+            @click="calendarModal.open(cal.name)"
+          >
             <FiEdit2 />
           </button>
         </div>
@@ -160,10 +178,35 @@ function getTagColor(calName: string, tagId?: string) {
   .calendar {
     height: 2rem;
     padding: 0 0.25rem 0 0.4rem;
+    gap: 0.2rem;
+
+    .calendar-label {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      min-width: 0;
+      gap: 0.3rem;
+    }
 
     .name {
-      flex-grow: 1;
-      font-weight: 600;
+      min-width: 0;
+      font-weight: 900;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .calendar-icon {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      width: 1rem;
+      height: 1rem;
+
+      /* hidden by default until hovered */
+      opacity: 0;
+      pointer-events: none;
     }
   }
 }
@@ -178,9 +221,12 @@ function getTagColor(calName: string, tagId?: string) {
     padding: 0.15rem;
   }
 
-  &:hover .action-btn {
-    opacity: 1;
-    pointer-events: auto;
+  &:hover {
+    .action-btn,
+    .calendar-icon {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 }
 
@@ -221,6 +267,10 @@ function getTagColor(calName: string, tagId?: string) {
       flex-grow: 1;
       font-size: 0.9em;
       opacity: 0.9;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .action-btn {
