@@ -198,15 +198,25 @@ function getTagColor(calName: string, tagId?: string) {
     }
 
     .calendar-icon {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
+      display: none;
       width: 1rem;
       height: 1rem;
+    }
 
-      /* hidden by default until hovered */
-      opacity: 0;
-      pointer-events: none;
+    > .action-btn {
+      display: none;
+    }
+
+    &:hover {
+      .calendar-icon {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      > .action-btn {
+        display: block;
+      }
     }
   }
 }
@@ -302,6 +312,10 @@ function getTagColor(calName: string, tagId?: string) {
   .action-btn {
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .calendar-wrap .calendar > .action-btn {
+    display: block;
   }
 }
 </style>
