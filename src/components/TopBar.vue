@@ -51,12 +51,10 @@ function jumpToToday() {
     <NewEventBtn v-if="!sidebar.isOpen.value" :large="!isMobile" />
 
     <SyncStatus />
-    <!-- TODO: remove disabled -->
     <MultiToggle
       v-model="view"
       :options="CALENDAR_VIEWS"
       :labels="CALENDAR_VIEWS.map((view) => $t(`views.${view}.${isMobile ? 'short' : 'long'}`))"
-      :disabled="['m']"
       name="view-selector"
     />
 
