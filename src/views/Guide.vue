@@ -91,7 +91,7 @@
           <li><kbd>T</kbd> Go to today</li>
           <li><kbd>4</kbd> Switch to the four-day view</li>
           <li><kbd>W</kbd> Switch to the week view</li>
-          <li><kbd>M</kbd> (In progress) Switch to the week view</li>
+          <li><kbd>M</kbd> (In progress) Switch to the month view</li>
           <li><kbd>←</kbd> Move to the previous period</li>
           <li><kbd>→</kbd> Move to the next period</li>
           <li><kbd>Esc</kbd> Close the open dialog</li>
