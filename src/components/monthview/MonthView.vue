@@ -31,8 +31,9 @@ const weeks = computed(() => Array.from({ length: 6 }, (_, index) => days.value.
 const displayedEvents = computed(() => {
   const activeEvent = drag.active.value;
   const showMovedEvent = drag.mode.value === 'move' && drag.moved.value;
+  if (!activeEvent || !showMovedEvent) return events.value;
 
-  return activeEvent && showMovedEvent ? [...events.value, activeEvent] : events.value;
+  return [...events.value.filter((event) => !drag.isSourceEvent(event)), activeEvent];
 });
 
 let latestRequest = 0;
