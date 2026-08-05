@@ -16,6 +16,7 @@
           <li><a href="#quick-start">Quick start</a></li>
           <li><a href="#create-repository">Create a repository</a></li>
           <li><a href="#clone-repository">Clone a repository</a></li>
+          <li><a href="#icalendar">Importing iCalendar</a></li>
           <li><a href="#dragging-tips">Dragging tips</a></li>
           <li><a href="#keyboard-shortcuts">Keyboard shortcuts</a></li>
           <li><a href="#other-controls">Other controls</a></li>
@@ -62,6 +63,26 @@
         <p class="note">
           Encryption keys cannot be recovered from the repository. You need the same key on every device that clones it.
         </p>
+      </section>
+
+      <section id="icalendar" aria-labelledby="icalendar-heading">
+        <h2 id="icalendar-heading"><a href="#icalendar">Importing iCalendar</a></h2>
+        <p>
+          iCalendar, also called iCal, is an open format for exchanging calendar events. Files and feeds use the
+          <code>.ics</code> extension and are supported by calendar apps such as Apple Calendar, Google Calendar, and
+          Outlook.
+        </p>
+        <ul>
+          <li>
+            <strong>Import a file:</strong> events from an <code>.ics</code> file are copied into a writable repository
+            and become regular Git Calendar events. Later changes to the original file are not synchronized.
+          </li>
+          <li>
+            <strong>Subscribe to a feed:</strong> an HTTPS URL ending in <code>.ics</code> creates a read-only calendar.
+            The feed is refreshed during sync, and the last downloaded copy remains available while offline.
+          </li>
+        </ul>
+        <p>To change events in a subscribed calendar, edit them in the service that publishes the iCalendar feed.</p>
       </section>
 
       <section id="dragging-tips" aria-labelledby="dragging-tips-heading">
