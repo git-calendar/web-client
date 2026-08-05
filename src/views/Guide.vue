@@ -46,8 +46,8 @@
             If you want remote syncing, create an empty repository on your Git provider and paste its HTTPS URL. The URL
             must end in <code>.git</code>.
           </li>
-          <li>For a private remote, enter your username and access token.</li>
-          <li>Enable encryption if needed, save the key somewhere safe, and finish creating the repository.</li>
+          <li>For a private remote, enter your username and/or access token/password.</li>
+          <li>Enable encryption if desired, save the key somewhere safe, and finish creating the repository.</li>
         </ol>
       </section>
 
@@ -60,7 +60,7 @@
           <li>Enable <strong>Read-only</strong> if you only want to view the calendar.</li>
           <li>If the repository is encrypted, enable encryption and enter its existing key.</li>
         </ol>
-        <p class="note">
+        <p>
           Encryption keys cannot be recovered from the repository. You need the same key on every device that clones it.
         </p>
       </section>
@@ -210,7 +210,7 @@ kbd {
   overflow-wrap: anywhere;
 }
 
-.shortcuts {
+p + ul {
   margin-top: 0.75rem;
 }
 
@@ -219,12 +219,6 @@ kbd {
   min-width: 2.5rem;
   margin-right: 0.25rem;
   text-align: center;
-}
-
-.note {
-  margin-top: 1rem;
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--grid-color-harder);
 }
 
 section > p:last-child {
