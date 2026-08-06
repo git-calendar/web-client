@@ -146,6 +146,7 @@ function openWeek(day: DateTime) {
         :event="item.event"
         :compact="item.compact"
         :interactive="item.event !== drag.active.value && drag.canEdit(item.event)"
+        :temporary="item.event === drag.active.value"
         :style="item.style"
         @pointerdown.stop="startMove(item.event, $event)"
         @click="openEvent(item.event, $event)"
