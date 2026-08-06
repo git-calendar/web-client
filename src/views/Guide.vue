@@ -109,6 +109,7 @@
         <p>These shortcuts work while the calendar is open and focus is not inside a form field.</p>
         <ul class="shortcuts">
           <li><kbd>N</kbd> Create a new event</li>
+          <li><kbd>S</kbd> Show or hide the sidebar</li>
           <li><kbd>T</kbd> Go to today</li>
           <li><kbd>4</kbd> Switch to the four-day view</li>
           <li><kbd>W</kbd> Switch to the week view</li>

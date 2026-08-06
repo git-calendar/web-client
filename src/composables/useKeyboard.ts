@@ -7,11 +7,13 @@ import { useEventModal } from '@/composables/modals/useEventModal';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
+import { useSidebar } from '@/composables/useSidebar';
 
 const calendarModal = useCalendarModal();
 const tagModal = useTagModal();
 const eventModal = useEventModal();
 const strategyModal = useStrategyModal();
+const sidebar = useSidebar();
 
 export function useKeyboard() {
   function inputNeededElsewhere(): boolean {
@@ -27,6 +29,13 @@ export function useKeyboard() {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
       if (!tagModal.isOpen.value && !calendarModal.isOpen.value) eventModal.open();
+    });
+
+    // S -> toggle sidebar
+    onKeyStroke('s', (e) => {
+      if (inputNeededElsewhere()) return;
+      e.preventDefault();
+      sidebar.toggle();
     });
 
     // T -> go to today
