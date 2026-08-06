@@ -69,8 +69,11 @@ export function useKeyboard() {
       return; // TODO
       if (inputNeededElsewhere()) return;
       e.preventDefault();
+
+      const activeDate = getCurrentViewDatetime(router.currentRoute.value.params);
       router.replace({
-        params: { ...router.currentRoute.value.params, view: 'm' },
+        name: 'calendar',
+        params: { view: 'm', year: activeDate.year, month: activeDate.month, day: activeDate.day },
       });
     });
 

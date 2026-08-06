@@ -40,7 +40,11 @@ export function moveView(back: boolean, router: Router) {
   switch (params.view) {
     case 'm':
       newDate = currentDatetime.plus({ month: sign });
-      break;
+      router.replace({
+        name: 'calendar',
+        params: { view: 'm', year: newDate.year, month: newDate.month, day: newDate.day },
+      });
+      return;
     case 'w':
       newDate = currentDatetime.plus({ days: 7 * sign });
       router.replace(getWeekAlignedRedirect(newDate));
