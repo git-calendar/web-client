@@ -232,15 +232,25 @@ function openWeek(day: DateTime) {
   padding-bottom: 0.2rem;
 
   .more-events-content {
+    position: relative;
     max-width: 100%;
     display: flex;
     align-items: center;
     gap: 0.1rem;
     overflow: hidden;
-    border-bottom: 1px solid currentColor;
     white-space: nowrap;
     cursor: pointer;
     pointer-events: auto;
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 1px;
+      left: 0;
+      height: 1px;
+      background: currentColor;
+    }
 
     svg {
       width: 0.8rem;
