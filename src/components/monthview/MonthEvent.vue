@@ -14,19 +14,21 @@ const props = defineProps<{
 const eventStyle = computed(() => ({
   '--event-color': getEventColorCSSVariable(toColorId(getTag(props.event.calendar, props.event.tagId ?? '')?.color)),
 }));
+const showTime = computed(() => !isWholeDay(props.event));
 </script>
 
 <template>
-  <div class="month-event" :class="{ compact, interactive }" :style="eventStyle">
+  <div class="month-event" :class="{ compact, interactive, 'without-time': !showTime }" :style="eventStyle">
     <span class="title">{{ event.title }}</span>
-    <span v-if="!isWholeDay(event)" class="time">{{ timeRangeFormat(event.from, event.to) }}</span>
+    <span v-if="showTime" class="time">{{ timeRangeFormat(event.from, event.to) }}</span>
   </div>
 </template>
 
 <style scoped>
 .month-event {
+  position: absolute;
+  height: 2.4rem;
   min-height: 2.4rem;
-  margin: 1px 0.15rem;
   padding: 0.2rem 0.4rem;
   display: flex;
   flex-direction: column;
@@ -47,6 +49,16 @@ const eventStyle = computed(() => ({
   touch-action: none;
 }
 
+.month-event.without-time {
+  height: 1.4rem;
+  min-height: 1.4rem;
+  padding-block: 0.1rem;
+}
+
+.month-event.without-time:not(.compact) {
+  justify-content: center;
+}
+
 .month-event:hover {
   filter: brightness(1.15);
 }
@@ -56,7 +68,6 @@ const eventStyle = computed(() => ({
   font-size: 0.8rem;
   font-weight: 600;
   line-height: 1rem;
-  text-overflow: ellipsis;
 }
 
 .time {
@@ -64,10 +75,10 @@ const eventStyle = computed(() => ({
   font-size: 0.7rem;
   line-height: 1rem;
   opacity: 0.8;
-  text-overflow: ellipsis;
 }
 
 .month-event.compact {
+  height: 1.4rem;
   min-height: 1.4rem;
   padding-block: 0.1rem;
   flex-direction: row;
@@ -75,11 +86,13 @@ const eventStyle = computed(() => ({
   gap: 0.3rem;
 
   .title {
-    flex: 1;
+    max-width: 100%;
+    flex: 0 0 auto;
   }
 
   .time {
-    flex: none;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 }
 

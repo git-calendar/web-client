@@ -7,8 +7,11 @@ export type VisibleDayRange = {
   span: number;
 };
 
-export type LaidOutDayEvent = VisibleDayRange & {
+export type VisibleDayEvent = VisibleDayRange & {
   event: CalendarEvent;
+};
+
+export type LaidOutDayEvent = VisibleDayEvent & {
   row: number;
 };
 
@@ -36,11 +39,11 @@ export function getVisibleDayRange(
   };
 }
 
-export function layoutEventsByDay(
+export function getVisibleEventsByDay(
   events: CalendarEvent[],
   viewStart: DateTime,
   numberOfDays: number,
-): LaidOutDayEvent[] {
+): VisibleDayEvent[] {
   const visibleEvents = events.flatMap((event) => {
     const range = getVisibleDayRange(event, viewStart, numberOfDays);
     return range ? [{ event, ...range }] : [];
@@ -54,6 +57,15 @@ export function layoutEventsByDay(
       a.event.to.toMillis() - b.event.to.toMillis(),
   );
 
+  return visibleEvents;
+}
+
+export function layoutEventsByDay(
+  events: CalendarEvent[],
+  viewStart: DateTime,
+  numberOfDays: number,
+): LaidOutDayEvent[] {
+  const visibleEvents = getVisibleEventsByDay(events, viewStart, numberOfDays);
   const rowEnds: number[] = [];
   return visibleEvents.map((item) => {
     let rowIndex = rowEnds.findIndex((endIndex) => endIndex < item.startIndex);

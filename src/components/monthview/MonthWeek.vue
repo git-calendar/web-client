@@ -5,7 +5,8 @@ import MonthEvent from '@/components/monthview/MonthEvent.vue';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarDragController } from '@/composables/useCalendarDrag';
 import type { CalendarEvent } from '@/types/core';
-import { layoutEventsByDay } from '@/utils/allDayEventLayout';
+import { isWholeDay } from '@/utils';
+import { getVisibleEventsByDay } from '@/utils/allDayEventLayout';
 
 const props = defineProps<{
   days: DateTime[];
@@ -20,28 +21,41 @@ const emit = defineEmits<{
 
 const eventModal = useEventModal();
 
+const COMPACT_EVENT_HEIGHT_REM = 1.4;
+const FULL_EVENT_HEIGHT_REM = 2.4;
+const EVENT_GAP_REM = 0.15;
+const EVENT_MARGIN_REM = 0.15;
+
 const laidOutEvents = computed(() => {
   const weekStart = props.days[0]?.startOf('day');
   if (!weekStart) return [];
 
-  const visibleEvents = layoutEventsByDay(props.events, weekStart, 7);
-
+  const visibleEvents = getVisibleEventsByDay(props.events, weekStart, 7);
   const eventsPerDay = Array.from({ length: 7 }, () => 0);
+  const dayBottoms = Array.from({ length: 7 }, () => 0);
+
   for (const item of visibleEvents) {
     for (let day = item.startIndex; day <= item.endIndex; day++) eventsPerDay[day]++;
   }
 
   return visibleEvents.map((item) => {
+    const compact = eventsPerDay.slice(item.startIndex, item.endIndex + 1).some((count) => count > 2);
+    const height = compact || isWholeDay(item.event) ? COMPACT_EVENT_HEIGHT_REM : FULL_EVENT_HEIGHT_REM;
+    const top = Math.max(...dayBottoms.slice(item.startIndex, item.endIndex + 1));
+    const nextBottom = top + height + EVENT_GAP_REM;
+
+    for (let day = item.startIndex; day <= item.endIndex; day++) dayBottoms[day] = nextBottom;
+
+    const leftPercent = (item.startIndex / 7) * 100;
+    const widthPercent = (item.span / 7) * 100;
     const style: CSSProperties = {
-      gridColumn: `${item.startIndex + 1} / ${item.endIndex + 2}`,
-      gridRow: String(item.row),
+      top: `${top}rem`,
+      left: `calc(${leftPercent}% + ${EVENT_MARGIN_REM}rem)`,
+      width: `calc(${widthPercent}% - ${EVENT_MARGIN_REM * 2}rem)`,
+      height: `${height}rem`,
     };
 
-    return {
-      ...item,
-      style,
-      compact: eventsPerDay.slice(item.startIndex, item.endIndex + 1).some((count) => count > 2),
-    };
+    return { ...item, style, compact };
   });
 });
 
@@ -109,16 +123,15 @@ function startMove(calendarEvent: CalendarEvent, event: PointerEvent) {
 }
 
 .day-background {
-  min-width: 0;
   padding: 0.3rem;
   border-right: var(--grid-border);
   border-bottom: var(--grid-border);
-  transition: background-color 80ms ease-out;
 }
 
 .day-number {
+  position: absolute;
+  top: 0.3rem;
   font-size: 0.8rem;
-  line-height: 1rem;
   user-select: none;
 }
 
@@ -138,12 +151,6 @@ function startMove(calendarEvent: CalendarEvent, event: PointerEvent) {
 .week-events {
   position: absolute;
   inset: 1.6rem 0 0;
-  padding: 0 2px;
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: min-content;
-  gap: 2px 0;
-  align-content: start;
   overflow-y: auto;
 }
 
