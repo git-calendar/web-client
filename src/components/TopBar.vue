@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { DateTime } from 'luxon';
 import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
 
 import { FiChevronLeft, FiChevronRight } from 'vue-icons-plus/fi';
@@ -28,19 +29,33 @@ watch(
   { immediate: true },
 );
 watch(view, (newView) => {
+  const current = getCurrentViewDatetime(router.currentRoute.value.params);
+
   if (newView === 'w') {
-    // week view should be aligned
-    const current = getCurrentViewDatetime(router.currentRoute.value.params);
     router.push(getWeekAlignedRedirect(current));
+  } else if (newView === 'm') {
+    router.push({
+      name: 'calendar',
+      params: { view: 'm', year: current.year, month: current.month, day: current.day },
+    });
   } else {
     router.push({
       name: 'calendar',
-      params: { ...router.currentRoute.value.params, view: newView },
+      params: { view: newView, year: current.year, month: current.month, day: current.day },
     });
   }
 });
 
 function jumpToToday() {
+  if (view.value === 'm') {
+    const today = DateTime.now();
+    router.push({
+      name: 'calendar',
+      params: { view: 'm', year: today.year, month: today.month, day: today.day },
+    });
+    return;
+  }
+
   router.push({ name: 'calendar', params: { view: view.value } });
 }
 </script>
@@ -51,12 +66,10 @@ function jumpToToday() {
     <NewEventBtn v-if="!sidebar.isOpen.value" :large="!isMobile" />
 
     <SyncStatus />
-    <!-- TODO: remove disabled -->
     <MultiToggle
       v-model="view"
       :options="CALENDAR_VIEWS"
       :labels="CALENDAR_VIEWS.map((view) => $t(`views.${view}.${isMobile ? 'short' : 'long'}`))"
-      :disabled="['m']"
       name="view-selector"
     />
 

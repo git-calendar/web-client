@@ -12,6 +12,7 @@ const { monthNameLong } = useTranslation();
 const route = useRoute();
 
 const currentDatetime = ref<DateTime>(DateTime.now());
+const isMonthView = computed(() => route.params.view === 'm');
 const monthTracker = ref(currentDatetime.value.month);
 const yearTracker = ref(currentDatetime.value.year);
 
@@ -60,6 +61,12 @@ watch(
     const viewStart = getCurrentViewDatetime(route.params);
     currentDatetime.value = viewStart;
 
+    if (isMonthView.value) {
+      monthTracker.value = viewStart.month;
+      yearTracker.value = viewStart.year;
+      return;
+    }
+
     const viewEnd = viewStart.plus({
       days: getViewLengthInDays(route.params),
     });
@@ -102,6 +109,11 @@ function changeMonthNum(up: boolean) {
 function jumpToInterval(clickedDay: DateTime) {
   if (route.params.view === 'w') {
     router.replace(getWeekAlignedRedirect(clickedDay));
+  } else if (isMonthView.value) {
+    router.replace({
+      name: 'calendar',
+      params: { view: 'm', year: clickedDay.year, month: clickedDay.month, day: clickedDay.day },
+    });
   } else {
     router.replace({ params: { year: clickedDay.year, month: clickedDay.month, day: clickedDay.day } });
   }
@@ -131,11 +143,15 @@ function getIntervalFromDay(day: DateTime) {
 const hoverInterval = computed(() => {
   if (!hoveredDay.value) return null;
 
+  if (isMonthView.value) {
+    return { start: hoveredDay.value, end: hoveredDay.value };
+  }
+
   return getIntervalFromDay(hoveredDay.value);
 });
 
 const pressedInterval = computed(() => {
-  if (!pressedDay.value) return null;
+  if (isMonthView.value || !pressedDay.value) return null;
 
   return getIntervalFromDay(pressedDay.value);
 });
@@ -172,10 +188,11 @@ const pressedInterval = computed(() => {
         class="day"
         :class="{
           today: d.hasSame(DateTime.now(), 'day'),
+          'selected-day': isMonthView && d.hasSame(currentDatetime, 'day'),
           'not-this-month': d.month !== monthTracker,
-          'in-range': d >= viewInterval.start && d <= viewInterval.end,
-          'range-start': d.hasSame(viewInterval.start, 'day'),
-          'range-end': d.hasSame(viewInterval.end, 'day'),
+          'in-range': !isMonthView && d >= viewInterval.start && d <= viewInterval.end,
+          'range-start': !isMonthView && d.hasSame(viewInterval.start, 'day'),
+          'range-end': !isMonthView && d.hasSame(viewInterval.end, 'day'),
           'pressed-range': pressedInterval && d >= pressedInterval.start && d <= pressedInterval.end,
         }"
         @click="jumpToInterval(d)"
@@ -270,7 +287,7 @@ const pressedInterval = computed(() => {
     text-decoration-thickness: 0.15rem;
     text-underline-offset: 0.2rem;*/
 
-    &:not(.in-range) {
+    &:not(.in-range):not(.selected-day) {
       color: var(--git-color);
     }
 
@@ -304,6 +321,16 @@ const pressedInterval = computed(() => {
     &:has(.hover-layer) {
       filter: saturate(1.2) brightness(0.95); /* small adjustment to the git color when also hovered */
     }
+  }
+
+  &.today.not-this-month:not(.selected-day) {
+    color: color-mix(in srgb, var(--git-color) 45%, transparent);
+  }
+
+  &.selected-day {
+    border-radius: var(--small-border-radius);
+    background-color: var(--git-bg-color);
+    color: var(--text-color-hard);
   }
 
   &.range-start {

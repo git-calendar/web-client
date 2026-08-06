@@ -4,19 +4,28 @@ import { computed } from 'vue';
 
 const props = withDefaults(
   defineProps<{
-    topStyle: string;
-    heightStyle: string;
+    topStyle?: string;
+    heightStyle?: string;
     title: string;
-    subtitle: string;
+    subtitle?: string;
     color?: string;
     temporary?: boolean;
     interactive?: boolean;
     resizable?: boolean;
+    variant?: 'timeline' | 'month';
+    compact?: boolean;
+    withoutTime?: boolean;
+    showSubtitle?: boolean;
   }>(),
   {
+    subtitle: '',
     temporary: false,
     interactive: false,
     resizable: false,
+    variant: 'timeline',
+    compact: false,
+    withoutTime: false,
+    showSubtitle: true,
   },
 );
 
@@ -29,8 +38,8 @@ const dynamicStyles = computed(() => {
   if (props.temporary) color = 'var(--event-color-git)';
 
   return {
-    top: `calc(${props.topStyle} + 1.5px)`,
-    height: `calc(${props.heightStyle} - 2px)`,
+    ...(props.topStyle !== undefined ? { top: `calc(${props.topStyle} + 1.5px)` } : {}),
+    ...(props.heightStyle !== undefined ? { height: `calc(${props.heightStyle} - 2px)` } : {}),
     '--event-color': color,
   };
 });
@@ -38,8 +47,15 @@ const dynamicStyles = computed(() => {
 
 <template>
   <div
-    class="timeline-event"
-    :class="{ temporary: props.temporary, interactive: props.interactive }"
+    class="base-event"
+    :class="{
+      'timeline-event': variant === 'timeline',
+      'month-event': variant === 'month',
+      temporary,
+      interactive,
+      compact,
+      'without-time': withoutTime,
+    }"
     :style="dynamicStyles"
   >
     <div
@@ -49,7 +65,7 @@ const dynamicStyles = computed(() => {
       @click.stop
     />
     <span class="title">{{ title }}</span>
-    <span class="subtitle">{{ subtitle }}</span>
+    <span v-if="showSubtitle" class="subtitle">{{ subtitle }}</span>
     <div
       v-if="resizable"
       class="resize-handle resize-handle-bottom"
@@ -60,7 +76,7 @@ const dynamicStyles = computed(() => {
 </template>
 
 <style scoped>
-.timeline-event {
+.base-event {
   position: absolute;
   left: 0;
   right: 0;
@@ -107,7 +123,7 @@ const dynamicStyles = computed(() => {
 }
 
 /* temporary event styling */
-.timeline-event.temporary {
+.base-event.temporary {
   /* dashed left border (basic dashed border was sus) */
   background-image: repeating-linear-gradient(
     to bottom,
@@ -124,7 +140,7 @@ const dynamicStyles = computed(() => {
 }
 
 /* hover only for non-temporary events */
-.timeline-event:not(.temporary):hover {
+.base-event:not(.temporary):hover {
   filter: brightness(1.15);
 }
 
@@ -136,5 +152,60 @@ const dynamicStyles = computed(() => {
 .subtitle {
   font-size: 0.7rem;
   opacity: 0.8;
+}
+
+.month-event {
+  right: auto;
+  height: 2.4rem;
+  min-height: 2.4rem;
+
+  .title,
+  .subtitle {
+    overflow: hidden;
+    line-height: 1rem;
+  }
+
+  &.without-time {
+    height: 1.4rem;
+    min-height: 1.4rem;
+    padding-block: 0.1rem;
+
+    &:not(.compact) {
+      justify-content: center;
+    }
+  }
+
+  &.compact {
+    height: 1.4rem;
+    min-height: 1.4rem;
+    padding-block: 0.1rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+
+    .title {
+      max-width: 100%;
+      flex: 0 0 auto;
+    }
+
+    .subtitle {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+  }
+}
+
+@media (max-width: 500px) {
+  .month-event {
+    padding-inline: 0.25rem;
+
+    &.compact {
+      gap: 0.15rem;
+
+      .subtitle {
+        display: none;
+      }
+    }
+  }
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import XDaysView from '@/components/timeline/XDaysView.vue';
+import MonthView from '@/components/monthview/MonthView.vue';
 import SideBar from '@/components/SideBar.vue';
 import MonthSideMap from '@/components/MonthSideMap.vue';
 import TopBar from '@/components/TopBar.vue';
@@ -29,7 +30,7 @@ const activeView: ComputedRef<CalendarView> = computed(() => String(route.params
 const views = {
   '4d': [XDaysView, 4],
   w: [XDaysView, 7],
-  m: [null, null],
+  m: [MonthView, null],
 };
 </script>
 

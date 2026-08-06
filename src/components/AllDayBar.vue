@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
-import { getAllDayEndDate, getCurrentViewDatetime, isWholeDay } from '@/utils';
+import { getCurrentViewDatetime } from '@/utils';
+import { getVisibleDayRange, layoutEventsByDay } from '@/utils/allDayEventLayout';
 import { DateTime } from 'luxon';
 import { computed, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
@@ -36,23 +37,6 @@ const todayGridColumn = computed(() => {
   return '';
 });
 
-function visibleRange(event: CalendarEvent) {
-  const end = isWholeDay(event) ? getAllDayEndDate(event) : event.to;
-  const startIndex = event.from.startOf('day').diff(currentDate.value, 'days').days;
-  const endIndex = end.startOf('day').diff(currentDate.value, 'days').days;
-
-  if (endIndex < 0 || startIndex >= props.numOfDays) return null;
-
-  const firstDay = Math.max(0, startIndex);
-  const lastDay = Math.min(props.numOfDays - 1, endIndex);
-
-  return {
-    startIndex: firstDay,
-    endIndex: lastDay,
-    span: Math.max(1, lastDay - firstDay + 1),
-  };
-}
-
 function gridStyle(startIndex: number, span: number, row: number) {
   return {
     gridColumn: `${startIndex + 1} / span ${span}`,
@@ -69,42 +53,18 @@ function startCreate(event: PointerEvent) {
   props.drag.startCreateAllDay(event, element);
 }
 
-const laidOutEvents = computed(() => {
-  const visibleEvents = props.events.flatMap((event) => {
-    const range = visibleRange(event);
-    return range ? [{ event, ...range }] : [];
-  });
-
-  visibleEvents.sort((a, b) => (a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span));
-
-  const rowEnds: number[] = [];
-  return visibleEvents.map((item) => {
-    let rowIndex = rowEnds.findIndex((endIndex) => endIndex < item.startIndex);
-
-    if (rowIndex === -1) {
-      rowIndex = rowEnds.length;
-      rowEnds.push(item.endIndex);
-    } else {
-      rowEnds[rowIndex] = item.endIndex;
-    }
-
-    const row = rowIndex + 1;
-
-    return {
-      event: item.event,
-      startIndex: item.startIndex,
-      endIndex: item.endIndex,
-      row,
-      gridStyle: gridStyle(item.startIndex, item.span, row),
-    };
-  });
-});
+const laidOutEvents = computed(() =>
+  layoutEventsByDay(props.events, currentDate.value, props.numOfDays).map((item) => ({
+    ...item,
+    gridStyle: gridStyle(item.startIndex, item.span, item.row),
+  })),
+);
 
 const previewEvent = computed(() => {
   const event = props.drag.active.value;
   if (props.drag.mode.value !== 'create-all-day' || !event) return null;
 
-  const range = visibleRange(event);
+  const range = getVisibleDayRange(event, currentDate.value, props.numOfDays);
   if (!range) return null;
 
   const occupiedRows = new Set(

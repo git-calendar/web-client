@@ -42,6 +42,9 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
   let resizeDate: DateTime | null = null;
   let createAnchor: DateTime | null = null;
   let allDayAnchorIndex = 0;
+  let allDayGridColumns = 1;
+  let moveByDay = false;
+  let moveGrabOffsetDays = 0;
   let suppressClickUntil = 0;
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -98,6 +101,19 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
   function dateAt(dayIndex: number, minutes: number) {
     const date = dates[dayIndex] ?? dates[0] ?? DateTime.now();
     return date.startOf('day').plus({ minutes: startHour * 60 + minutes });
+  }
+
+  function allDayIndex(clientX: number, clientY: number) {
+    const rect = allDayGrid?.getBoundingClientRect();
+    if (!rect || rect.width <= 0 || rect.height <= 0 || dates.length === 0) return 0;
+
+    const columns = Math.max(1, Math.min(allDayGridColumns, dates.length));
+    const rows = Math.ceil(dates.length / columns);
+    const column = Math.floor((clientX - rect.left) / (rect.width / columns));
+    const row = Math.floor((clientY - rect.top) / (rect.height / rows));
+    const index = Math.max(0, row) * columns + Math.max(0, Math.min(column, columns - 1));
+
+    return Math.max(0, Math.min(index, dates.length - 1));
   }
 
   function gridMinutesFor(date: DateTime, columnDate = date) {
@@ -222,20 +238,42 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     });
   }
 
-  function startCreateAllDay(event: PointerEvent, element: HTMLElement) {
+  function startCreateAllDay(event: PointerEvent, element: HTMLElement, columns = dates.length) {
     if (!isSupportedPointer(event) || hasPointerInteraction() || isActive() || dates.length === 0) return;
 
-    const rect = element.getBoundingClientRect();
-    const anchorIndex = snapDay(event.clientX, rect);
+    allDayGrid = element;
+    allDayGridColumns = columns;
+    const anchorIndex = allDayIndex(event.clientX, event.clientY);
     const date = dates[anchorIndex] ?? DateTime.now();
 
     startPointer(event, () => {
-      allDayGrid = element;
       allDayAnchorIndex = anchorIndex;
       mode.value = 'create-all-day';
       activeColumnDate.value = null;
       source.value = null;
-      active.value = blankEvent(date.startOf('day'), date.endOf('day'));
+      active.value = blankEvent(date.startOf('day'), date.plus({ days: 1 }).startOf('day'));
+    });
+  }
+
+  function startMoveAllDay(
+    event: PointerEvent,
+    calendarEvent: CalendarEvent,
+    element: HTMLElement,
+    columns = dates.length,
+  ) {
+    if (!isSupportedPointer(event) || hasPointerInteraction() || isActive() || !canEdit(calendarEvent)) return;
+
+    allDayGrid = element;
+    allDayGridColumns = columns;
+    const grabbedDate = dates[allDayIndex(event.clientX, event.clientY)] ?? calendarEvent.from;
+
+    startPointer(event, () => {
+      mode.value = 'move';
+      moveByDay = true;
+      moveGrabOffsetDays = Math.round(grabbedDate.startOf('day').diff(calendarEvent.from.startOf('day'), 'days').days);
+      source.value = calendarEvent;
+      active.value = { ...calendarEvent };
+      activeColumnDate.value = grabbedDate;
     });
   }
 
@@ -304,11 +342,25 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     active.value = blankEvent(from, to);
   }
 
-  function updateCreateAllDay(clientX: number) {
-    const rect = allDayGrid?.getBoundingClientRect();
-    if (!rect) return;
+  function updateMoveAllDay(clientX: number, clientY: number) {
+    const original = source.value;
+    const pointerDate = dates[allDayIndex(clientX, clientY)];
+    if (!original || !pointerDate) return;
 
-    const pointerIndex = snapDay(clientX, rect);
+    const nextStartDay = pointerDate.minus({ days: moveGrabOffsetDays }).startOf('day');
+    const dayDelta = Math.round(nextStartDay.diff(original.from.startOf('day'), 'days').days);
+    activeColumnDate.value = pointerDate;
+    active.value = {
+      ...original,
+      from: original.from.plus({ days: dayDelta }),
+      to: original.to.plus({ days: dayDelta }),
+    };
+  }
+
+  function updateCreateAllDay(clientX: number, clientY: number) {
+    if (!allDayGrid) return;
+
+    const pointerIndex = allDayIndex(clientX, clientY);
     const firstIndex = Math.min(allDayAnchorIndex, pointerIndex);
     const lastIndex = Math.max(allDayAnchorIndex, pointerIndex);
     const firstDate = dates[firstIndex];
@@ -344,7 +396,8 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
 
     switch (mode.value) {
       case 'move':
-        updateMove(event.clientX, event.clientY);
+        if (moveByDay) updateMoveAllDay(event.clientX, event.clientY);
+        else updateMove(event.clientX, event.clientY);
         break;
       case 'resize-top':
       case 'resize-bottom':
@@ -354,7 +407,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
         updateCreate(event.clientY);
         break;
       case 'create-all-day':
-        updateCreateAllDay(event.clientX);
+        updateCreateAllDay(event.clientX, event.clientY);
         break;
     }
   }
@@ -386,6 +439,9 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     moved.value = false;
     saving.value = false;
     allDayGrid = null;
+    allDayGridColumns = 1;
+    moveByDay = false;
+    moveGrabOffsetDays = 0;
     createAnchor = null;
     resizeDate = null;
   }
@@ -494,6 +550,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     startMove,
     startResize,
     startCreateAllDay,
+    startMoveAllDay,
     canEdit,
     isSourceEvent,
     consumeClick,
