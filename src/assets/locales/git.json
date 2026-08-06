@@ -3,7 +3,8 @@
     "new": "New Commit",
     "title": "Message",
     "description": "Message \\n",
-    "location": "Origin"
+    "location": "Origin",
+    "more": "more…"
   },
   "saveBtn": "Commit",
   "createBtn": "Init / Clone",
