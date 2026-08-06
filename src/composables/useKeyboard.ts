@@ -66,7 +66,6 @@ export function useKeyboard() {
 
     // M -> switch to month view
     onKeyStroke('m', (e) => {
-      return; // TODO
       if (inputNeededElsewhere()) return;
       e.preventDefault();
 
