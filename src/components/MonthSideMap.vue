@@ -287,7 +287,7 @@ const pressedInterval = computed(() => {
     text-decoration-thickness: 0.15rem;
     text-underline-offset: 0.2rem;*/
 
-    &:not(.in-range) {
+    &:not(.in-range):not(.selected-day) {
       color: var(--git-color);
     }
 
@@ -303,12 +303,6 @@ const pressedInterval = computed(() => {
       background-color: currentColor; /* same as color of parent */
       border-radius: 100rem;
     }
-  }
-
-  &.selected-day {
-    border-radius: var(--small-border-radius);
-    background-color: var(--git-bg-color);
-    color: var(--text-color-hard);
   }
 
   &.not-this-month {
@@ -327,6 +321,16 @@ const pressedInterval = computed(() => {
     &:has(.hover-layer) {
       filter: saturate(1.2) brightness(0.95); /* small adjustment to the git color when also hovered */
     }
+  }
+
+  &.today.not-this-month:not(.selected-day) {
+    color: color-mix(in srgb, var(--git-color) 45%, transparent);
+  }
+
+  &.selected-day {
+    border-radius: var(--small-border-radius);
+    background-color: var(--git-bg-color);
+    color: var(--text-color-hard);
   }
 
   &.range-start {
