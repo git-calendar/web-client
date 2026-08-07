@@ -1,13 +1,14 @@
 import { onMounted } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import router from '@/router';
-import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
-import { DateTime } from 'luxon';
+import { getCalendarRedirect, moveView } from '@/utils';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
 import { useSidebar } from '@/composables/useSidebar';
+import { DateTime } from 'luxon';
+import type { CalendarView } from '@/services/settings';
 
 const calendarModal = useCalendarModal();
 const tagModal = useTagModal();
@@ -16,6 +17,13 @@ const strategyModal = useStrategyModal();
 const sidebar = useSidebar();
 
 export function useKeyboard() {
+  function switchView(view: CalendarView) {
+    router.replace({
+      name: 'calendar',
+      params: { ...router.currentRoute.value.params, view },
+    });
+  }
+
   function inputNeededElsewhere(): boolean {
     return document.activeElement!.matches(
       'input:not([type="radio"]), textarea, select, [contenteditable], [role="textbox"], [role="combobox"]',
@@ -43,16 +51,15 @@ export function useKeyboard() {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
 
-      router.replace(getWeekAlignedRedirect(DateTime.now()));
+      const currentView = String(router.currentRoute.value.params.view) as CalendarView;
+      router.replace(getCalendarRedirect(currentView, DateTime.now()));
     });
 
     // 4 -> switch to 4-day view
     onKeyStroke('4', (e) => {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
-      router.replace({
-        params: { ...router.currentRoute.value.params, view: '4d' },
-      });
+      switchView('4d');
     });
 
     // W -> switch to week view
@@ -60,8 +67,7 @@ export function useKeyboard() {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
 
-      const activeDate = getCurrentViewDatetime(router.currentRoute.value.params);
-      router.replace(getWeekAlignedRedirect(activeDate));
+      switchView('w');
     });
 
     // M -> switch to month view
@@ -69,11 +75,7 @@ export function useKeyboard() {
       if (inputNeededElsewhere()) return;
       e.preventDefault();
 
-      const activeDate = getCurrentViewDatetime(router.currentRoute.value.params);
-      router.replace({
-        name: 'calendar',
-        params: { view: 'm', year: activeDate.year, month: activeDate.month, day: activeDate.day },
-      });
+      switchView('m');
     });
 
     // < -> move view back

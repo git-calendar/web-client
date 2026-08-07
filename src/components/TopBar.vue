@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { DateTime } from 'luxon';
-import { getCurrentViewDatetime, getWeekAlignedRedirect, moveView } from '@/utils';
+import { getCalendarRedirect, moveView } from '@/utils';
 
 import { FiChevronLeft, FiChevronRight } from 'vue-icons-plus/fi';
 import { useRouter } from 'vue-router';
@@ -20,43 +20,18 @@ const sidebar = useSidebar();
 const { width } = useWindowSize(); // reactive window size
 const isMobile = computed(() => width.value < 500);
 
-const view = ref<CalendarView>('4d');
-watch(
-  () => router.currentRoute.value.params.view,
-  (newView) => {
-    view.value = String(newView) as CalendarView;
+const view = computed<CalendarView>({
+  get: () => String(router.currentRoute.value.params.view) as CalendarView,
+  set: (view) => {
+    router.push({
+      name: 'calendar',
+      params: { ...router.currentRoute.value.params, view },
+    });
   },
-  { immediate: true },
-);
-watch(view, (newView) => {
-  const current = getCurrentViewDatetime(router.currentRoute.value.params);
-
-  if (newView === 'w') {
-    router.push(getWeekAlignedRedirect(current));
-  } else if (newView === 'm') {
-    router.push({
-      name: 'calendar',
-      params: { view: 'm', year: current.year, month: current.month, day: current.day },
-    });
-  } else {
-    router.push({
-      name: 'calendar',
-      params: { view: newView, year: current.year, month: current.month, day: current.day },
-    });
-  }
 });
 
 function jumpToToday() {
-  if (view.value === 'm') {
-    const today = DateTime.now();
-    router.push({
-      name: 'calendar',
-      params: { view: 'm', year: today.year, month: today.month, day: today.day },
-    });
-    return;
-  }
-
-  router.push({ name: 'calendar', params: { view: view.value } });
+  router.push(getCalendarRedirect(view.value, DateTime.now()));
 }
 </script>
 

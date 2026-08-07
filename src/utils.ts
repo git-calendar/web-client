@@ -2,33 +2,21 @@ import { DateTime } from 'luxon';
 import { type RouteParamsGeneric, type Router } from 'vue-router';
 import type { CalendarEvent } from '@/types/core';
 import { CalendarCore } from '@/wasm/core-wrapper';
-import { settings } from '@/services/settings';
+import { settings, type CalendarView } from '@/services/settings';
 
 /**
- * Returns the datetime from route parameters. A dateless week route starts at
- * the configured beginning of the current week.
+ * Returns the selected datetime from the route parameters.
  */
 export function getCurrentViewDatetime(params: RouteParamsGeneric): DateTime {
-  const today = DateTime.now();
-
-  if (!params) return today;
-
-  const hasDate = params.year != null || params.month != null || params.day != null;
-  if (!hasDate && params.view === 'w') return getStartOfWeek(today);
-
-  let year = Number(params.year);
-  let month = Number(params.month);
-  let day = Number(params.day);
-
-  if (Number.isNaN(year)) year = today.year;
-  if (Number.isNaN(month)) month = today.month;
-  if (Number.isNaN(day)) day = today.day;
-
-  return DateTime.fromObject({ year: year, month: month, day: day });
+  return DateTime.fromObject({
+    year: Number(params.year),
+    month: Number(params.month),
+    day: Number(params.day),
+  });
 }
 
 /**
- * Updates the date in url when switching views.
+ * Moves the current view backward or forward.
  */
 export function moveView(back: boolean, router: Router) {
   const currentDatetime = getCurrentViewDatetime(router.currentRoute.value.params);
@@ -40,15 +28,10 @@ export function moveView(back: boolean, router: Router) {
   switch (params.view) {
     case 'm':
       newDate = currentDatetime.plus({ month: sign });
-      router.replace({
-        name: 'calendar',
-        params: { view: 'm', year: newDate.year, month: newDate.month, day: newDate.day },
-      });
-      return;
+      break;
     case 'w':
       newDate = currentDatetime.plus({ days: 7 * sign });
-      router.replace(getWeekAlignedRedirect(newDate));
-      return;
+      break;
     case '4d':
       newDate = currentDatetime.plus({ days: 4 * sign });
       break;
@@ -56,10 +39,7 @@ export function moveView(back: boolean, router: Router) {
       return;
   }
 
-  router.replace({
-    name: 'calendar',
-    params: { ...params, year: newDate.year, month: newDate.month, day: newDate.day },
-  });
+  router.replace(getCalendarRedirect(String(params.view) as CalendarView, newDate));
 }
 
 /**
@@ -89,22 +69,28 @@ export function getStartOfWeek(dt: DateTime): DateTime {
 }
 
 /**
- * Returns the router redirect object for week aligned view.
+ * Returns the first visible date while keeping the route's selected date unchanged.
  */
-export function getWeekAlignedRedirect(date: DateTime) {
-  const startOfWeek = getStartOfWeek(date);
-  const currentWeekStart = getStartOfWeek(DateTime.now());
+export function getCurrentViewStartDatetime(params: RouteParamsGeneric): DateTime {
+  const selectedDate = getCurrentViewDatetime(params);
 
+  if (params.view === 'm') return selectedDate.startOf('month');
+  if (params.view === 'w') return getStartOfWeek(selectedDate);
+  return selectedDate.startOf('day');
+}
+
+/**
+ * Returns a calendar route that preserves the selected date for every view.
+ */
+export function getCalendarRedirect(view: CalendarView, date: DateTime) {
   return {
     name: 'calendar',
-    params: startOfWeek.hasSame(currentWeekStart, 'day')
-      ? { view: 'w' }
-      : {
-          view: 'w',
-          year: startOfWeek.year,
-          month: startOfWeek.month,
-          day: startOfWeek.day,
-        },
+    params: {
+      view,
+      year: date.year,
+      month: date.month,
+      day: date.day,
+    },
   };
 }
 

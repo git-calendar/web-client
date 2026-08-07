@@ -8,9 +8,9 @@ import { useTranslation } from '@/composables/useTranslation';
 import { eventsRevision } from '@/composables/useEventsRefresh';
 import { useCalendarDrag } from '@/composables/useCalendarDrag';
 import { useCalendarFilters } from '@/services/calendarFilters';
-import { settings } from '@/services/settings';
+
 import type { CalendarEvent } from '@/types/core';
-import { getCurrentViewDatetime, getStartOfWeek } from '@/utils';
+import { getCurrentViewStartDatetime, getStartOfWeek } from '@/utils';
 import { CalendarCore } from '@/wasm/core-wrapper';
 
 const route = useRoute();
@@ -20,7 +20,7 @@ const { filter } = useCalendarFilters();
 
 const isMobile = computed(() => width.value < 500);
 
-const monthStart = computed(() => getCurrentViewDatetime(route.params).startOf('month'));
+const monthStart = computed(() => getCurrentViewStartDatetime(route.params));
 const gridStart = computed(() => getStartOfWeek(monthStart.value));
 const days = computed(() => Array.from({ length: 42 }, (_, index) => gridStart.value.plus({ days: index })));
 const events = ref<CalendarEvent[]>([]);
@@ -57,7 +57,7 @@ function startMove(calendarEvent: CalendarEvent, event: PointerEvent) {
   if (grid) drag.startMoveAllDay(event, calendarEvent, grid, 7);
 }
 
-watch([gridStart, eventsRevision, filter, () => settings.value.weekStart], () => void updateData(), {
+watch([gridStart, eventsRevision, filter], () => void updateData(), {
   immediate: true,
 });
 

@@ -7,7 +7,7 @@ import MonthEvent from '@/components/monthview/MonthEvent.vue';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarDragController } from '@/composables/useCalendarDrag';
 import type { CalendarEvent } from '@/types/core';
-import { getWeekAlignedRedirect, isWholeDay } from '@/utils';
+import { getCalendarRedirect, isWholeDay } from '@/utils';
 import router from '@/router';
 import { getVisibleEventsByDay } from '@/utils/allDayEventLayout';
 
@@ -119,7 +119,7 @@ function startMove(calendarEvent: CalendarEvent, event: PointerEvent) {
 }
 
 function openWeek(day: DateTime) {
-  router.push(getWeekAlignedRedirect(day));
+  router.push(getCalendarRedirect('w', day));
 }
 </script>
 

@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { DateTime } from 'luxon';
 import CalendarView from '@/views/CalendarView.vue';
 import SettingsView from '@/views/SettingsView.vue';
 import FileExplorer from '@/views/FileExplorer.vue';
 import Guide from '@/views/Guide.vue';
-import { settings } from '@/services/settings';
+import { settings, type CalendarView as CalendarViewName } from '@/services/settings';
+import { getCalendarRedirect } from '@/utils';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,8 +13,12 @@ const router = createRouter({
     { path: '/week', redirect: '/w' }, // TODO: delete compatibility
     { path: '/4days', redirect: '/4d' },
     {
+      path: '/:view(4d|w|m)',
+      redirect: (to) => getCalendarRedirect(String(to.params.view) as CalendarViewName, DateTime.now()),
+    },
+    {
       name: 'calendar',
-      path: '/:view(4d|w|m)/:year(\\d+)?/:month(\\d+)?/:day(\\d+)?',
+      path: '/:view(4d|w|m)/:year(\\d+)/:month(\\d+)/:day(\\d+)',
       component: CalendarView,
     },
 
@@ -21,10 +27,7 @@ const router = createRouter({
     { path: '/files', component: FileExplorer },
     {
       path: '/:pathMatch(.*)*', // anything
-      redirect: () => ({
-        name: 'calendar',
-        params: { view: settings.value.defaultView },
-      }),
+      redirect: () => getCalendarRedirect(settings.value.defaultView, DateTime.now()),
     },
   ],
 });

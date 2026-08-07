@@ -5,7 +5,7 @@ import type { CalendarEvent } from '@/types/core.ts';
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
-import { getCurrentViewDatetime, isWholeDay } from '@/utils';
+import { getCurrentViewStartDatetime, isWholeDay } from '@/utils';
 import { useRoute } from 'vue-router';
 import CursorLine from '@/components/timeline/CursorLine.vue';
 import { useWindowSize } from '@vueuse/core';
@@ -30,7 +30,7 @@ const props = defineProps<{
 }>();
 
 const isMobile = computed(() => width.value < 500);
-const startDate = computed(() => getCurrentViewDatetime(route.params));
+const startDate = computed(() => getCurrentViewStartDatetime(route.params));
 const dates = computed(() =>
   Array.from({ length: props.numOfDays }, (_, index) => startDate.value.plus({ days: index })),
 );
@@ -150,7 +150,7 @@ watchEffect(() => {
     </div>
 
     <span>{{ $t('allday') }}</span>
-    <AllDayBar :numOfDays="numOfDays" :events="eventGroups.allDay" :drag="drag" />
+    <AllDayBar :view-start="startDate" :num-of-days="numOfDays" :events="eventGroups.allDay" :drag="drag" />
 
     <div id="left-time-bar">
       <span v-for="h in hoursOnGrid" :key="h">{{ h }}</span>

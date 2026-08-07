@@ -1,35 +1,31 @@
 <script setup lang="ts">
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
-import { getCurrentViewDatetime } from '@/utils';
 import { getVisibleDayRange, layoutEventsByDay } from '@/utils/allDayEventLayout';
 import { DateTime } from 'luxon';
 import { computed, useTemplateRef } from 'vue';
-import { useRoute } from 'vue-router';
 import AllDayEvent from '@/components/AllDayEvent.vue';
 import { getTag } from '@/services/calendarCache';
 import type { CalendarDragController } from '@/composables/useCalendarDrag';
 
-const route = useRoute();
 const eventModal = useEventModal();
 
 const props = defineProps<{
   events: CalendarEvent[];
+  viewStart: DateTime;
   numOfDays: number;
   drag: CalendarDragController;
 }>();
 
 const allDayBarRef = useTemplateRef<HTMLElement>('all-day-bar-ref');
 
-const currentDate = computed(() => getCurrentViewDatetime(route.params).startOf('day'));
-
 const todayGridColumn = computed(() => {
   const today = DateTime.now()
-    .setZone(currentDate.value.zoneName ?? undefined)
+    .setZone(props.viewStart.zoneName ?? undefined)
     .startOf('day');
 
   for (let i = 0; i < props.numOfDays; i++) {
-    if (currentDate.value.plus({ days: i }).hasSame(today, 'day')) {
+    if (props.viewStart.plus({ days: i }).hasSame(today, 'day')) {
       return `${i + 1} / span 1`;
     }
   }
@@ -54,7 +50,7 @@ function startCreate(event: PointerEvent) {
 }
 
 const laidOutEvents = computed(() =>
-  layoutEventsByDay(props.events, currentDate.value, props.numOfDays).map((item) => ({
+  layoutEventsByDay(props.events, props.viewStart, props.numOfDays).map((item) => ({
     ...item,
     gridStyle: gridStyle(item.startIndex, item.span, item.row),
   })),
@@ -64,7 +60,7 @@ const previewEvent = computed(() => {
   const event = props.drag.active.value;
   if (props.drag.mode.value !== 'create-all-day' || !event) return null;
 
-  const range = getVisibleDayRange(event, currentDate.value, props.numOfDays);
+  const range = getVisibleDayRange(event, props.viewStart, props.numOfDays);
   if (!range) return null;
 
   const occupiedRows = new Set(

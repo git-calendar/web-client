@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useTranslation } from '@/composables/useTranslation';
 import router from '@/router';
-import { settings } from '@/services/settings';
-import { getCurrentViewDatetime, getStartOfWeek, getViewLengthInDays, getWeekAlignedRedirect } from '@/utils';
+import { getCurrentViewDatetime, getCurrentViewStartDatetime, getStartOfWeek, getViewLengthInDays } from '@/utils';
 import { DateTime } from 'luxon';
 import { computed, ref, watch } from 'vue';
 import { FiChevronDown, FiChevronUp } from 'vue-icons-plus/fi';
@@ -11,13 +10,13 @@ import { useRoute } from 'vue-router';
 const { monthNameLong } = useTranslation();
 const route = useRoute();
 
-const currentDatetime = ref<DateTime>(DateTime.now());
+const selectedDate = computed(() => getCurrentViewDatetime(route.params));
 const isMonthView = computed(() => route.params.view === 'm');
-const monthTracker = ref(currentDatetime.value.month);
-const yearTracker = ref(currentDatetime.value.year);
+const monthTracker = ref(selectedDate.value.month);
+const yearTracker = ref(selectedDate.value.year);
 
 const viewInterval = computed(() => {
-  const start = currentDatetime.value;
+  const start = getCurrentViewStartDatetime(route.params);
   const length = getViewLengthInDays(route.params);
 
   return {
@@ -33,40 +32,20 @@ const days = computed(() => {
     day: 1,
   });
 
-  const result: DateTime[] = [];
-
-  // adjust weekday based on custom week start
-  const weekday = firstOfTheMonth.weekday; // 1–7 (Mon–Sun)
-  const weekStart = settings.value.weekStart; // 1–7
-
-  const numOfDaysFromLastMonth = (weekday - weekStart + 7) % 7;
-
-  // trailing days from previous month
-  for (let i = numOfDaysFromLastMonth; i > 0; i--) {
-    result.push(firstOfTheMonth.minus({ days: i }));
-  }
-
-  // fill remaining cells (6×7 = 42)
-  const moreDaysNeeded = 6 * 7 - result.length;
-  for (let i = 0; i < moreDaysNeeded; i++) {
-    result.push(firstOfTheMonth.plus({ days: i }));
-  }
-
-  return result;
+  const gridStart = getStartOfWeek(firstOfTheMonth);
+  return Array.from({ length: 42 }, (_, index) => gridStart.plus({ days: index }));
 });
 
 watch(
   () => route.params,
   () => {
-    const viewStart = getCurrentViewDatetime(route.params);
-    currentDatetime.value = viewStart;
-
     if (isMonthView.value) {
-      monthTracker.value = viewStart.month;
-      yearTracker.value = viewStart.year;
+      monthTracker.value = selectedDate.value.month;
+      yearTracker.value = selectedDate.value.year;
       return;
     }
 
+    const viewStart = getCurrentViewStartDatetime(route.params);
     const viewEnd = viewStart.plus({
       days: getViewLengthInDays(route.params),
     });
@@ -107,16 +86,15 @@ function changeMonthNum(up: boolean) {
 }
 
 function jumpToInterval(clickedDay: DateTime) {
-  if (route.params.view === 'w') {
-    router.replace(getWeekAlignedRedirect(clickedDay));
-  } else if (isMonthView.value) {
-    router.replace({
-      name: 'calendar',
-      params: { view: 'm', year: clickedDay.year, month: clickedDay.month, day: clickedDay.day },
-    });
-  } else {
-    router.replace({ params: { year: clickedDay.year, month: clickedDay.month, day: clickedDay.day } });
-  }
+  router.replace({
+    name: 'calendar',
+    params: {
+      ...route.params,
+      year: clickedDay.year,
+      month: clickedDay.month,
+      day: clickedDay.day,
+    },
+  });
 }
 
 const hoveredDay = ref<DateTime | null>(null);
@@ -188,7 +166,7 @@ const pressedInterval = computed(() => {
         class="day"
         :class="{
           today: d.hasSame(DateTime.now(), 'day'),
-          'selected-day': isMonthView && d.hasSame(currentDatetime, 'day'),
+          'selected-day': isMonthView && d.hasSame(selectedDate, 'day'),
           'not-this-month': d.month !== monthTracker,
           'in-range': !isMonthView && d >= viewInterval.start && d <= viewInterval.end,
           'range-start': !isMonthView && d.hasSame(viewInterval.start, 'day'),
