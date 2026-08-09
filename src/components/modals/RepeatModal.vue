@@ -24,7 +24,7 @@ const form = reactive({
   frequency: rule.freq,
   interval: rule.interval,
   weekdays: [...initialWeekdays],
-  end: rule.until ? 'on' : 'after',
+  end: rule.until ? 'on' : rule.count ? 'after' : 'never',
   endAfter: rule.count || 5,
   endOn: rule.until
     ? (DateTime.fromJSDate(rule.until).toISODate() ?? '')
@@ -61,6 +61,7 @@ const canSave = computed(() => {
   if (!Number.isInteger(form.interval) || form.interval < 1) return false;
   if (form.frequency === RRule.WEEKLY && form.weekdays.length === 0) return false;
 
+  if (form.end === 'never') return true;
   if (form.end === 'after') return Number.isInteger(form.endAfter) && form.endAfter > 0;
 
   const endDate = DateTime.fromISO(form.endOn);
@@ -144,6 +145,10 @@ onMounted(() => intervalInput.value?.focus());
 
       <div class="ends">
         <span>{{ $t('event.repeat.ends') }}:</span>
+        <label>
+          <input v-model="form.end" type="radio" name="repeat-end" value="never" />
+          {{ $t('event.repeat.never') }}
+        </label>
         <label>
           <input v-model="form.end" type="radio" name="repeat-end" value="after" />
           {{ $t('event.repeat.endAfter') }}:

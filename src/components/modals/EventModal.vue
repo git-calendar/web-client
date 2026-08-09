@@ -16,8 +16,9 @@ import { cachedCalendars, getDefaultCalendar, loadCalendars } from '@/services/c
 import { getAllDayEndDate, isWholeDay } from '@/utils';
 
 const repeatEndOptions = [
-  { value: 'on', label: 'On' },
-  { value: 'after', label: 'After' },
+  { value: 'never', translationKey: 'never' },
+  { value: 'on', translationKey: 'endOn' },
+  { value: 'after', translationKey: 'endAfter' },
 ];
 const frequencyOptions = [
   { value: 'never', frequency: null },
@@ -161,6 +162,8 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
       } else if (until) {
         form.repeatEnd = 'on';
         form.repeatEndOn = DateTime.fromJSDate(until, { zone: event.from.zone }).toISODate() ?? '';
+      } else {
+        form.repeatEnd = 'never';
       }
     }
   }
@@ -419,7 +422,7 @@ function validate(event: CalendarEvent): boolean {
   if (form.repeatSelection !== 'never') {
     const isCustom = form.repeatSelection === 'custom';
     const options = customRepeat.value.options;
-    const repeatEnd = isCustom ? (options.until ? 'on' : 'after') : form.repeatEnd;
+    const repeatEnd = isCustom ? (options.until ? 'on' : options.count ? 'after' : 'never') : form.repeatEnd;
     const repeatEndAfter = isCustom ? options.count : form.repeatEndAfter;
     const repeatEndOn =
       isCustom && options.until
@@ -442,7 +445,7 @@ function validate(event: CalendarEvent): boolean {
         if (isCustom) isRepeatModalOpen.value = true;
         return false;
       }
-    } else {
+    } else if (repeatEnd === 'on') {
       const until = DateTime.fromISO(repeatEndOn, { zone: event.from.zone });
       if (!until.isValid || until.startOf('day') < event.from.startOf('day')) {
         errors.badUntilDate = true;
@@ -538,8 +541,8 @@ onMounted(async () => {
         <label v-if="form.repeatSelection !== 'never' && form.repeatSelection !== 'custom'">
           {{ $t('event.repeat.end') }}:
           <select name="end" v-model="form.repeatEnd">
-            <option v-for="end in repeatEndOptions" :value="end.value" :key="end.label">
-              {{ $t(`event.repeat.end${end.label}`) }}
+            <option v-for="end in repeatEndOptions" :value="end.value" :key="end.value">
+              {{ $t(`event.repeat.${end.translationKey}`) }}
             </option>
           </select>
 
