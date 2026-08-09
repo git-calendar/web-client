@@ -25,8 +25,8 @@ npm run dev         # run locally
   - [x] drag to create event
   - [x] drag horizontally for multi-day event
   - [x] drag to move existing event
-- [ ] month view
-- [ ] mobile friendly
+- [x] month view
+- [x] mobile friendly
   - [x] basic responsiveness
   - [ ] verify drag-to-create on ios etc.
 - [ ] prettier tag/color picker
