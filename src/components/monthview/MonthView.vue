@@ -125,6 +125,9 @@ watchEffect(() => {
   border-top: var(--grid-border);
   border-left: var(--grid-border);
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 @media (max-width: 768px) {
