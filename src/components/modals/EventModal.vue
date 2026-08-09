@@ -2,7 +2,7 @@
 import { ref, shallowRef, reactive, watch, onMounted, useTemplateRef, toRaw, computed, nextTick } from 'vue';
 import { UpdateStrategy, type CalendarEvent } from '@/types/core';
 import { DateTime } from 'luxon';
-import { RRule, RRuleSet, rrulestr, type Frequency } from 'rrule';
+import { datetime, RRule, RRuleSet, rrulestr, type Frequency } from 'rrule';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import StrategyModal from '@/components/modals/StrategyModal.vue';
@@ -242,10 +242,17 @@ function parseRepeat(repeat: string): RRuleSet {
   return rrulestr(repeat, { forceset: true }) as RRuleSet;
 }
 
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+function toRRuleDateTime(value: DateTime): Date {
+  return datetime(value.year, value.month, value.day, value.hour, value.minute, value.second);
+}
+
 function buildRepeat(from: DateTime): string | undefined {
   if (form.repeatSelection === 'never' || !from.isValid) return;
 
   const recurrence = new RRuleSet();
+  const dtstart = toRRuleDateTime(from);
 
   if (form.repeatSelection === 'custom') {
     const options = customRepeat.value.options;
@@ -261,11 +268,12 @@ function buildRepeat(from: DateTime): string | undefined {
     recurrence.rrule(
       new RRule({
         freq: options.freq,
-        dtstart: from.toJSDate(),
+        dtstart,
+        tzid: localTimeZone,
         interval: options.interval,
         byweekday: options.freq === RRule.WEEKLY ? options.byweekday : undefined,
         count: options.count || undefined,
-        until: until?.toJSDate(),
+        until: until ? toRRuleDateTime(until) : undefined,
       }),
     );
   } else {
@@ -283,9 +291,10 @@ function buildRepeat(from: DateTime): string | undefined {
     recurrence.rrule(
       new RRule({
         freq: frequency,
-        dtstart: from.toJSDate(),
+        dtstart,
+        tzid: localTimeZone,
         count: form.repeatEnd === 'after' ? form.repeatEndAfter : undefined,
-        until: form.repeatEnd === 'on' ? until.toJSDate() : undefined,
+        until: form.repeatEnd === 'on' ? toRRuleDateTime(until) : undefined,
       }),
     );
   }
