@@ -12,8 +12,9 @@ import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { syncAllWrapper } from '@/services/gitSync';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
-import { cachedCalendars, getDefaultCalendar, loadCalendars } from '@/services/calendarCache';
+import { cachedCalendars, getDefaultCalendar, getTag, loadCalendars } from '@/services/calendarCache';
 import { getAllDayEndDate, isWholeDay } from '@/utils';
+import { getEventColorCSSVariable, toColorId } from '@/colors';
 
 const repeatEndOptions = [
   { value: 'never', translationKey: 'never' },
@@ -65,6 +66,7 @@ const isLocked = computed(() => isSaving.value || isDeleting.value || isUpdating
 const isReadonly = computed(
   () => cachedCalendars.value.find((calendar) => calendar.name === thisModal.event.value?.calendar)?.readonly ?? false,
 );
+const selectedTagColor = computed(() => getEventColorCSSVariable(toColorId(getTag(form.calendar, form.tagId)?.color)));
 
 const form = reactive({
   title: '',
@@ -587,16 +589,19 @@ onMounted(async () => {
             </option>
           </select>
 
-          <select name="tag" id="tag" v-model="form.tagId">
-            <option value="">{{ $t('tag.notag') }}</option>
-            <option
-              v-for="tag in cachedCalendars.find((cal) => cal.name == form.calendar)?.tags ?? []"
-              :key="tag.id"
-              :value="tag.id"
-            >
-              {{ tag.name }}
-            </option>
-          </select>
+          <div class="tag-select" :style="{ '--tag-color': selectedTagColor }">
+            <span class="tag-color" aria-hidden="true"></span>
+            <select name="tag" id="tag" v-model="form.tagId">
+              <option value="">{{ $t('tag.notag') }}</option>
+              <option
+                v-for="tag in cachedCalendars.find((cal) => cal.name == form.calendar)?.tags ?? []"
+                :key="tag.id"
+                :value="tag.id"
+              >
+                {{ tag.name }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <input
@@ -642,6 +647,28 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.tag-select {
+  position: relative;
+
+  select {
+    width: 100%;
+    padding-left: 2rem;
+  }
+}
+
+.tag-color {
+  position: absolute;
+  top: 50%;
+  left: 0.6rem;
+  z-index: 1;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: var(--small-border-radius);
+  background-color: var(--tag-color);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
 .repeat-row {
   display: flex;
   align-items: center;
