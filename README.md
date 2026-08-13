@@ -29,5 +29,5 @@ npm run dev         # run locally
 - [x] mobile friendly
   - [x] basic responsiveness
   - [x] verify drag-to-create on ios etc.
-- [ ] prettier tag/color picker
+- [x] prettier tag/color picker
 - [x] infinite repeat option

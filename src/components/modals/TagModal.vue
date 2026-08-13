@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { colorsList, getColorI18nKey } from '@/colors';
+import ColorPicker from '@/components/ColorPicker.vue';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
 import { refreshCalendars } from '@/services/calendarCache';
@@ -144,15 +144,12 @@ onMounted(async () => {
           @input="errors.missingName = false"
         />
 
-        <!-- TODO: prettier color picker -->
-        <label>
-          {{ $t('tag.color') }}:
-          <select name="color" id="color" v-model="form.color">
-            <option v-for="color in colorsList" :key="color" :value="color">
-              {{ $t(getColorI18nKey(color)) }}
-            </option>
-          </select>
-        </label>
+        <ColorPicker
+          v-model="form.color"
+          :label="$t('tag.color')"
+          :invalid="errors.missingColor"
+          @update:model-value="errors.missingColor = false"
+        />
 
         <div class="bottom-btns">
           <button type="submit">
@@ -171,8 +168,7 @@ onMounted(async () => {
 <style scoped>
 #tag-modal {
   > form {
-    min-width: 20rem;
-    width: auto;
+    width: min(90%, 20rem);
   }
 }
 </style>
