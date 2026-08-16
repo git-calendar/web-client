@@ -131,29 +131,33 @@ export function getAllDayEndDate(event: CalendarEvent): DateTime {
 export async function exportZip(calendar: string = '') {
   const zipBytes = await CalendarCore.exportZip(calendar);
   const fileName = calendar ? `${calendar}.zip` : `git-calendar-data.zip`;
+  await saveFile(zipBytes, fileName, 'ZIP archive', 'application/zip', '.zip');
+}
 
+export async function exportICal(calendar: string = '') {
+  const iCalBytes = await CalendarCore.exportICal(calendar);
+  const fileName = calendar ? `${calendar}.ics` : `git-calendar-data.ics`;
+  await saveFile(iCalBytes, fileName, 'iCalendar file', 'text/calendar', '.ics');
+}
+
+async function saveFile(data: BlobPart, fileName: string, description: string, mimeType: string, extension: string) {
   if ('showSaveFilePicker' in window && typeof window.showSaveFilePicker == 'function') {
     const handle = await window.showSaveFilePicker({
       suggestedName: fileName,
-      types: [
-        {
-          description: 'ZIP archive',
-          accept: { 'application/zip': ['.zip'] },
-        },
-      ],
+      types: [{ description, accept: { [mimeType]: [extension] } }],
     });
 
     const writable = await handle.createWritable();
-    await writable.write(zipBytes);
+    await writable.write(data);
     await writable.close();
   } else {
-    // firefox doesnt have the showSaveFilePicker method
-    downloadBlob(zipBytes, fileName);
+    // Firefox does not have the showSaveFilePicker method.
+    downloadBlob(data, fileName, mimeType);
   }
 }
 
-function downloadBlob(data: BlobPart, filename: string) {
-  const blob = new Blob([data], { type: 'application/zip' });
+function downloadBlob(data: BlobPart, filename: string, mimeType: string) {
+  const blob = new Blob([data], { type: mimeType });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement('a');

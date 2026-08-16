@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime, type WeekdayNumbers } from 'luxon';
-import { DRAG_PRECISIONS, LANGUAGES, THEMES } from '@/constants.ts';
+import { DRAG_PRECISIONS, LANGUAGES, THEMES } from '@/constants';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { settings } from '@/services/settings';
 import { colorsList, getColorI18nKey } from '@/colors';
+import DataManagement from '@/components/DataManagement.vue';
 
 const { dayNameLong } = useTranslation();
 const { alert } = useAlertModal();
@@ -107,16 +108,24 @@ function formatHour(hour: number): string {
         placeholder="https://..."
       />
     </label>
+
+    <DataManagement />
   </form>
 </template>
 
 <style scoped>
 form {
   display: grid;
-  justify-content: center;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: start;
+  align-content: start;
+  width: min(100%, 28rem);
+  height: 100%;
+  margin: 0 auto;
+  overflow-y: auto;
   padding: 2rem;
   gap: 1rem;
+  cursor: text;
 
   > label {
     width: 100%;
@@ -124,6 +133,10 @@ form {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
+
+    > :is(input, select, div) {
+      cursor: auto;
+    }
 
     > input[name='cors-proxy'] {
       width: 12rem;

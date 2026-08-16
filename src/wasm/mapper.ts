@@ -2,6 +2,10 @@ import { DateTime } from 'luxon';
 
 const dateTimeFieldNames: string[] = ['from', 'to', 'until'];
 
+function isBinaryData(data: object): boolean {
+  return data instanceof ArrayBuffer || ArrayBuffer.isView(data) || data instanceof Blob || data instanceof File;
+}
+
 function toCamelCase(str: string): string {
   return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
@@ -25,13 +29,7 @@ export function hydrateDates<T>(data: unknown): T {
   if (data === null || typeof data !== 'object') return data as T;
 
   // preserve binary data
-  if (
-    data instanceof Uint8Array ||
-    data instanceof ArrayBuffer ||
-    ArrayBuffer.isView(data) ||
-    data instanceof Blob ||
-    data instanceof File
-  ) {
+  if (isBinaryData(data)) {
     return data as T;
   }
 
@@ -75,6 +73,11 @@ export function dehydrateDates<T>(data: T): T {
   }
 
   if (data === null || typeof data !== 'object') {
+    return data;
+  }
+
+  // preserve binary data for methods such as restoreZip
+  if (isBinaryData(data)) {
     return data;
   }
 

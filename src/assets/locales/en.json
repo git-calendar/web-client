@@ -13,7 +13,20 @@
     "weekStart": "Week start",
     "dragPrecision": "Drag precision",
     "hourRange": "Hour range",
-    "defaultColor": "Default event color"
+    "defaultColor": "Default event color",
+    "dataManagement": {
+      "title": "Data management",
+      "export": "Export",
+      "exporting": "Exporting...",
+      "exportCalendar": "Calendar to export",
+      "exportFormat": "Export format",
+      "allData": "All data",
+      "importZip": "Import ZIP",
+      "restoring": "Restoring...",
+      "restoreWarning": "Warning: importing a ZIP backup will override all current calendar data.",
+      "confirmRestore": "Restore data from {name}? All current calendar data will be overridden.",
+      "restoreSuccess": "Calendar data restored successfully."
+    }
   },
   "event": {
     "new": "New Event",

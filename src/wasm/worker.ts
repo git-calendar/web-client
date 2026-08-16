@@ -176,8 +176,11 @@ async function dispatch({ id, method, args }: RpcRequest): Promise<void> {
       throw new Error(`Method "${method}" not found on CalendarCore`);
     }
 
-    // Serialize object args to JSON for Go
-    const serializedArgs = args.map((arg) => (typeof arg === 'object' && arg !== null ? JSON.stringify(arg) : arg));
+    // Serialize domain objects to JSON for Go, but preserve native byte arrays.
+    const serializedArgs = args.map((arg) => {
+      if (arg instanceof ArrayBuffer || ArrayBuffer.isView(arg)) return arg;
+      return typeof arg === 'object' && arg !== null ? JSON.stringify(arg) : arg;
+    });
 
     const raw = await api[method](...serializedArgs);
 

@@ -13,7 +13,20 @@
     "weekStart": "Začátek týdne",
     "dragPrecision": "Přesnost při tažení",
     "hourRange": "Rozmezí hodin",
-    "defaultColor": "Výchozí barva událostí"
+    "defaultColor": "Výchozí barva událostí",
+    "dataManagement": {
+      "title": "Správa dat",
+      "export": "Exportovat",
+      "exporting": "Exportování...",
+      "exportCalendar": "Kalendář k exportu",
+      "exportFormat": "Formát exportu",
+      "allData": "Všechna data",
+      "importZip": "Importovat ZIP",
+      "restoring": "Obnovování...",
+      "restoreWarning": "Varování: import ZIP zálohy přepíše všechna aktuální data kalendářů.",
+      "confirmRestore": "Obnovit data ze souboru {name}? Všechna aktuální data kalendářů budou přepsána.",
+      "restoreSuccess": "Data kalendářů byla úspěšně obnovena."
+    }
   },
   "event": {
     "new": "Nová událost",
