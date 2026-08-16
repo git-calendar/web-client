@@ -4,8 +4,7 @@ import { useSlots } from 'vue';
 import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import { useSidebar } from '@/composables/useSidebar';
 import NewEventBtn from '@/components/NewEventBtn.vue';
-import { exportZip } from '@/utils';
-import { LuFolderArchive, LuRefreshCcw } from 'vue-icons-plus/lu';
+import { LuRefreshCcw } from 'vue-icons-plus/lu';
 import { syncAllWrapper } from '@/services/gitSync';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
@@ -44,14 +43,6 @@ async function syncAndReload() {
       </router-link>
       <button
         type="button"
-        :title="$t('actions.exportCalendars')"
-        :aria-label="$t('actions.exportCalendars')"
-        @click="exportZip('')"
-      >
-        <LuFolderArchive style="transform: scale(1.1)" />
-      </button>
-      <button
-        type="button"
         :title="$t('actions.syncCalendars')"
         :aria-label="$t('actions.syncCalendars')"
         @click="syncAndReload"
@@ -59,7 +50,7 @@ async function syncAndReload() {
         <LuRefreshCcw />
       </button>
       <a
-        href="https://github.com/git-calendar/web-client"
+        href="https://github.com/git-calendar"
         target="_blank"
         rel="noopener noreferrer"
         :title="$t('actions.sourceCode')"
