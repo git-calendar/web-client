@@ -65,7 +65,9 @@ export interface CalendarApi {
 
   setCorsProxy(url: string): void;
   syncAll(): void;
-  exportZip(calendar: string): ArrayBuffer;
+  exportICal(calendar: string): Uint8Array<ArrayBuffer>;
+  exportZip(calendar: string): Uint8Array<ArrayBuffer>;
+  restoreZip(data: Uint8Array<ArrayBuffer>): void;
 }
 
 export enum UpdateStrategy {
