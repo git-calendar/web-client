@@ -220,15 +220,56 @@ async function deleteCal() {
 function validate(): boolean {
   form.name = form.name.trim();
   form.remoteURL = form.remoteURL.trim();
-  if (!form.remoteURL || isICalFile.value) return true;
+
+  if (isICalFile.value) {
+    if (writableCalendars.value.length === 0) {
+      return validationError('message.noWritableCalendars');
+    }
+    if (!form.file) {
+      return validationError('message.errorICalFileRequired');
+    }
+    if (!writableCalendars.value.some((calendar) => calendar.name === form.destination)) {
+      return validationError('message.errorICalDestinationRequired');
+    }
+    return true;
+  }
+
+  if (form.how !== 'Clone' && !form.name) {
+    return validationError('message.errorCalendarNameRequired');
+  }
+
+  if (!form.remoteURL) {
+    if (form.how === 'Clone') {
+      return validationError('message.errorRemoteUrlRequired');
+    }
+    if (isICalURL.value) {
+      return validationError('message.errorICalUrlRequired');
+    }
+    if (thisModal.isNew.value && form.encrypted && !form.encryptionKey) {
+      return validationError('message.errorEncryptionKeyRequired');
+    }
+    return true;
+  }
 
   const url = parseURL(form.remoteURL);
-  if (!url) return false;
+  if (!url) {
+    return validationError('message.errorInvalidUrl');
+  }
 
   const suffix = isICalURL.value ? '.ics' : '.git';
-  if (url.pathname.toLowerCase().endsWith(suffix)) return true;
+  if (!url.pathname.toLowerCase().endsWith(suffix)) {
+    return validationError(isICalURL.value ? 'message.errorICalUrlEndDotIcs' : 'message.errorRemoteUrlEndDotGit');
+  }
 
-  alert(t(isICalURL.value ? 'message.errorICalUrlEndDotIcs' : 'message.errorRemoteUrlEndDotGit'));
+  if (thisModal.isNew.value && form.encrypted && !form.encryptionKey) {
+    return validationError('message.errorEncryptionKeyRequired');
+  }
+
+  return true;
+}
+
+function validationError(messageKey: string): false {
+  void alert(t(messageKey));
   return false;
 }
 
@@ -307,7 +348,7 @@ onMounted(() => {
 
 <template>
   <div id="calendar-modal" class="modal">
-    <form @submit.prevent="saveCalendar" :aria-busy="isLocked">
+    <form @submit.prevent="saveCalendar" :aria-busy="isLocked" novalidate>
       <fieldset :disabled="isLocked">
         <MultiToggle v-if="thisModal.isNew.value" v-model="form.how" :options="howOptions" class="mode-toggle" />
 
@@ -381,6 +422,7 @@ onMounted(() => {
               name="encryption-key"
               :placeholder="$t('calendar.encryptionKey')"
               autocomplete="current-password"
+              required
             />
           </div>
         </template>

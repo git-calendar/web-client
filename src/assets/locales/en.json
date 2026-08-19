@@ -151,8 +151,15 @@
   },
   "message": {
     "confirmCalendarDelete": "Do you really want to delete the whole calendar?",
-    "errorRemoteUrlEndDotGit": "Remote URL must end with \".git\".",
-    "errorICalUrlEndDotIcs": "iCalendar URL must end with \".ics\".",
+    "errorCalendarNameRequired": "Enter a calendar name. The name cannot be empty or contain only spaces.",
+    "errorRemoteUrlRequired": "Enter a Git repository URL. A URL is required when cloning a calendar.",
+    "errorICalUrlRequired": "Enter an iCalendar URL. A URL is required when importing from a URL.",
+    "errorInvalidUrl": "Enter a valid absolute URL, including the scheme (for example, \"https://\").",
+    "errorRemoteUrlEndDotGit": "The Git repository URL must end with \".git\".",
+    "errorICalUrlEndDotIcs": "The iCalendar URL path must end with \".ics\".",
+    "errorICalFileRequired": "Select an iCalendar file with the .ics extension to import.",
+    "errorICalDestinationRequired": "Select an available writable calendar as the import destination.",
+    "errorEncryptionKeyRequired": "Enter an encryption key when encryption is enabled.",
     "noWritableCalendars": "Create a writable calendar before importing a file."
   },
   "colors": {

@@ -151,8 +151,15 @@
   },
   "message": {
     "confirmCalendarDelete": "Chcete opravdu smazat celý kalenář?",
-    "errorRemoteUrlEndDotGit": "Remote URL musí končit \".git\".",
-    "errorICalUrlEndDotIcs": "iCalendar URL musí končit \".ics\".",
+    "errorCalendarNameRequired": "Zadejte název kalendáře. Název nesmí být prázdný ani obsahovat pouze mezery.",
+    "errorRemoteUrlRequired": "Zadejte URL Git repozitáře. Při klonování kalendáře je URL povinná.",
+    "errorICalUrlRequired": "Zadejte URL iCalendaru. Při importu z URL je tato adresa povinná.",
+    "errorInvalidUrl": "Zadejte platnou absolutní URL včetně schématu (například \"https://\").",
+    "errorRemoteUrlEndDotGit": "URL Git repozitáře musí končit \".git\".",
+    "errorICalUrlEndDotIcs": "Cesta v URL iCalendaru musí končit \".ics\".",
+    "errorICalFileRequired": "Vyberte soubor iCalendar s příponou .ics, který chcete importovat.",
+    "errorICalDestinationRequired": "Vyberte dostupný zapisovatelný kalendář jako cíl importu.",
+    "errorEncryptionKeyRequired": "Pokud je šifrování zapnuté, zadejte šifrovací klíč.",
     "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář."
   },
   "colors": {
