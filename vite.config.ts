@@ -5,10 +5,9 @@ import vue from '@vitejs/plugin-vue';
 import { compression, defineAlgorithm } from 'vite-plugin-compression2';
 import { constants } from 'node:zlib';
 import { VitePWA } from 'vite-plugin-pwa';
-import { resolve } from 'node:path';
 import { statSync } from 'node:fs';
 
-const wasmPath = resolve(__dirname, 'src/assets/core.wasm');
+const wasmPath = fileURLToPath(new URL('./src/assets/core.wasm', import.meta.url));
 const wasmDecodedSize = statSync(wasmPath).size;
 
 // https://vite.dev/config/
