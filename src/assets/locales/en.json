@@ -166,6 +166,7 @@
       "network": "Could not reach the remote service. Check the URL, network connection, and proxy settings, then try again.",
       "auth": "Authentication failed. Check your credentials and try again.",
       "forbidden": "Connections to this remote host are not allowed. Check the URL and try again.",
+      "rateLimit": "Too many requests were sent to the remote service. Wait a moment and try again.",
       "validation": "The operation contains invalid data. Check your input and try again.",
       "storage": "Calendar data could not be read or saved. Check the available storage and try again."
     }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import LoadingView from '@/views/LoadingView.vue';
 import { CalendarCore, CoreLoadingState } from '@/wasm/core-wrapper';
-import { onBeforeMount, ref } from 'vue';
+import { nextTick, onBeforeMount, ref } from 'vue';
 import AlertModal from '@/components/modals/AlertModal.vue';
 import { createCalendarOnce } from '@/utils';
 import { syncAllWrapper } from '@/services/gitSync';
@@ -28,11 +28,12 @@ onBeforeMount(async () => {
     }
     await createCalendarOnce();
     await CalendarCore.loadCalendars(); // load local first, they might change after with network pull
-    sync();
-
     await loadCalendars();
 
     coreReady.value = true;
+
+    await nextTick();
+    sync();
   } catch (err) {
     logError(err);
     alert(err);

@@ -1,4 +1,4 @@
-export const CORE_ERROR_CODES = ['NETWORK', 'AUTH', 'FORBIDDEN', 'VALIDATION', 'STORAGE'] as const;
+export const CORE_ERROR_CODES = ['NETWORK', 'AUTH', 'FORBIDDEN', 'RATELIMIT', 'VALIDATION', 'STORAGE'] as const;
 
 export type CoreErrorCode = (typeof CORE_ERROR_CODES)[number];
 

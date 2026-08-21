@@ -166,6 +166,7 @@
       "network": "Vzdálená služba není dostupná. Zkontrolujte URL, síťové připojení a nastavení proxy a zkuste to znovu.",
       "auth": "Ověření se nezdařilo. Zkontrolujte přihlašovací údaje a zkuste to znovu.",
       "forbidden": "Připojení k tomuto vzdálenému hostiteli není povoleno. Zkontrolujte URL a zkuste to znovu.",
+      "rateLimit": "Vzdálené službě bylo odesláno příliš mnoho požadavků. Chvíli počkejte a zkuste to znovu.",
       "validation": "Operace obsahuje neplatná data. Zkontrolujte zadané údaje a zkuste to znovu.",
       "storage": "Data kalendáře se nepodařilo načíst nebo uložit. Zkontrolujte dostupné úložiště a zkuste to znovu."
     }

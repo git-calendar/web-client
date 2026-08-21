@@ -7,6 +7,7 @@ const messageKeys: Record<CoreErrorCode, string> = {
   NETWORK: 'message.coreError.network',
   AUTH: 'message.coreError.auth',
   FORBIDDEN: 'message.coreError.forbidden',
+  RATELIMIT: 'message.coreError.rateLimit',
   VALIDATION: 'message.coreError.validation',
   STORAGE: 'message.coreError.storage',
 };
