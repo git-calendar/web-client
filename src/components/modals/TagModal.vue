@@ -4,6 +4,7 @@ import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
 import { refreshCalendars } from '@/services/calendarCache';
 import { syncAllWrapper } from '@/services/gitSync';
+import { logError } from '@/services/errorHandling';
 import type { Tag } from '@/types/core';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { cloneDeep } from 'lodash-es';
@@ -77,7 +78,8 @@ async function saveTag() {
     refreshCalendars();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    logError(err, thisModal.calendarName.value);
+    alert(err, thisModal.calendarName.value);
   } finally {
     isSaving.value = false;
   }
@@ -103,7 +105,8 @@ async function deleteTag() {
     refreshCalendars();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    logError(err, thisModal.calendarName.value);
+    alert(err, thisModal.calendarName.value);
   } finally {
     isDeleting.value = false;
   }

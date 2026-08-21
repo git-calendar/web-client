@@ -160,7 +160,15 @@
     "errorICalFileRequired": "Select an iCalendar file with the .ics extension to import.",
     "errorICalDestinationRequired": "Select an available writable calendar as the import destination.",
     "errorEncryptionKeyRequired": "Enter an encryption key when encryption is enabled.",
-    "noWritableCalendars": "Create a writable calendar before importing a file."
+    "noWritableCalendars": "Create a writable calendar before importing a file.",
+    "coreError": {
+      "calendar": "Calendar “{name}”: {message}",
+      "network": "Could not reach the remote service. Check the URL, network connection, and proxy settings, then try again.",
+      "auth": "Authentication failed. Check your credentials and try again.",
+      "forbidden": "Connections to this remote host are not allowed. Check the URL and try again.",
+      "validation": "The operation contains invalid data. Check your input and try again.",
+      "storage": "Calendar data could not be read or saved. Check the available storage and try again."
+    }
   },
   "colors": {
     "blue": "Blue",

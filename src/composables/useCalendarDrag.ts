@@ -2,6 +2,7 @@ import { computed, onScopeDispose, ref, shallowRef } from 'vue';
 import { DateTime } from 'luxon';
 
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { logError } from '@/services/errorHandling';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import { getCalendar } from '@/services/calendarCache';
 import { syncAllWrapper } from '@/services/gitSync';
@@ -484,7 +485,8 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
       await CalendarCore.updateEvent(completedEvent);
     } catch (error) {
       reset();
-      await alert(String(error));
+      logError(error, completedEvent.calendar);
+      alert(error, completedEvent.calendar);
       return;
     }
 
@@ -493,7 +495,8 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     } catch (error) {
       reset();
       void syncAllWrapper();
-      await alert(String(error));
+      logError(error, completedEvent.calendar);
+      alert(error, completedEvent.calendar);
       return;
     }
 

@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { syncAllWrapper } from '@/services/gitSync';
 import { cachedCalendars, refreshCalendars } from '@/services/calendarCache';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
+import { logError } from '@/services/errorHandling';
 
 const { t } = useI18n();
 const thisModal = useCalendarModal();
@@ -123,10 +124,18 @@ async function saveCalendar() {
     notifyEventsChanged();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    const calendarName = affectedCalendarName();
+    logError(err, calendarName);
+    alert(err, calendarName);
   } finally {
     isSaving.value = false;
   }
+}
+
+function affectedCalendarName(): string | undefined {
+  if (isICalFile.value) return form.destination || undefined;
+  if (form.how === 'Clone') return undefined;
+  return form.name || originalCalendar.value?.name;
 }
 
 async function createCalendar() {
@@ -211,7 +220,9 @@ async function deleteCal() {
     notifyEventsChanged();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    const calendarName = originalCalendar.value?.name;
+    logError(err, calendarName);
+    alert(err, calendarName);
   } finally {
     isDeleting.value = false;
   }

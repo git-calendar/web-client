@@ -1,12 +1,12 @@
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { ref, readonly } from 'vue';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { logError } from '@/services/errorHandling';
 import { waitForOnline } from '@/composables/useOnlineStatus';
 
 type GitSyncStatus = 'idle' | 'syncing';
 
 const { alert } = useAlertModal();
-
 const statusRef = ref<GitSyncStatus>('idle');
 const hasQueuedSyncRef = ref(false);
 
@@ -36,7 +36,8 @@ async function runSyncQueue(): Promise<void> {
       await CalendarCore.syncAll();
     } while (hasQueuedSyncRef.value);
   } catch (err) {
-    alert(String(err)); // show alert modal
+    logError(err);
+    alert(err);
   } finally {
     statusRef.value = 'idle';
     hasQueuedSyncRef.value = false;

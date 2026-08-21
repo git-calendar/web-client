@@ -9,6 +9,7 @@ import StrategyModal from '@/components/modals/StrategyModal.vue';
 import RepeatModal from '@/components/modals/RepeatModal.vue';
 import { useStrategyModal } from '@/composables/modals/useStrategyModal';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { logError } from '@/services/errorHandling';
 import { syncAllWrapper } from '@/services/gitSync';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
@@ -338,7 +339,8 @@ async function saveEvent() {
     void syncAllWrapper();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    logError(err, event.calendar);
+    alert(err, event.calendar);
   } finally {
     isSaving.value = false;
   }
@@ -367,7 +369,8 @@ async function deleteEvent() {
     void syncAllWrapper();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    logError(err, event.calendar);
+    alert(err, event.calendar);
   } finally {
     isDeleting.value = false;
   }
@@ -392,7 +395,8 @@ async function updateWithStrategy(strategy: UpdateStrategy) {
     void syncAllWrapper();
     thisModal.close();
   } catch (err) {
-    alert(String(err));
+    logError(err, form.calendar);
+    alert(err, form.calendar);
   } finally {
     isUpdatingWithStrategy.value = false;
   }

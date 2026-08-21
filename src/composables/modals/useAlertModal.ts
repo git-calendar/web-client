@@ -1,3 +1,4 @@
+import { formatErrorForUser } from '@/services/errorHandling';
 import { reactive } from 'vue';
 
 type ModalState = {
@@ -18,11 +19,11 @@ const modalState = reactive<ModalState>({
 });
 
 export function useAlertModal() {
-  function alert(message: string): Promise<void> {
+  function alert(message: unknown, calendarName?: string): Promise<void> {
     return new Promise((resolve) => {
       modalState.isOpen = true;
       modalState.type = 'alert';
-      modalState.message = message;
+      modalState.message = formatErrorForUser(message, calendarName);
       modalState.confirmText = 'OK';
       modalState.cancelText = '';
       modalState.resolve = () => resolve();

@@ -160,7 +160,15 @@
     "errorICalFileRequired": "Vyberte soubor iCalendar s příponou .ics, který chcete importovat.",
     "errorICalDestinationRequired": "Vyberte dostupný zapisovatelný kalendář jako cíl importu.",
     "errorEncryptionKeyRequired": "Pokud je šifrování zapnuté, zadejte šifrovací klíč.",
-    "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář."
+    "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář.",
+    "coreError": {
+      "calendar": "Kalendář „{name}“: {message}",
+      "network": "Vzdálená služba není dostupná. Zkontrolujte URL, síťové připojení a nastavení proxy a zkuste to znovu.",
+      "auth": "Ověření se nezdařilo. Zkontrolujte přihlašovací údaje a zkuste to znovu.",
+      "forbidden": "Připojení k tomuto vzdálenému hostiteli není povoleno. Zkontrolujte URL a zkuste to znovu.",
+      "validation": "Operace obsahuje neplatná data. Zkontrolujte zadané údaje a zkuste to znovu.",
+      "storage": "Data kalendáře se nepodařilo načíst nebo uložit. Zkontrolujte dostupné úložiště a zkuste to znovu."
+    }
   },
   "colors": {
     "blue": "Modrá",

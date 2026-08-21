@@ -7,11 +7,11 @@ import { createCalendarOnce } from '@/utils';
 import { syncAllWrapper } from '@/services/gitSync';
 import { settings } from '@/services/settings';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
+import { logError } from '@/services/errorHandling';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 import { loadCalendars } from '@/services/calendarCache';
 
 const { alert } = useAlertModal();
-
 const coreReady = ref(false); // waits for loadCalendars etc.
 
 async function sync() {
@@ -34,7 +34,8 @@ onBeforeMount(async () => {
 
     coreReady.value = true;
   } catch (err) {
-    alert(String(err));
+    logError(err);
+    alert(err);
   }
 });
 </script>

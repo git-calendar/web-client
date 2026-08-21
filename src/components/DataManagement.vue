@@ -6,6 +6,7 @@ import { exportICal, exportZip } from '@/utils';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { notifyEventsChanged } from '@/composables/useEventsRefresh';
+import { logError } from '@/services/errorHandling';
 
 type ExportFormat = 'zip' | 'ical';
 
@@ -43,7 +44,8 @@ async function exportCalendar() {
     }
   } catch (err) {
     if (!(err instanceof DOMException && err.name === 'AbortError')) {
-      await alert(String(err));
+      logError(err, selectedCalendarName.value);
+      alert(err, selectedCalendarName.value);
     }
   } finally {
     isExporting.value = false;
@@ -72,7 +74,8 @@ async function selectZip(event: Event) {
     notifyEventsChanged();
     await alert(t('settings.dataManagement.restoreSuccess'));
   } catch (err) {
-    await alert(String(err));
+    logError(err);
+    alert(err);
   } finally {
     isRestoring.value = false;
   }

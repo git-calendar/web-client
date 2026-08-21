@@ -1,4 +1,5 @@
 import type { CalendarApi } from '@/types/core';
+import type { CoreErrorCode } from '@/types/errors';
 import { hydrateDates, dehydrateDates } from '@/wasm/mapper';
 import { reactive } from 'vue';
 
@@ -10,9 +11,12 @@ export const CoreLoadingState = reactive({
 const worker = new Worker(new URL('worker.ts', import.meta.url), { type: 'module' });
 
 class CalendarCoreError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly code?: CoreErrorCode,
+    readonly calendar?: string,
+  ) {
     super(message);
-    this.name = 'CalendarCoreError';
   }
 }
 
@@ -64,17 +68,14 @@ worker.onmessage = ({ data }: MessageEvent) => {
     return;
   }
 
-  const { id, result, error } = data;
+  const { id, result, error, code, calendar } = data;
   const handlers = pending.get(id);
 
   if (!handlers) return;
   pending.delete(id);
 
   if (error) {
-    handlers.reject(new CalendarCoreError(error));
-    if (error.includes('OPFS')) {
-      alert('OPFS is not available. Are you on a secure connection (HTTPS)?');
-    }
+    handlers.reject(new CalendarCoreError(error, code, calendar));
   } else {
     handlers.resolve(result);
   }
