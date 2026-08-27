@@ -193,12 +193,11 @@ async function updateCalendar() {
     return;
   }
 
-  if (rawUrl) {
-    const newRemoteUrl = urlWithAuth(rawUrl, form.username, form.password);
-    if (calendar.remoteUrl !== newRemoteUrl || calendar.readonly !== form.readonly) {
-      await CalendarCore.updateRemote(calendarName, newRemoteUrl, form.readonly);
-      await syncAllWrapper(); // merge/pull or whatever
-    }
+  const newRemoteUrl = rawUrl ? urlWithAuth(rawUrl, form.username, form.password) : '';
+  const readonly = rawUrl ? form.readonly : false;
+  if (calendar.remoteUrl !== newRemoteUrl || calendar.readonly !== readonly) {
+    await CalendarCore.updateRemote(calendarName, newRemoteUrl, readonly);
+    if (newRemoteUrl) await syncAllWrapper(); // merge/pull or whatever
   }
 }
 
