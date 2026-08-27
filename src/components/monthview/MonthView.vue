@@ -134,11 +134,14 @@ watchEffect(() => {
   #month-view {
     margin: 0.3rem;
   }
+
+  .month-grid {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 500px) {
   .month-grid {
-    min-width: 0;
     grid-template-rows: 1.5rem minmax(27rem, 1fr);
   }
 
