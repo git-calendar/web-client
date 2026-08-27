@@ -19,6 +19,7 @@ const sidebar = useSidebar();
 
 const { width } = useWindowSize(); // reactive window size
 const isMobile = computed(() => width.value < 500);
+const useShortLabels = computed(() => width.value < 365);
 
 const view = computed<CalendarView>({
   get: () => String(router.currentRoute.value.params.view) as CalendarView,
@@ -44,8 +45,9 @@ function jumpToToday() {
     <MultiToggle
       v-model="view"
       :options="CALENDAR_VIEWS"
-      :labels="CALENDAR_VIEWS.map((view) => $t(`views.${view}.${isMobile ? 'short' : 'long'}`))"
+      :labels="CALENDAR_VIEWS.map((view) => $t(`views.${view}.${useShortLabels ? 'short' : 'long'}`))"
       name="view-selector"
+      class="view-toggle"
     />
 
     <button
@@ -54,10 +56,10 @@ function jumpToToday() {
       :aria-label="$t('actions.jumpToToday')"
       @click="jumpToToday"
     >
-      {{ $t(`todayBtn.${isMobile ? 'short' : 'long'}`) }}
+      {{ $t(`todayBtn.${useShortLabels ? 'short' : 'long'}`) }}
     </button>
 
-    <div id="view-nav-btns">
+    <div v-if="!isMobile" id="view-nav-btns">
       <button
         :title="$t('actions.previousPeriod')"
         :aria-label="$t('actions.previousPeriod')"
@@ -85,6 +87,12 @@ header {
 
 .new-event-btn {
   margin-right: auto;
+}
+
+.view-toggle,
+#today-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 #view-nav-btns {

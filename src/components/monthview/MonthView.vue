@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
-import { useWindowSize } from '@vueuse/core';
 
 import MonthWeek from '@/components/monthview/MonthWeek.vue';
 import { useTranslation } from '@/composables/useTranslation';
@@ -14,11 +13,8 @@ import { getCurrentViewStartDatetime, getStartOfWeek } from '@/utils';
 import { CalendarCore } from '@/wasm/core-wrapper';
 
 const route = useRoute();
-const { width } = useWindowSize();
-const { dayNameShort, dayNameSuperShort } = useTranslation();
+const { dayNameShort } = useTranslation();
 const { filter } = useCalendarFilters();
-
-const isMobile = computed(() => width.value < 500);
 
 const monthStart = computed(() => getCurrentViewStartDatetime(route.params));
 const gridStart = computed(() => getStartOfWeek(monthStart.value));
@@ -71,7 +67,7 @@ watchEffect(() => {
     <div class="month-grid">
       <div class="day-names">
         <span v-for="day in days.slice(0, 7)" :key="day.weekday" class="day-name">
-          {{ isMobile ? dayNameSuperShort(day) : dayNameShort(day) }}
+          {{ dayNameShort(day) }}
         </span>
       </div>
 
