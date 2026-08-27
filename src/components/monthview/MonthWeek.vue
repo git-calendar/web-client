@@ -279,4 +279,10 @@ function openWeek(day: DateTime) {
     inset-block-start: 1.3rem;
   }
 }
+
+@media (max-width: 768px) {
+  .day-background.selected {
+    background-color: color-mix(in srgb, var(--git-color-real) 15%, transparent);
+  }
+}
 </style>
