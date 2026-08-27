@@ -8,7 +8,7 @@ import CalendarList from '@/components/CalendarList.vue';
 import EventModal from '@/components/modals/EventModal.vue';
 import CalendarModal from '@/components/modals/CalendarModal.vue';
 
-import { computed, type ComputedRef } from 'vue';
+import { computed, type ComputedRef, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { useKeyboard } from '@/composables/useKeyboard';
 import { useCalendarModal } from '@/composables/modals/useCalendarModal';
@@ -17,6 +17,7 @@ import { useSidebar } from '@/composables/useSidebar';
 import type { CalendarView } from '@/services/settings';
 import TagModal from '@/components/modals/TagModal.vue';
 import { useTagModal } from '@/composables/modals/useTagModal';
+import { useCalendarSwipeNavigation } from '@/composables/useCalendarSwipeNavigation';
 
 useKeyboard();
 const calendarModal = useCalendarModal();
@@ -24,6 +25,9 @@ const eventModal = useEventModal();
 const tagModal = useTagModal();
 const route = useRoute();
 const sidebar = useSidebar();
+const swipeArea = useTemplateRef<HTMLElement>('swipe-area');
+
+useCalendarSwipeNavigation(swipeArea);
 
 const activeView: ComputedRef<CalendarView> = computed(() => String(route.params.view) as CalendarView);
 
@@ -44,7 +48,9 @@ const views = {
     </SideBar>
 
     <TopBar />
-    <component :is="views[activeView][0]" :num-of-days="views[activeView][1]" ref="calendar-view" />
+    <div ref="swipe-area" class="swipe-area">
+      <component :is="views[activeView][0]" :num-of-days="views[activeView][1]" ref="calendar-view" />
+    </div>
 
     <EventModal v-if="eventModal.isOpen.value" />
     <TagModal v-if="tagModal.isOpen.value" />
@@ -53,6 +59,10 @@ const views = {
 </template>
 
 <style scoped>
+.swipe-area {
+  display: contents;
+}
+
 .sidebar-backdrop {
   display: none;
 }
