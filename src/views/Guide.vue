@@ -18,6 +18,7 @@
           <li><a href="#clone-repository">Clone a repository</a></li>
           <li><a href="#icalendar">Importing iCalendar</a></li>
           <li><a href="#dragging-tips">Dragging tips</a></li>
+          <li><a href="#mobile-gestures">Mobile gestures</a></li>
           <li><a href="#keyboard-shortcuts">Keyboard shortcuts</a></li>
           <li><a href="#other-controls">Other controls</a></li>
         </ol>
@@ -102,6 +103,15 @@
           </li>
         </ul>
         <p>Events in read-only repositories cannot be dragged or edited.</p>
+      </section>
+
+      <section id="mobile-gestures" aria-labelledby="mobile-gestures-heading">
+        <h2 id="mobile-gestures-heading"><a href="#mobile-gestures">Mobile gestures</a></h2>
+        <ul>
+          <li><strong>Next period:</strong> swipe left across the calendar.</li>
+          <li><strong>Previous period:</strong> swipe right across the calendar.</li>
+        </ul>
+        <p>A swipe moves by one month, week, or four-day period, depending on the current view.</p>
       </section>
 
       <section id="keyboard-shortcuts" aria-labelledby="keyboard-shortcuts-heading">
