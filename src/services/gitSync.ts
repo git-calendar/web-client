@@ -5,6 +5,8 @@ import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { logError } from '@/services/errorHandling';
 import { waitForOnline } from '@/composables/useOnlineStatus';
 import { coreErrorCodeOf } from '@/types/errors';
+import { refreshCalendars } from '@/services/calendarCache';
+import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
 type GitSyncStatus = 'idle' | 'syncing';
 
@@ -42,6 +44,14 @@ async function runSyncQueue(): Promise<void> {
     logError(err);
     alert(err);
   } finally {
+    try {
+      await refreshCalendars();
+      notifyEventsChanged();
+    } catch (err) {
+      logError(err);
+      alert(err);
+    }
+
     statusRef.value = 'idle';
     hasQueuedSyncRef.value = false;
     currentSync = null;

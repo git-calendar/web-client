@@ -6,14 +6,12 @@ import { useSidebar } from '@/composables/useSidebar';
 import NewEventBtn from '@/components/NewEventBtn.vue';
 import { LuRefreshCcw } from 'vue-icons-plus/lu';
 import { syncAllWrapper } from '@/services/gitSync';
-import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 
 const slots = useSlots();
 const sidebar = useSidebar();
 
-async function syncAndReload() {
-  await syncAllWrapper();
-  notifyEventsChanged();
+function syncAndReload() {
+  void syncAllWrapper();
 }
 </script>
 

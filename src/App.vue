@@ -8,18 +8,10 @@ import { syncAllWrapper } from '@/services/gitSync';
 import { settings } from '@/services/settings';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { logError } from '@/services/errorHandling';
-import { notifyEventsChanged } from '@/composables/useEventsRefresh';
 import { loadCalendars } from '@/services/calendarCache';
 
 const { alert } = useAlertModal();
 const coreReady = ref(false); // waits for loadCalendars etc.
-
-async function sync() {
-  await syncAllWrapper(); // pull/sync/fetch all that
-  await CalendarCore.loadCalendars(); // update events
-
-  notifyEventsChanged();
-}
 
 onBeforeMount(async () => {
   try {
@@ -33,7 +25,7 @@ onBeforeMount(async () => {
     coreReady.value = true;
 
     await nextTick();
-    sync();
+    void syncAllWrapper();
   } catch (err) {
     logError(err);
     alert(err);
