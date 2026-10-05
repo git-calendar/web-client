@@ -266,9 +266,8 @@ function validate(): boolean {
     return validationError('message.errorInvalidUrl');
   }
 
-  const suffix = isICalURL.value ? '.ics' : '.git';
-  if (!url.pathname.toLowerCase().endsWith(suffix)) {
-    return validationError(isICalURL.value ? 'message.errorICalUrlEndDotIcs' : 'message.errorRemoteUrlEndDotGit');
+  if (!isICalURL.value && !url.pathname.toLowerCase().endsWith('.git')) {
+    return validationError('message.errorRemoteUrlEndDotGit');
   }
 
   if (thisModal.isNew.value && form.encrypted && !form.encryptionKey) {
