@@ -386,14 +386,16 @@ function horizontalStyle(layout: EventLayout): CSSProperties {
   }
 
   const totalGap = COLUMN_GAP_REM * (columns - 1);
-  const availableWidth = Math.max(grid.value.widthRem - coverLeft - eventRightRem() - totalGap, 0);
+  const availableWidth = Math.max(grid.value.widthRem - eventRightRem() - totalGap, 0);
   const columnWidth = availableWidth / columns;
-  const left = coverLeft + layout.column * (columnWidth + COLUMN_GAP_REM);
+  const isCoveredColumn = layout.column === 0;
+  const left = layout.column * (columnWidth + COLUMN_GAP_REM) + (isCoveredColumn ? coverLeft : 0);
+  const width = columnWidth - (isCoveredColumn ? coverLeft : 0);
 
   return {
     left: rem(left),
     right: 'auto',
-    width: rem(columnWidth),
+    width: rem(Math.max(width, 0)),
   };
 }
 
