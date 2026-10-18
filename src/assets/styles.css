@@ -76,6 +76,18 @@ button {
   box-shadow: none;
 }
 
+select {
+  padding-right: 2rem;
+  background-image:
+    linear-gradient(45deg, transparent 40%, currentColor 40%, currentColor 60%, transparent 60%),
+    linear-gradient(135deg, transparent 40%, currentColor 40%, currentColor 60%, transparent 60%);
+  background-position:
+    right 0.95rem center,
+    right 0.65rem center;
+  background-size: 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+}
+
 textarea {
   height: auto;
 }
