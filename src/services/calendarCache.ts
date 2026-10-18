@@ -2,6 +2,7 @@ import { computed, readonly, shallowRef } from 'vue';
 
 import type { Calendar, Tag } from '@/types/core';
 import { CalendarCore } from '@/wasm/core-wrapper';
+import { settings } from '@/services/settings';
 
 const calendars = shallowRef<Calendar[]>([]);
 const loaded = shallowRef(false);
@@ -53,5 +54,14 @@ export function getDefaultCalendar(): Calendar | undefined {
 }
 
 export function getTag(calendarName: string, tagId: string): Tag | undefined {
+  if (tagId === '') {
+    return {
+      id: '',
+      name: '',
+      color: Object.hasOwn(settings.value.untaggedColors, calendarName)
+        ? settings.value.untaggedColors[calendarName]!
+        : settings.value.defaultEventColor,
+    };
+  }
   return getCalendar(calendarName)?.tags?.find((tag) => tag.id === tagId);
 }

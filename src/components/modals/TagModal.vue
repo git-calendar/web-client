@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import ColorPicker from '@/components/ColorPicker.vue';
+import { toColorId } from '@/colors';
+import { settings } from '@/services/settings';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { useTagModal } from '@/composables/modals/useTagModal';
 import { refreshCalendars } from '@/services/calendarCache';
@@ -41,6 +43,7 @@ watch(
 const isNew = computed(() => {
   return thisModal.tag.value?.id === undefined;
 });
+const isUntagged = computed(() => thisModal.tag.value?.id === '');
 
 function updateFormFromTag(tag: Tag | undefined) {
   if (!tag) return;
@@ -69,6 +72,14 @@ async function saveTag() {
 
   isSaving.value = true;
   try {
+    if (isUntagged.value) {
+      settings.value.untaggedColors = {
+        ...settings.value.untaggedColors,
+        [thisModal.calendarName.value]: toColorId(tag.color),
+      };
+      thisModal.close();
+      return;
+    }
     if (isNew.value) {
       await CalendarCore.createTag(thisModal.calendarName.value, tag);
     } else {
@@ -113,7 +124,7 @@ async function deleteTag() {
 }
 
 function validate(tag: Tag): boolean {
-  if (tag.name == '') {
+  if (!isUntagged.value && tag.name == '') {
     errors.missingName = true;
     return false;
   }
@@ -136,7 +147,9 @@ onMounted(async () => {
   <div id="tag-modal" class="modal">
     <form @submit.prevent="saveTag" :aria-busy="isLocked">
       <fieldset :disabled="isLocked">
+        <input v-if="isUntagged" type="text" name="name" :value="$t('tag.notag')" readonly disabled />
         <input
+          v-else
           type="text"
           name="name"
           :placeholder="$t('tag.name')"
@@ -159,7 +172,7 @@ onMounted(async () => {
             {{ isSaving ? $t('savingBtn') : $t('saveBtn') }}
           </button>
           <button type="button" @click="thisModal.close">{{ $t('closeBtn') }}</button>
-          <button v-if="!thisModal.isNew.value" type="button" @click="deleteTag" class="delete-btn">
+          <button v-if="!thisModal.isNew.value && !isUntagged" type="button" @click="deleteTag" class="delete-btn">
             {{ isDeleting ? $t('deletingBtn') : $t('deleteBtn') }}
           </button>
         </div>
@@ -170,6 +183,10 @@ onMounted(async () => {
 
 <style scoped>
 #tag-modal {
+  input[readonly] {
+    cursor: not-allowed;
+  }
+
   > form {
     width: min(90%, 20rem);
   }

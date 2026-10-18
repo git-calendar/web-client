@@ -84,6 +84,13 @@ function getTagColor(calName: string, tagId?: string) {
               :style="{ '--tag-color': getTagColor(cal.name) }"
             />
             <span class="tag-name">{{ $t('tag.notag') }}</span>
+            <button
+              class="action-btn"
+              :aria-label="$t('event.repeat.edit') + ': ' + $t('tag.notag')"
+              @click.stop="tagModal.open(cal.name, getTag(cal.name, ''))"
+            >
+              <FiEdit2 />
+            </button>
           </div>
 
           <div class="tag" v-for="tag in cal.tags" :key="tag.name" @click="toggleTag(cal.name, tag.id ?? '')">

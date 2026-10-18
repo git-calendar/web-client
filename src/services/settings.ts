@@ -20,6 +20,7 @@ type UserSettings = {
   dayViewEndHour: HourNumbers;
   dragPrecisionMinutes: number;
   defaultEventColor: ColorId;
+  untaggedColors: Record<string, ColorId>;
   corsProxyURL: string;
 };
 
@@ -36,6 +37,7 @@ export const settings = useStorage<UserSettings>(
     dayViewEndHour: 0,
     dragPrecisionMinutes: 30,
     defaultEventColor: 'gray',
+    untaggedColors: {},
     corsProxyURL: 'https://cors-proxy.firu.dev',
   },
   localStorage,
