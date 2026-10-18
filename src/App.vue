@@ -9,9 +9,11 @@ import { settings } from '@/services/settings';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { logError } from '@/services/errorHandling';
 import { loadCalendars } from '@/services/calendarCache';
+import { useEventNotifications } from '@/composables/useEventNotifications';
 
 const { alert } = useAlertModal();
 const coreReady = ref(false); // waits for loadCalendars etc.
+useEventNotifications(coreReady);
 
 onBeforeMount(async () => {
   try {

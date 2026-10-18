@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, reactive, watch, onMounted, useTemplateRef, toRaw, computed, nextTick } from 'vue';
-import { UpdateStrategy, type CalendarEvent } from '@/types/core';
+import { UpdateStrategy, type CalendarEvent, type Reminder } from '@/types/core';
+import ReminderFields from '@/components/ReminderFields.vue';
 import { DateTime } from 'luxon';
 import { datetime, RRule, RRuleSet, rrulestr, type Frequency } from 'rrule';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -80,6 +81,7 @@ const form = reactive({
   calendar: '',
   entireDay: false,
   tagId: '',
+  reminders: [] as Reminder[],
 
   repeatSelection: 'never',
   repeatEnd: 'after',
@@ -110,7 +112,7 @@ watch(
       return;
     }
 
-    originalEvent = cloneDeep(toRaw(thisModal.originalEvent.value ?? newEvent));
+    originalEvent = cloneDeep(toRaw(thisModal.originalEvent.value ?? newEvent)) as CalendarEvent;
     const eventForForm = cloneDeep(toRaw(newEvent)) as CalendarEvent;
 
     if (eventForForm.calendar === '') {
@@ -129,6 +131,7 @@ function updateFormFromEvent(event: CalendarEvent | undefined) {
   form.title = event.title;
   form.location = event.location ?? '';
   form.description = event.description ?? '';
+  form.reminders = (event.reminders ?? []).map((reminder) => ({ ...reminder }));
 
   [form.fromDate, form.fromTime] = dateTimeToIsoDateAndTime(event.from);
   [form.toDate, form.toTime] = dateTimeToIsoDateAndTime(event.to);
@@ -235,6 +238,7 @@ function reconstructEvent(): CalendarEvent {
       ? DateTime.fromISO(`${form.toDate}T00:00`, { zone: originalEvent?.to.zone }).plus({ days: 1 })
       : DateTime.fromISO(`${form.toDate}T${form.toTime}`, { zone: originalEvent?.to.zone }),
     parentId: originalEvent?.parentId,
+    reminders: form.reminders.map((reminder) => ({ ...reminder })),
   };
   const repeat = buildRepeat(event.from);
   if (repeat) event.repeat = repeat;
@@ -580,6 +584,8 @@ onMounted(async () => {
             @input="errors.badRepeatCount = false"
           />
         </label>
+
+        <ReminderFields v-model="form.reminders" />
 
         <div class="form-row">
           <select name="calendar" v-model="form.calendar">

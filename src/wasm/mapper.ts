@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-const dateTimeFieldNames: string[] = ['from', 'to', 'until'];
+const dateTimeFieldNames: string[] = ['from', 'to', 'until', 'at'];
 
 function isBinaryData(data: object): boolean {
   return data instanceof ArrayBuffer || ArrayBuffer.isView(data) || data instanceof Blob || data instanceof File;

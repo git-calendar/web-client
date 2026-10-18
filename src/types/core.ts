@@ -11,6 +11,16 @@ export interface CalendarEvent {
   tagId?: string;
   parentId?: string;
   repeat?: string; // DTSTART/RRULE/EXDATE in RFC 5545 format
+  reminders?: Reminder[];
+}
+
+export interface Reminder {
+  minutesBefore: number;
+}
+
+export interface EventNotification {
+  event: CalendarEvent;
+  at: DateTime;
 }
 
 export interface Calendar {
@@ -58,6 +68,7 @@ export interface CalendarApi {
   removeRepeatingEvent(event: CalendarEvent, strategy: UpdateStrategy): void;
   getEvent(id: string): CalendarEvent;
   getEvents(from: DateTime, to: DateTime, filter: GetEventsFilter | null): CalendarEvent[];
+  getNotifications(from: DateTime, to: DateTime, filter: GetEventsFilter | null): EventNotification[];
 
   createTag(calendar: string, tag: Tag): Tag;
   updateTag(calendar: string, tag: Tag): Tag;

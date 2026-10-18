@@ -37,6 +37,15 @@
     "to": "Do",
     "entireDay": "Celý den",
     "more": "další…",
+    "reminders": {
+      "title": "Připomenutí",
+      "add": "Přidat připomenutí",
+      "remove": "Odebrat",
+      "atStart": "Na začátku události",
+      "minutesBefore": "{count} minut předem",
+      "hoursBefore": "{count} hodinu předem | {count} hodiny předem | {count} hodin předem",
+      "daysBefore": "{count} den předem | {count} dny předem | {count} dní předem"
+    },
     "repeat": {
       "repeat": "Opakování",
       "end": "Konec",

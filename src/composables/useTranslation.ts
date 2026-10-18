@@ -22,6 +22,9 @@ const i18n = createI18n<[MessageSchema], LocaleCode>({
   legacy: false,
   locale: settings.value.language,
   fallbackLocale: 'en',
+  pluralRules: {
+    cs: (count) => (count === 1 ? 0 : count >= 2 && count <= 4 ? 1 : 2),
+  },
   messages,
 });
 

@@ -37,6 +37,15 @@
     "to": "To",
     "entireDay": "Entire day",
     "more": "more…",
+    "reminders": {
+      "title": "Reminders",
+      "add": "Add reminder",
+      "remove": "Remove",
+      "atStart": "At event start",
+      "minutesBefore": "{count} minutes before",
+      "hoursBefore": "{count} hour before | {count} hours before",
+      "daysBefore": "{count} day before | {count} days before"
+    },
     "repeat": {
       "repeat": "Repeat",
       "end": "End",
