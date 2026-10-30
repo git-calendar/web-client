@@ -67,18 +67,17 @@ const views = {
   display: none;
 }
 
-#calendar-view:has(aside[hidden]) {
-  grid-template-columns: auto;
-  grid-template-areas:
-    'topbar'
-    'content';
+aside {
+  width: var(--sidebar-width);
+  transition: transform 0.12s ease-out;
 }
 
 aside[hidden] {
-  position: absolute;
-  height: 100%;
-  left: calc(-1 * var(--sidebar-width));
-  width: var(--sidebar-width);
+  transform: translateX(-100%);
+}
+
+#calendar-view:has(aside[hidden]) {
+  grid-template-columns: 0 auto;
 }
 
 #calendar-view {
@@ -90,6 +89,7 @@ aside[hidden] {
     'sidebar content';
 
   height: 100%;
+  transition: grid-template-columns 0.12s ease-out;
 }
 
 @media (max-width: 768px) {
@@ -109,7 +109,8 @@ aside[hidden] {
     z-index: 600;
   }
 
-  #calendar-view {
+  #calendar-view,
+  #calendar-view:has(aside[hidden]) {
     grid-template-columns: auto;
     grid-template-areas:
       'topbar'

@@ -38,8 +38,10 @@ function jumpToToday() {
 
 <template>
   <header>
-    <SidebarCloseBtn v-if="!sidebar.isOpen.value" />
-    <NewEventBtn v-if="!sidebar.isOpen.value" :large="!isMobile" />
+    <div id="corner-btns" :class="{ 'over-sidebar': sidebar.isOpen.value }">
+      <SidebarCloseBtn />
+      <NewEventBtn :large="sidebar.isOpen.value || !isMobile" />
+    </div>
 
     <SyncStatus />
     <MultiToggle
@@ -82,11 +84,40 @@ header {
   gap: 0.5rem;
 
   padding: 0.5rem;
-  grid-area: topbar;
+  /* span the sidebar column too, so the corner buttons stay put while the sidebar slides */
+  grid-row: 1;
+  grid-column: 1 / -1;
 }
 
-.new-event-btn {
+/* sits on top of the sidebar's top area; stretches to the sidebar width when it's open */
+#corner-btns {
+  position: relative;
+  z-index: 601; /* above the mobile sidebar and backdrop */
+  display: flex;
+  gap: 0.5rem;
   margin-right: auto;
+  min-width: 0;
+  transition: min-width 0.12s ease-out;
+
+  > .new-event-btn {
+    flex-grow: 1;
+  }
+
+  > button {
+    transition: background-color 0.12s ease-out;
+  }
+
+  &.over-sidebar {
+    min-width: calc(var(--sidebar-width) - 1rem);
+
+    > button {
+      background-color: var(--sidebar-btn-bg-color);
+
+      &:hover:not(:focus):not(:disabled) {
+        background-color: var(--sidebar-btn-bg-hover-color);
+      }
+    }
+  }
 }
 
 .view-toggle,

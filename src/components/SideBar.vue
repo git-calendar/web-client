@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import { FiSettings, FiGithub, FiHelpCircle } from 'vue-icons-plus/fi';
 import { useSlots } from 'vue';
-import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
-import { useSidebar } from '@/composables/useSidebar';
-import NewEventBtn from '@/components/NewEventBtn.vue';
 import { LuRefreshCcw } from 'vue-icons-plus/lu';
 import { syncAllWrapper } from '@/services/gitSync';
 
 const slots = useSlots();
-const sidebar = useSidebar();
 
 function syncAndReload() {
   void syncAllWrapper();
@@ -17,10 +13,8 @@ function syncAndReload() {
 
 <template>
   <aside>
-    <div id="top-btns">
-      <SidebarCloseBtn v-if="sidebar.isOpen.value" />
-      <NewEventBtn :large="true" />
-    </div>
+    <!-- space for the sidebar toggle + new event buttons, which live in TopBar so they don't move with the sidebar -->
+    <div id="top-spacer"></div>
 
     <hr />
 
@@ -113,13 +107,8 @@ hr {
   margin: 0.5rem 0;
 }
 
-#top-btns {
-  display: flex;
-  width: 100%;
-  gap: 0.5rem;
-
-  > .new-event-btn {
-    flex-grow: 1;
-  }
+#top-spacer {
+  flex-shrink: 0;
+  height: calc(var(--topbar-height) - 1rem);
 }
 </style>
