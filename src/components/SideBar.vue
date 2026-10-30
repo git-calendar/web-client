@@ -71,7 +71,7 @@ aside {
   button {
     background-color: var(--sidebar-btn-bg-color);
 
-    &:hover:not(:focus):not(:disabled) {
+    &:hover:not(:focus-visible):not(:disabled) {
       background-color: var(--sidebar-btn-bg-hover-color);
     }
   }

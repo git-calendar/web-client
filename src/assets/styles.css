@@ -104,7 +104,7 @@ button:disabled {
 input:hover:not(:focus):not(:disabled),
 textarea:hover:not(:focus):not(:disabled),
 select:hover:not(:focus):not(:disabled),
-button:hover:not(:focus):not(:disabled) {
+button:hover:not(:focus-visible):not(:disabled) {
   background-color: var(--btn-bg-color-hover);
 }
 
