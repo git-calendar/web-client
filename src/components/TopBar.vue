@@ -40,7 +40,7 @@ function jumpToToday() {
   <header>
     <div id="corner-btns" :class="{ 'over-sidebar': sidebar.isOpen.value }">
       <SidebarCloseBtn />
-      <NewEventBtn :large="sidebar.isOpen.value || !isMobile" />
+      <NewEventBtn />
     </div>
 
     <SyncStatus />
@@ -78,37 +78,50 @@ function jumpToToday() {
 
 <style scoped>
 header {
+  /* space reserved for the corner buttons: toggle + gap + new event btn */
+  --corner-width: calc(2.4rem + 0.5rem + 9rem);
+
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: end;
   gap: 0.5rem;
 
   padding: 0.5rem;
+  padding-left: calc(1rem + var(--corner-width));
   /* span the sidebar column too, so the corner buttons stay put while the sidebar slides */
   grid-row: 1;
   grid-column: 1 / -1;
 }
 
-/* sits on top of the sidebar's top area; stretches to the sidebar width when it's open */
+@media (max-width: 519.98px) {
+  header {
+    --corner-width: calc(2.4rem + 0.5rem + 2.4rem); /* icon only */
+  }
+}
+
+/* floats above the sidebar's top area, so it never pushes the rest of the header; stretches to the sidebar width when it's open */
 #corner-btns {
-  position: relative;
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
   z-index: 601; /* above the mobile sidebar and backdrop */
   display: flex;
   gap: 0.5rem;
-  margin-right: auto;
-  min-width: 0;
-  transition: min-width 0.12s ease-out;
-
-  > .new-event-btn {
-    flex-grow: 1;
-  }
+  width: var(--corner-width);
+  transition: width 0.12s ease-out;
 
   > button {
+    flex-shrink: 0;
     transition: background-color 0.12s ease-out;
   }
 
+  > .new-event-btn {
+    flex: 1 1 0;
+  }
+
   &.over-sidebar {
-    min-width: calc(var(--sidebar-width) - 1rem);
+    width: calc(var(--sidebar-width) - 1rem);
 
     > button {
       background-color: var(--sidebar-btn-bg-color);
