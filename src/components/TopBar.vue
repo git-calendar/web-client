@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import { DateTime } from 'luxon';
-import { getCalendarRedirect, moveView } from '@/utils';
+import { getCalendarRedirect, getCurrentViewDatetime, moveView } from '@/utils';
 
 import { FiChevronLeft, FiChevronRight } from 'vue-icons-plus/fi';
 import { useRouter } from 'vue-router';
@@ -10,12 +10,14 @@ import MultiToggle from '@/components/MultiToggle.vue';
 import SidebarCloseBtn from '@/components/SidebarCloseBtn.vue';
 import NewEventBtn from '@/components/NewEventBtn.vue';
 import SyncStatus from '@/components/SyncStatus.vue';
-import { useWindowSize } from '@vueuse/core';
+import { useElementSize, useWindowSize } from '@vueuse/core';
+import { useTranslation } from '@/composables/useTranslation';
 import { CALENDAR_VIEWS } from '@/constants';
 import type { CalendarView } from '@/services/settings';
 
 const router = useRouter();
 const sidebar = useSidebar();
+const { monthNameLong } = useTranslation();
 
 const { width } = useWindowSize(); // reactive window size
 const isMobile = computed(() => width.value < 500);
@@ -31,6 +33,20 @@ const view = computed<CalendarView>({
   },
 });
 
+const viewTitle = computed(() => {
+  const date = getCurrentViewDatetime(router.currentRoute.value.params);
+  return `${monthNameLong(date)} ${date.year}`;
+});
+
+// the title is only shown when it fits whole into the free space (with some breathing room);
+// measured on an always-rendered hidden copy, so the width is known even while the title is hidden
+const TITLE_MARGIN_PX = 16;
+const titleBox = useTemplateRef('title-box');
+const titleMeasure = useTemplateRef('title-measure');
+const { width: titleBoxWidth } = useElementSize(titleBox);
+const { width: titleTextWidth } = useElementSize(titleMeasure);
+const titleFits = computed(() => titleTextWidth.value + TITLE_MARGIN_PX <= titleBoxWidth.value);
+
 function jumpToToday() {
   router.push(getCalendarRedirect(view.value, DateTime.now()));
 }
@@ -41,6 +57,13 @@ function jumpToToday() {
     <div id="corner-btns" :class="{ 'over-sidebar': sidebar.isOpen.value }">
       <SidebarCloseBtn />
       <NewEventBtn />
+    </div>
+
+    <div ref="title-box" id="view-title-box">
+      <span ref="title-measure" class="view-title measure" aria-hidden="true">{{ viewTitle }}</span>
+      <Transition name="fade">
+        <span v-show="!sidebar.isOpen.value && titleFits" class="view-title">{{ viewTitle }}</span>
+      </Transition>
     </div>
 
     <SyncStatus />
@@ -131,6 +154,37 @@ header {
       }
     }
   }
+}
+
+#view-title-box {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.view-title {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 600;
+
+  &.measure {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    user-select: none;
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.12s ease-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .view-toggle,
