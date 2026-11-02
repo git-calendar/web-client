@@ -198,6 +198,10 @@ function openWeek(day: DateTime) {
   user-select: none;
 }
 
+.day-background.today {
+  box-shadow: inset 0 2px 0 var(--git-color);
+}
+
 .today .day-number {
   color: var(--git-color);
   font-weight: 700;
