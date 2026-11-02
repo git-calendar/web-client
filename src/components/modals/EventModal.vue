@@ -735,14 +735,15 @@ fieldset.readonly:disabled {
   .dates > span {
     opacity: 1;
   }
+}
 
-  :deep(input),
-  :deep(textarea),
-  :deep(select),
-  :deep(button) {
-    cursor: not-allowed;
-    opacity: 1;
-  }
+/* not nested, nested :deep() compiles to "fieldset [data-v] input" and misses direct children */
+fieldset.readonly:disabled :deep(input),
+fieldset.readonly:disabled :deep(textarea),
+fieldset.readonly:disabled :deep(select),
+fieldset.readonly:disabled :deep(button) {
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .event-modal-footer {
