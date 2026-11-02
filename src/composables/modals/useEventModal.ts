@@ -35,10 +35,6 @@ export function useEventModal() {
       showEvent(event);
     },
 
-    openDraft(event: CalendarEvent, originalEvent: CalendarEvent) {
-      showEvent(event, originalEvent);
-    },
-
     close() {
       isOpen.value = false;
       editingEvent.value = undefined;

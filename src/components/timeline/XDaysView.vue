@@ -14,6 +14,7 @@ import { settings } from '@/services/settings';
 import { eventsRevision } from '@/composables/useEventsRefresh';
 import { useCalendarFilters } from '@/services/calendarFilters';
 import { useCalendarDrag } from '@/composables/useCalendarDrag';
+import StrategyModal from '@/components/modals/StrategyModal.vue';
 
 type TimelineRange = {
   startHour: number;
@@ -178,6 +179,13 @@ watchEffect(() => {
         :drag="drag"
       />
     </div>
+    <Teleport defer to="#calendar-view">
+      <StrategyModal
+        v-if="drag.pendingStrategy.value"
+        @update="drag.saveWithStrategy"
+        @cancel-update="drag.cancelStrategy"
+      />
+    </Teleport>
   </div>
 </template>
 

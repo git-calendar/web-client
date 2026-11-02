@@ -7,7 +7,7 @@ import { useEventModal } from '@/composables/modals/useEventModal';
 import { getCalendar } from '@/services/calendarCache';
 import { syncAllWrapper } from '@/services/gitSync';
 import { settings } from '@/services/settings';
-import type { CalendarEvent } from '@/types/core';
+import type { CalendarEvent, UpdateStrategy } from '@/types/core';
 import { CalendarCore } from '@/wasm/core-wrapper';
 
 export type CalendarDragMode = 'none' | 'create' | 'create-all-day' | 'move' | 'resize-top' | 'resize-bottom';
@@ -26,6 +26,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
   const activeColumnDate = shallowRef<DateTime | null>(null);
   const moved = ref(false);
   const saving = ref(false);
+  const pendingStrategy = ref(false);
 
   const eventModal = useEventModal();
   const { alert } = useAlertModal();
@@ -439,6 +440,7 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     activeColumnDate.value = null;
     moved.value = false;
     saving.value = false;
+    pendingStrategy.value = false;
     allDayGrid = null;
     allDayGridColumns = 1;
     moveByDay = false;
@@ -473,20 +475,32 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
       return;
     }
 
-    if (completedEvent.repeat) {
-      reset();
-      eventModal.openDraft(completedEvent, completedSource ?? completedEvent);
+    if (completedSource?.repeat) {
+      pendingStrategy.value = true; // keep the preview until a strategy is picked
       return;
     }
 
+    await save(() => CalendarCore.updateEvent(completedEvent), completedEvent.calendar);
+  }
+
+  async function saveWithStrategy(strategy: UpdateStrategy) {
+    const event = active.value;
+    const original = source.value;
+    if (!pendingStrategy.value || !event || !original) return;
+
+    pendingStrategy.value = false;
+    await save(() => CalendarCore.updateRepeatingEvent(original, event, strategy), event.calendar);
+  }
+
+  async function save(update: () => unknown, calendar: string) {
     saving.value = true;
 
     try {
-      await CalendarCore.updateEvent(completedEvent);
+      await update();
     } catch (error) {
       reset();
-      logError(error, completedEvent.calendar);
-      alert(error, completedEvent.calendar);
+      logError(error, calendar);
+      alert(error, calendar);
       return;
     }
 
@@ -495,8 +509,8 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     } catch (error) {
       reset();
       void syncAllWrapper();
-      logError(error, completedEvent.calendar);
-      alert(error, completedEvent.calendar);
+      logError(error, calendar);
+      alert(error, calendar);
       return;
     }
 
@@ -547,6 +561,9 @@ export function useCalendarDrag(refreshEvents: () => Promise<void>) {
     mode,
     moved,
     saving,
+    pendingStrategy,
+    saveWithStrategy,
+    cancelStrategy: reset,
     isTimedDrag,
     registerGrid,
     startCreate,

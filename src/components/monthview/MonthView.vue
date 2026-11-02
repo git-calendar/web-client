@@ -6,6 +6,7 @@ import MonthWeek from '@/components/monthview/MonthWeek.vue';
 import { useTranslation } from '@/composables/useTranslation';
 import { eventsRevision } from '@/composables/useEventsRefresh';
 import { useCalendarDrag } from '@/composables/useCalendarDrag';
+import StrategyModal from '@/components/modals/StrategyModal.vue';
 import { useCalendarFilters } from '@/services/calendarFilters';
 
 import type { CalendarEvent } from '@/types/core';
@@ -83,6 +84,13 @@ watchEffect(() => {
         />
       </div>
     </div>
+    <Teleport defer to="#calendar-view">
+      <StrategyModal
+        v-if="drag.pendingStrategy.value"
+        @update="drag.saveWithStrategy"
+        @cancel-update="drag.cancelStrategy"
+      />
+    </Teleport>
   </div>
 </template>
 
