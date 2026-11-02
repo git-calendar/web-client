@@ -736,11 +736,11 @@ fieldset.readonly:disabled {
     opacity: 1;
   }
 
-  input,
-  textarea,
-  select,
-  button {
-    cursor: default;
+  :deep(input),
+  :deep(textarea),
+  :deep(select),
+  :deep(button) {
+    cursor: not-allowed;
     opacity: 1;
   }
 }
