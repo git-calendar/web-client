@@ -212,7 +212,8 @@ function titleTop(event: CalendarEvent) {
 }
 
 function titleBottom(event: CalendarEvent) {
-  return titleTop(event) + TITLE_HEIGHT_REM + TITLE_GAP_REM;
+  // an event that has already ended can't collide with a later title
+  return Math.min(titleTop(event) + TITLE_HEIGHT_REM + TITLE_GAP_REM, secondsToRem(eventEnd(event)));
 }
 
 function splitIntoTitleGroups(events: CalendarEvent[]) {
