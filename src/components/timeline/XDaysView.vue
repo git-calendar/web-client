@@ -2,6 +2,7 @@
 import { computed, ref, useTemplateRef, watch, watchEffect } from 'vue';
 import DayTimeline from '@/components/timeline/DayTimeline.vue';
 import type { CalendarEvent } from '@/types/core.ts';
+import { useCurrentTime } from '@/composables/useCurrentTime';
 import { useTranslation } from '@/composables/useTranslation';
 import { DateTime } from 'luxon';
 import { CalendarCore } from '@/wasm/core-wrapper';
@@ -25,6 +26,7 @@ const { dayNameShort, dayNameSuperShort } = useTranslation();
 const { width } = useWindowSize();
 const { filter } = useCalendarFilters();
 const route = useRoute();
+const now = useCurrentTime();
 
 const props = defineProps<{
   numOfDays: number;
@@ -136,7 +138,7 @@ watchEffect(() => {
 <template>
   <div id="view-container">
     <div id="top-bar">
-      <span v-for="day in dates" :key="day.toMillis()" :class="{ today: day.hasSame(DateTime.now(), 'day') }">
+      <span v-for="day in dates" :key="day.toMillis()" :class="{ today: day.hasSame(now, 'day') }">
         {{ `${day.day}. ${isMobile ? dayNameSuperShort(day) : dayNameShort(day)}` }}
       </span>
     </div>

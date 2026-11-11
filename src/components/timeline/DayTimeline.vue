@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, toRef, useTemplateRef, watchEffect, type CSSProperties } from 'vue';
 import { DateTime } from 'luxon';
+import { useCurrentTime } from '@/composables/useCurrentTime';
 
 import type { CalendarEvent } from '@/types/core.ts';
 import CursorToday from '@/components/timeline/CursorToday.vue';
@@ -63,6 +64,7 @@ const DEFAULT_LAYOUT: EventLayout = {
 };
 
 const eventModal = useEventModal();
+const now = useCurrentTime();
 
 const timelineGridRef = useTemplateRef<HTMLElement>('timeline-grid-ref');
 
@@ -76,7 +78,7 @@ const timelineDate = toRef(props, 'date');
 const dayStartSeconds = computed(() => timelineDate.value.startOf('day').plus({ hours: props.startHour }).toSeconds());
 const dayEndSeconds = computed(() => timelineDate.value.startOf('day').plus({ hours: props.endHour }).toSeconds());
 const dayDurationSeconds = computed(() => Math.max(dayEndSeconds.value - dayStartSeconds.value, 1));
-const dateIsToday = computed(() => timelineDate.value.hasSame(DateTime.now(), 'day'));
+const dateIsToday = computed(() => timelineDate.value.hasSame(now.value, 'day'));
 const laidOutEvents = computed(() => layoutEvents(props.events));
 const previewEvent = computed(() => {
   if (!props.drag.isTimedDrag.value || (!props.drag.moved.value && props.drag.mode.value !== 'create')) return null;

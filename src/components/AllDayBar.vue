@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useCurrentTime } from '@/composables/useCurrentTime';
 import { useEventModal } from '@/composables/modals/useEventModal';
 import type { CalendarEvent } from '@/types/core';
 import { getVisibleDayRange, layoutEventsByDay } from '@/utils/allDayEventLayout';
@@ -9,6 +10,7 @@ import { getTag } from '@/services/calendarCache';
 import type { CalendarDragController } from '@/composables/useCalendarDrag';
 
 const eventModal = useEventModal();
+const now = useCurrentTime();
 
 const props = defineProps<{
   events: CalendarEvent[];
@@ -20,9 +22,7 @@ const props = defineProps<{
 const allDayBarRef = useTemplateRef<HTMLElement>('all-day-bar-ref');
 
 const todayGridColumn = computed(() => {
-  const today = DateTime.now()
-    .setZone(props.viewStart.zoneName ?? undefined)
-    .startOf('day');
+  const today = now.value.setZone(props.viewStart.zoneName ?? undefined).startOf('day');
 
   for (let i = 0; i < props.numOfDays; i++) {
     if (props.viewStart.plus({ days: i }).hasSame(today, 'day')) {

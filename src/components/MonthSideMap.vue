@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useCurrentTime } from '@/composables/useCurrentTime';
 import { useTranslation } from '@/composables/useTranslation';
 import router from '@/router';
 import { getCurrentViewDatetime, getCurrentViewStartDatetime, getStartOfWeek, getViewLengthInDays } from '@/utils';
@@ -9,6 +10,7 @@ import { useRoute } from 'vue-router';
 
 const { monthNameLong } = useTranslation();
 const route = useRoute();
+const now = useCurrentTime();
 
 const selectedDate = computed(() => getCurrentViewDatetime(route.params));
 const isMonthView = computed(() => route.params.view === 'm');
@@ -165,7 +167,7 @@ const pressedInterval = computed(() => {
         :key="d.toISODate()!"
         class="day"
         :class="{
-          today: d.hasSame(DateTime.now(), 'day'),
+          today: d.hasSame(now, 'day'),
           'selected-day': isMonthView && d.hasSame(selectedDate, 'day'),
           'not-this-month': d.month !== monthTracker,
           'in-range': !isMonthView && d >= viewInterval.start && d <= viewInterval.end,

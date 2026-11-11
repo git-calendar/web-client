@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, type CSSProperties, useTemplateRef } from 'vue';
 import { DateTime } from 'luxon';
+import { useCurrentTime } from '@/composables/useCurrentTime';
 import { useElementSize } from '@vueuse/core';
 import { FiChevronDown } from 'vue-icons-plus/fi';
 import MonthEvent from '@/components/monthview/MonthEvent.vue';
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const eventModal = useEventModal();
+const now = useCurrentTime();
 
 const COMPACT_EVENT_HEIGHT_REM = 1.4;
 const FULL_EVENT_HEIGHT_REM = 2.4;
@@ -130,7 +132,7 @@ function openWeek(day: DateTime) {
       :key="day.toISODate()!"
       class="day-background"
       :class="{
-        today: day.hasSame(DateTime.now(), 'day'),
+        today: day.hasSame(now, 'day'),
         'outside-month': day.month !== currentMonth,
         selected: isSelected(day),
       }"
