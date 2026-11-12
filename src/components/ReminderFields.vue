@@ -100,11 +100,17 @@ function updateReminder(index: number, value: string) {
 .reminder-row {
   display: flex;
   gap: 0.5rem;
-  width: 100%;
+  align-self: stretch;
+  margin-left: 4.3rem;
 
   select {
     flex: 1;
     min-width: 0;
+  }
+}
+@media (max-width: 450px) {
+  .reminder-row {
+    margin-left: 1.5rem;
   }
 }
 </style>
