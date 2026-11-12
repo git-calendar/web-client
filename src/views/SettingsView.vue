@@ -5,7 +5,7 @@ import { DRAG_PRECISIONS, LANGUAGES, THEMES } from '@/constants';
 import { CalendarCore } from '@/wasm/core-wrapper';
 import { useAlertModal } from '@/composables/modals/useAlertModal';
 import { settings } from '@/services/settings';
-import { colorsList, getColorI18nKey } from '@/colors';
+import ColorPicker from '@/components/ColorPicker.vue';
 import DataManagement from '@/components/DataManagement.vue';
 
 const { dayNameLong } = useTranslation();
@@ -88,15 +88,7 @@ function formatHour(hour: number): string {
       </select>
     </label>
 
-    <!-- TODO: prettier color picker -->
-    <label>
-      {{ $t('settings.defaultColor') }}:
-      <select name="color" id="color" v-model="settings.defaultEventColor">
-        <option v-for="color in colorsList" :key="color" :value="color">
-          {{ $t(getColorI18nKey(color)) }}
-        </option>
-      </select>
-    </label>
+    <ColorPicker v-model="settings.defaultEventColor" class="default-color" :label="$t('settings.defaultColor')" />
 
     <label>
       CORS Proxy:
@@ -142,6 +134,12 @@ form {
       width: 12rem;
     }
   }
+}
+
+.default-color {
+  width: 100%;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 /* the label forwards the second select's hover to the first */
