@@ -139,6 +139,7 @@ async function selectZip(event: Event) {
 <style scoped>
 .data-management {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
   min-width: 0;
   gap: 0.75rem;
@@ -159,13 +160,19 @@ async function selectZip(event: Event) {
   gap: 0.5rem;
 }
 
+.export-controls {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .control-label {
   cursor: text;
 }
 
 .export-controls select[name='export-calendar'] {
   min-width: 0;
-  flex: 1;
+  max-width: 100%;
+  flex: 1 1 8rem;
 }
 
 .export-controls > button,
@@ -190,6 +197,10 @@ async function selectZip(event: Event) {
   .import-controls {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .export-controls select[name='export-calendar'] {
+    flex-basis: auto;
   }
 
   .export-controls > *,
