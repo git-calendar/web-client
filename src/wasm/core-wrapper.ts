@@ -14,7 +14,7 @@ class CalendarCoreError extends Error {
   constructor(
     message: string,
     readonly code?: CoreErrorCode,
-    readonly calendar?: string,
+    readonly calendars: string[] = [],
   ) {
     super(message);
   }
@@ -68,14 +68,14 @@ worker.onmessage = ({ data }: MessageEvent) => {
     return;
   }
 
-  const { id, result, error, code, calendar } = data;
+  const { id, result, error, code, calendars } = data;
   const handlers = pending.get(id);
 
   if (!handlers) return;
   pending.delete(id);
 
   if (error) {
-    handlers.reject(new CalendarCoreError(error, code, calendar));
+    handlers.reject(new CalendarCoreError(error, code, calendars));
   } else {
     handlers.resolve(result);
   }

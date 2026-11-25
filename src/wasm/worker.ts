@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import '@/wasm/wasm_exec.js';
-import { coreErrorCalendarOf, coreErrorCodeOf, type CoreErrorCode } from '@/types/errors';
+import { coreErrorCalendarsOf, coreErrorCodeOf, type CoreErrorCode } from '@/types/errors';
 
 // Disclamer: I wibe-coded this shit. Who the hell would enjoy writing something like this.
 
@@ -31,7 +31,7 @@ declare const self: DedicatedWorkerGlobalScope;
 type WorkerOutbound =
   | { type: 'progress'; percentage: number; textId: string; other: string }
   | { type: 'result'; id: number; result: unknown }
-  | { type: 'error'; id: number; error: string; code?: CoreErrorCode; calendar?: string };
+  | { type: 'error'; id: number; error: string; code?: CoreErrorCode; calendars: string[] };
 
 interface RpcRequest {
   id: number;
@@ -202,7 +202,7 @@ async function dispatch({ id, method, args }: RpcRequest): Promise<void> {
       id,
       error: err instanceof Error ? err.message : String(err),
       code: coreErrorCodeOf(err),
-      calendar: coreErrorCalendarOf(err),
+      calendars: coreErrorCalendarsOf(err),
     });
   }
 }

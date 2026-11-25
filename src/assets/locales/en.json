@@ -171,8 +171,10 @@
     "errorEncryptionKeyRequired": "Enter an encryption key when encryption is enabled.",
     "noWritableCalendars": "Create a writable calendar before importing a file.",
     "coreError": {
-      "calendar": "Calendar “{name}”: {message}",
+      "calendar": "Calendar {names}: {message} | Calendars {names}: {message}",
+      "calendarName": "“{name}”",
       "network": "Could not reach the remote service. Check the URL, network connection, and proxy settings, then try again.",
+      "proxy": "Could not reach the CORS proxy. Check that it is running and that its URL in settings is correct, then try again.",
       "auth": "Authentication failed. Check your credentials and try again.",
       "forbidden": "Connections to this remote host are not allowed. Check the URL and try again.",
       "rateLimit": "Too many requests were sent to the remote service. Wait a moment and try again.",

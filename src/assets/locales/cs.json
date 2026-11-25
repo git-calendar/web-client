@@ -171,8 +171,10 @@
     "errorEncryptionKeyRequired": "Pokud je šifrování zapnuté, zadejte šifrovací klíč.",
     "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář.",
     "coreError": {
-      "calendar": "Kalendář „{name}“: {message}",
+      "calendar": "Kalendář {names}: {message} | Kalendáře {names}: {message}",
+      "calendarName": "„{name}“",
       "network": "Vzdálená služba není dostupná. Zkontrolujte URL, síťové připojení a nastavení proxy a zkuste to znovu.",
+      "proxy": "CORS proxy není dostupná. Zkontrolujte, že běží a že je její URL v nastavení správná, a zkuste to znovu.",
       "auth": "Ověření se nezdařilo. Zkontrolujte přihlašovací údaje a zkuste to znovu.",
       "forbidden": "Připojení k tomuto vzdálenému hostiteli není povoleno. Zkontrolujte URL a zkuste to znovu.",
       "rateLimit": "Vzdálené službě bylo odesláno příliš mnoho požadavků. Chvíli počkejte a zkuste to znovu.",
