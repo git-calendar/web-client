@@ -170,6 +170,8 @@
     "errorICalDestinationRequired": "Select an available writable calendar as the import destination.",
     "errorEncryptionKeyRequired": "Enter an encryption key when encryption is enabled.",
     "noWritableCalendars": "Create a writable calendar before importing a file.",
+    "syncFailed": "Sync failed",
+    "close": "Close",
     "coreError": {
       "calendar": "Calendar {names}: {message} | Calendars {names}: {message}",
       "calendarName": "“{name}”",

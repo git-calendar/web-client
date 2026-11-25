@@ -170,6 +170,8 @@
     "errorICalDestinationRequired": "Vyberte dostupný zapisovatelný kalendář jako cíl importu.",
     "errorEncryptionKeyRequired": "Pokud je šifrování zapnuté, zadejte šifrovací klíč.",
     "noWritableCalendars": "Před importem souboru vytvořte zapisovatelný kalendář.",
+    "syncFailed": "Synchronizace selhala",
+    "close": "Zavřít",
     "coreError": {
       "calendar": "Kalendář {names}: {message} | Kalendáře {names}: {message}",
       "calendarName": "„{name}“",

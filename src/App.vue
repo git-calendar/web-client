@@ -3,6 +3,7 @@ import LoadingView from '@/views/LoadingView.vue';
 import { CalendarCore, CoreLoadingState } from '@/wasm/core-wrapper';
 import { nextTick, onBeforeMount, ref } from 'vue';
 import AlertModal from '@/components/modals/AlertModal.vue';
+import SyncErrorNotification from '@/components/SyncErrorNotification.vue';
 import { createCalendarOnce } from '@/utils';
 import { syncAllWrapper } from '@/services/gitSync';
 import { settings } from '@/services/settings';
@@ -37,6 +38,7 @@ onBeforeMount(async () => {
 
 <template>
   <AlertModal />
+  <SyncErrorNotification />
   <LoadingView v-if="CoreLoadingState.percentage < 100 || !coreReady" />
   <RouterView v-else />
 </template>
