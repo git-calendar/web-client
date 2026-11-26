@@ -6,6 +6,14 @@ export const CORE_ERROR_CODES = [
   'RATELIMIT',
   'VALIDATION',
   'STORAGE',
+  'CALENDAR_EXISTS',
+  'CALENDAR_NOT_FOUND',
+  'READONLY',
+  'EVENT_NOT_FOUND',
+  'TAG_EXISTS',
+  'TAG_NOT_FOUND',
+  'NAME_REQUIRED',
+  'DECRYPTION',
 ] as const;
 
 export type CoreErrorCode = (typeof CORE_ERROR_CODES)[number];

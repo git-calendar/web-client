@@ -29,17 +29,41 @@ const destinationTags = computed(
 const form = reactive({
   how: 'Init',
   iCalSource: 'URL',
-  name: '',
-  remoteURL: '',
-  username: '',
-  password: '',
-  encrypted: false,
-  encryptionKey: '',
-  readonly: false,
   destination: writableCalendars.value[0]?.name ?? '',
   destinationTagId: '',
   file: undefined as File | undefined,
 });
+
+/** The fields of one kind of calendar form; each create mode keeps its own, so nothing carries over between them. */
+type CalendarFields = {
+  name: string;
+  remoteURL: string;
+  username: string;
+  password: string;
+  encrypted: boolean;
+  encryptionKey: string;
+  readonly: boolean;
+};
+type FormKind = 'Init' | 'Clone' | 'ICalURL' | 'ICalFile' | 'Edit';
+
+function emptyFields(): CalendarFields {
+  return { name: '', remoteURL: '', username: '', password: '', encrypted: false, encryptionKey: '', readonly: false };
+}
+
+const fieldsByKind = reactive<Record<FormKind, CalendarFields>>({
+  Init: emptyFields(),
+  Clone: emptyFields(),
+  ICalURL: emptyFields(),
+  ICalFile: emptyFields(),
+  Edit: emptyFields(),
+});
+const formKind = computed<FormKind>(() => {
+  if (!thisModal.isNew.value) return 'Edit';
+  if (form.how === 'iCal') return form.iCalSource === 'URL' ? 'ICalURL' : 'ICalFile';
+  return form.how === 'Clone' ? 'Clone' : 'Init';
+});
+/** The fields of the form shown now. */
+const fields = computed(() => fieldsByKind[formKind.value]);
 
 const isICal = computed(() => form.how === 'iCal');
 const isICalURL = computed(() => isICal.value && form.iCalSource === 'URL');
@@ -84,23 +108,24 @@ watch(
 );
 
 function updateFormFromCalendar(calendar: DeepReadonly<Calendar>) {
-  form.name = calendar.name;
-  form.encrypted = calendar.encrypted;
-  form.encryptionKey = ''; // secret
-  form.readonly = calendar.readonly;
+  const edit = fieldsByKind.Edit;
+  edit.name = calendar.name;
+  edit.encrypted = calendar.encrypted;
+  edit.encryptionKey = ''; // secret
+  edit.readonly = calendar.readonly;
 
   if (calendar.icalUrl) {
     form.how = 'iCal';
     form.iCalSource = 'URL';
-    form.remoteURL = calendar.icalUrl;
+    edit.remoteURL = calendar.icalUrl;
     return;
   }
 
   if (calendar.remoteUrl) {
     const remoteUrl = authFromUrl(calendar.remoteUrl);
-    form.remoteURL = remoteUrl.url;
-    form.username = remoteUrl.username;
-    form.password = remoteUrl.password;
+    edit.remoteURL = remoteUrl.url;
+    edit.username = remoteUrl.username;
+    edit.password = remoteUrl.password;
   }
 }
 
@@ -135,35 +160,38 @@ async function saveCalendar() {
 function affectedCalendarName(): string | undefined {
   if (isICalFile.value) return form.destination || undefined;
   if (form.how === 'Clone') return undefined;
-  return form.name || originalCalendar.value?.name;
+  return fields.value.name || originalCalendar.value?.name;
 }
 
 async function createCalendar() {
-  console.log('creating calendar', form.name, form.remoteURL);
+  console.log('creating calendar', fields.value.name, fields.value.remoteURL);
 
   switch (form.how) {
     case 'Init':
-      await CalendarCore.createCalendar(form.name.trim(), form.encrypted ? form.encryptionKey : '');
-      if (form.remoteURL !== '') {
+      await CalendarCore.createCalendar(
+        fields.value.name.trim(),
+        fields.value.encrypted ? fields.value.encryptionKey : '',
+      );
+      if (fields.value.remoteURL !== '') {
         await CalendarCore.updateRemote(
-          form.name.trim(),
-          urlWithAuth(form.remoteURL.trim(), form.username, form.password),
-          form.readonly,
+          fields.value.name.trim(),
+          urlWithAuth(fields.value.remoteURL.trim(), fields.value.username, fields.value.password),
+          fields.value.readonly,
         );
       }
       break;
 
     case 'Clone':
       await CalendarCore.cloneCalendar(
-        urlWithAuth(form.remoteURL.trim(), form.username, form.password),
-        form.encrypted ? form.encryptionKey : '',
-        form.readonly,
+        urlWithAuth(fields.value.remoteURL.trim(), fields.value.username, fields.value.password),
+        fields.value.encrypted ? fields.value.encryptionKey : '',
+        fields.value.readonly,
       );
       break;
 
     case 'iCal':
       if (form.iCalSource === 'URL') {
-        await CalendarCore.importICalURL(form.name, form.remoteURL);
+        await CalendarCore.importICalURL(fields.value.name, fields.value.remoteURL);
       } else {
         if (!form.file) throw new Error('No iCalendar file selected');
 
@@ -180,12 +208,12 @@ async function updateCalendar() {
   let calendarName = calendar.name;
   console.log('updating calendar', calendarName);
 
-  if (calendar.name !== form.name) {
-    await CalendarCore.renameCalendar(calendar.name, form.name);
-    calendarName = form.name;
+  if (calendar.name !== fields.value.name) {
+    await CalendarCore.renameCalendar(calendar.name, fields.value.name);
+    calendarName = fields.value.name;
   }
 
-  const rawUrl = form.remoteURL;
+  const rawUrl = fields.value.remoteURL;
   if (calendar.icalUrl) {
     if (calendar.icalUrl !== rawUrl) {
       await CalendarCore.updateICalURL(calendarName, rawUrl);
@@ -193,8 +221,8 @@ async function updateCalendar() {
     return;
   }
 
-  const newRemoteUrl = rawUrl ? urlWithAuth(rawUrl, form.username, form.password) : '';
-  const readonly = rawUrl ? form.readonly : false;
+  const newRemoteUrl = rawUrl ? urlWithAuth(rawUrl, fields.value.username, fields.value.password) : '';
+  const readonly = rawUrl ? fields.value.readonly : false;
   if (calendar.remoteUrl !== newRemoteUrl || calendar.readonly !== readonly) {
     await CalendarCore.updateRemote(calendarName, newRemoteUrl, readonly);
     if (newRemoteUrl) await syncAllWrapper(); // merge/pull or whatever
@@ -228,8 +256,8 @@ async function deleteCal() {
 }
 
 function validate(): boolean {
-  form.name = form.name.trim();
-  form.remoteURL = form.remoteURL.trim();
+  fields.value.name = fields.value.name.trim();
+  fields.value.remoteURL = fields.value.remoteURL.trim();
 
   if (isICalFile.value) {
     if (writableCalendars.value.length === 0) {
@@ -244,24 +272,24 @@ function validate(): boolean {
     return true;
   }
 
-  if (form.how !== 'Clone' && !form.name) {
+  if (form.how !== 'Clone' && !fields.value.name) {
     return validationError('message.errorCalendarNameRequired');
   }
 
-  if (!form.remoteURL) {
+  if (!fields.value.remoteURL) {
     if (form.how === 'Clone') {
       return validationError('message.errorRemoteUrlRequired');
     }
     if (isICalURL.value) {
       return validationError('message.errorICalUrlRequired');
     }
-    if (thisModal.isNew.value && form.encrypted && !form.encryptionKey) {
+    if (thisModal.isNew.value && fields.value.encrypted && !fields.value.encryptionKey) {
       return validationError('message.errorEncryptionKeyRequired');
     }
     return true;
   }
 
-  const url = parseURL(form.remoteURL);
+  const url = parseURL(fields.value.remoteURL);
   if (!url) {
     return validationError('message.errorInvalidUrl');
   }
@@ -270,7 +298,7 @@ function validate(): boolean {
     return validationError('message.errorRemoteUrlEndDotGit');
   }
 
-  if (thisModal.isNew.value && form.encrypted && !form.encryptionKey) {
+  if (thisModal.isNew.value && fields.value.encrypted && !fields.value.encryptionKey) {
     return validationError('message.errorEncryptionKeyRequired');
   }
 
@@ -297,13 +325,7 @@ function selectICalFile(event: Event) {
 function resetForm() {
   form.how = howOptions[0];
   form.iCalSource = iCalSourceOptions[0];
-  form.name = '';
-  form.remoteURL = '';
-  form.username = '';
-  form.password = '';
-  form.encrypted = false;
-  form.encryptionKey = '';
-  form.readonly = false;
+  for (const kind of Object.keys(fieldsByKind) as FormKind[]) fieldsByKind[kind] = emptyFields();
   form.destination = writableCalendars.value[0]?.name ?? '';
   form.destinationTagId = '';
   form.file = undefined;
@@ -373,7 +395,7 @@ onMounted(() => {
 
         <input
           v-if="form.how !== 'Clone' && !isICalFile"
-          v-model="form.name"
+          v-model="fields.name"
           ref="name-input-field"
           type="text"
           name="name"
@@ -384,7 +406,7 @@ onMounted(() => {
 
         <input
           v-if="!isICalFile"
-          v-model="form.remoteURL"
+          v-model="fields.remoteURL"
           type="url"
           name="url"
           :placeholder="urlPlaceholder"
@@ -397,14 +419,14 @@ onMounted(() => {
             {{ $t('calendar.gitCredentials') }} ({{ $t('optionalText') }})
             <div class="form-row">
               <input
-                v-model="form.username"
+                v-model="fields.username"
                 type="text"
                 name="username"
                 :placeholder="$t('calendar.username')"
                 autocomplete="username"
               />
               <input
-                v-model="form.password"
+                v-model="fields.password"
                 type="password"
                 name="password"
                 :placeholder="$t('calendar.password')"
@@ -413,26 +435,29 @@ onMounted(() => {
             </div>
           </div>
 
-          <label v-if="form.how === 'Clone' || (!thisModal.isNew.value && form.remoteURL)">
-            {{ $t('calendar.readonly') }}
-            <input v-model="form.readonly" type="checkbox" name="readonly" />
-          </label>
-
-          <div v-if="thisModal.isNew.value" id="encryption">
-            <!-- TODO: re-encrypt option for existing calendars -->
-            <label>
-              {{ $t('calendar.encrypted') }}
-              <input v-model="form.encrypted" type="checkbox" name="encrypted" />
+          <!-- the checkboxes sit together, without the gap between form rows -->
+          <div id="calendar-options">
+            <label v-if="form.how === 'Clone' || (!thisModal.isNew.value && fields.remoteURL)">
+              {{ $t('calendar.readonly') }}
+              <input v-model="fields.readonly" type="checkbox" name="readonly" />
             </label>
-            <input
-              v-if="form.encrypted"
-              v-model="form.encryptionKey"
-              type="password"
-              name="encryption-key"
-              :placeholder="$t('calendar.encryptionKey')"
-              autocomplete="current-password"
-              required
-            />
+
+            <div v-if="thisModal.isNew.value" id="encryption">
+              <!-- TODO: re-encrypt option for existing calendars -->
+              <label>
+                {{ $t('calendar.encrypted') }}
+                <input v-model="fields.encrypted" type="checkbox" name="encrypted" />
+              </label>
+              <input
+                v-if="fields.encrypted"
+                v-model="fields.encryptionKey"
+                type="password"
+                name="encryption-key"
+                :placeholder="$t('calendar.encryptionKey')"
+                autocomplete="current-password"
+                required
+              />
+            </div>
           </div>
         </template>
 
@@ -550,6 +575,7 @@ onMounted(() => {
 }
 
 #git-credentials,
+#calendar-options,
 #encryption {
   display: flex;
   flex-direction: column;

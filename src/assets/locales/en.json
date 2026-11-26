@@ -181,7 +181,15 @@
       "forbidden": "Connections to this remote host are not allowed. Check the URL and try again.",
       "rateLimit": "Too many requests were sent to the remote service. Wait a moment and try again.",
       "validation": "The operation contains invalid data. Check your input and try again.",
-      "storage": "Calendar data could not be read or saved. Check the available storage and try again."
+      "storage": "Calendar data could not be read or saved. Check the available storage and try again.",
+      "calendarExists": "A calendar with this name already exists. Choose another name.",
+      "calendarNotFound": "The calendar no longer exists.",
+      "readOnly": "This calendar is read-only.",
+      "eventNotFound": "The event no longer exists. It may have been deleted or changed elsewhere.",
+      "tagExists": "A tag with this name already exists.",
+      "tagNotFound": "The tag no longer exists.",
+      "nameRequired": "Enter a name.",
+      "decryption": "The calendar data could not be decrypted. Check the encryption key."
     }
   },
   "colors": {
